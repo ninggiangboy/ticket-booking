@@ -1093,26 +1093,95 @@ GET /events/{id}/queue
 - Khi số người đến ít hơn `max_active`, hàng đợi trong suốt: người vào phòng chờ được cấp lượt ngay ở vòng job kế tiếp.
 - **Redis không khả dụng**: API chuyển sang rate limiter trong bộ nhớ với ngưỡng thấp; sự kiện `high_demand` trả 503 kèm `Retry-After` cho phần vượt ngưỡng. Tính đúng đắn không đổi vì không phụ thuộc Redis.
 
-### 10.3 Không có hot row: mỗi vé là một dòng
+### 10.3 Kho vé theo số lượng: các phương án và lý do chọn
 
-Kho vé theo số lượng không dùng một dòng bộ đếm cho mỗi pool mà dùng một dòng cho mỗi vé (mục 8.2). Các transaction đồng thời khóa những dòng khác nhau bằng `SKIP LOCKED`, nên không có dòng nào để tranh và không transaction nào phải chờ lock.
+Hệ thống chọn phương án D: một dòng cho mỗi vé, lấy bằng `SKIP LOCKED`, theo cách Shopify làm inventory reservation. Ba phương án A, B, C dưới đây đã được xem xét trước đó; phần này ghi lại ưu nhược điểm của từng phương án và vì sao chúng bị loại.
 
-| Phương án | Tranh chấp | Tính nhất quán | Kết luận |
+**Bài toán.** Vé của một khu vực hoặc một loại vé GA không có danh tính riêng, nên cách lưu tự nhiên nhất là một con số. Khi 100.000 request cùng muốn đổi con số đó, tất cả dồn vào một dòng: đây là hot row.
+
+```mermaid
+flowchart LR
+    subgraph PA["Phương án A: một dòng bộ đếm"]
+        A1["Request 1"] --> AR["Dòng của pool VIP"]
+        A2["Request 2"] -. chờ lock .-> AR
+        A3["Request 3"] -. chờ lock .-> AR
+    end
+    subgraph PD["Phương án D: một dòng mỗi vé"]
+        D1["Request 1"] --> U1["Unit 1 và 2"]
+        D2["Request 2"] --> U2["Unit 3 và 4"]
+        D3["Request 3"] --> U3["Unit 5"]
+    end
+```
+
+#### Phương án A: một dòng bộ đếm cho mỗi pool
+
+Đây là thiết kế ban đầu của tài liệu này. Mỗi pool là một dòng có `capacity`, `held`, `sold`; giữ vé là một câu lệnh vừa kiểm tra vừa cộng:
+
+```sql
+UPDATE inventory_pool
+SET held = held + :qty
+WHERE id = :pool AND held + sold + :qty <= capacity;
+-- 1 dòng: giữ thành công. 0 dòng: không đủ vé.
+```
+
+- **Ưu điểm**: đơn giản nhất; mỗi pool chỉ một dòng; số vé còn lại đọc được ngay từ dòng đó; bất biến ép được bằng một ràng buộc `CHECK`; kho vé và reservation nằm trong một transaction.
+- **Nhược điểm**: mọi lệnh giữ vé của pool xếp hàng trên một lock dòng, nên thông lượng bị chặn bởi thời gian giữ lock (một câu lệnh cộng một lần commit). Mỗi request đang chờ lock giữ một connection, nên hàng chờ dài sẽ làm cạn connection pool của cả API. Phải kèm các biện pháp vá: đặt câu `UPDATE` cuối transaction, `lock_timeout`, phòng chờ để hạ lượng ghi.
+- **Kết luận**: đúng nhưng có trần thông lượng cố định trên mỗi pool. Được giữ lại làm baseline để đo trong EXP-10.
+
+#### Phương án B: chia pool thành K dòng bộ đếm
+
+Mỗi pool được tách thành K dòng con với sức chứa chia đều. Request chọn một ngăn theo hash của `user_id` và thử ngăn kế tiếp khi ngăn đó hết.
+
+- **Ưu điểm**: tranh chấp giảm khoảng K lần; vẫn là một transaction; số dòng vẫn ít.
+- **Nhược điểm**: mỗi ngăn vẫn là một hot row nhỏ, tức chỉ dời trần lên chứ không bỏ trần. Những vé cuối nằm rải rác: một request xin 4 vé có thể thất bại dù tổng còn đủ 4 vé ở bốn ngăn khác nhau, muốn gom thì phải khóa nhiều ngăn theo thứ tự để tránh deadlock. K là tham số phải đoán trước, và đổi sức chứa phải chia lại các ngăn.
+- **Kết luận**: thêm nhiều phức tạp để đổi lấy một cải thiện có giới hạn.
+
+#### Phương án C: bộ đếm trong Redis
+
+Số vé còn lại nằm trong một key Redis; giữ vé là `DECR`, trả vé là `INCR`. Có hai biến thể:
+
+| Biến thể | Cách làm | Ưu điểm | Nhược điểm |
 | --- | --- | --- | --- |
-| Một dòng mỗi vé, lấy bằng `FOR UPDATE SKIP LOCKED` | Không có: mỗi transaction khóa dòng riêng | Kho vé và reservation trong một transaction | **Chọn** |
-| Một dòng bộ đếm mỗi pool (`held`, `sold`) | Mọi lệnh giữ vé xếp hàng trên một lock dòng | Một transaction | Không chọn: hot row |
-| Chia pool thành K dòng bộ đếm | Giảm K lần nhưng vẫn còn | Một transaction; vé cuối nằm rải rác ở các ngăn | Không chọn |
-| Bộ đếm trong Redis (`DECR`, `INCR`) cùng database | Không có lock | Bước trừ ở Redis và bước ghi database không nằm trong một transaction, nên có thể lệch nhau | Không chọn |
+| C1: Redis là nguồn chuẩn | Trừ ở Redis, ghi database sau | Nhanh nhất, không có lock | Bước trừ ở Redis và bước ghi database không gói được trong một thao tác nguyên tử; tiến trình dừng giữa hai bước hoặc mất dữ liệu Redis dẫn tới bán vượt hoặc bán thiếu |
+| C2: Redis là cổng chặn, database vẫn quyết định | Trừ ở Redis trước; qua được mới chạy câu `UPDATE` của phương án A; lỗi thì cộng trả lại | Request thua bị chặn trước database; không bán vượt vì database vẫn là nơi quyết định | Hot row vẫn còn nguyên cho các request thắng; bộ đếm Redis có thể lệch tạm thời (từ chối oan, kẹt thấp khi API dừng giữa chừng) nên cần thêm bước bù và job đồng bộ lại |
 
-Đây là mẫu Shopify dùng cho inventory reservation sau khi bỏ thiết kế `DECR` và `INCR` trên Redis: một dòng cho mỗi đơn vị bán được thay cho một dòng có cột số lượng, lấy bằng `SKIP LOCKED`, để reservation và kho nằm trong cùng một transaction ([Shopify Engineering](https://shopify.engineering/scaling-inventory-reservations)). Khác biệt ở đây: Shopify giữ một pool tối đa 1.000 dòng còn trống cho mỗi mặt hàng và bổ sung dần; sức chứa của một sự kiện hữu hạn và biết trước, nên hệ thống này tạo đủ số dòng khi xuất bản và không cần bước bổ sung.
+- **Kết luận**: C1 bị loại vì vi phạm yêu cầu số một là không bán vượt. C2 đúng nhưng chỉ che hot row chứ không bỏ nó, lại thêm một bộ đếm thứ hai phải giữ cho khớp.
+- Shopify từng chạy đúng thiết kế `DECR` và `INCR` này và rời bỏ nó vì lý do nêu ở C1: bước xác nhận phải vừa cập nhật MySQL vừa dọn Redis, và hai thao tác đó không nằm được trong một bước nguyên tử ([Shopify Engineering](https://shopify.engineering/scaling-inventory-reservations)).
 
-Cái giá của phương án này:
+#### Phương án D: một dòng cho mỗi vé, lấy bằng `SKIP LOCKED` (chọn)
 
-- **Số dòng bằng tổng sức chứa.** 5.000 vé là 5.000 dòng; một sự kiện 100.000 chỗ là 100.000 dòng, vẫn nhỏ với PostgreSQL. Nếu sau này có pool hàng triệu vé thì chuyển sang pool có giới hạn và bổ sung dần như Shopify.
-- **Số vé còn lại phải đếm**, không đọc được từ một cột. Phép đếm chạy trên index một phần và kết quả được cache 1 đến 2 giây trong response tình trạng chỗ.
-- **Từ chối oan khi gần hết vé** (mục 8.2).
+Mỗi vé bán được là một dòng `inventory_unit`. Giữ vé là khóa `qty` dòng còn trống bất kỳ của pool bằng `SELECT … FOR UPDATE SKIP LOCKED` rồi đổi trạng thái (câu lệnh ở mục 8.2). Transaction đến sau bỏ qua các dòng đang bị khóa và lấy dòng khác.
 
-Phòng chờ và cờ hết vé vẫn được giữ. Vai trò của chúng không còn là bảo vệ một dòng nóng mà là chặn request thua trước khi chúng chiếm connection.
+- **Ưu điểm**:
+  - Không có dòng nào để tranh: mỗi transaction khóa dòng riêng, không ai chờ ai, không có deadlock.
+  - Kho vé và reservation vẫn nằm trong một transaction của database; không cần Redis để đúng.
+  - Bất biến trở thành cấu trúc: không thể giữ một dòng không tồn tại, không có bộ đếm để âm hay lệch.
+  - Trùng với cách bán theo ghế vốn đã là mỗi ghế một dòng, nên cả ba mô hình dùng chung một bảng, một câu giữ vé, một câu trả vé.
+- **Nhược điểm**:
+  - Số dòng bằng tổng sức chứa: 5.000 vé là 5.000 dòng, sự kiện 100.000 chỗ là 100.000 dòng.
+  - Số vé còn lại phải đếm trên index một phần, không đọc được từ một cột; kết quả được cache 1 đến 2 giây.
+  - Gần hết vé có thể từ chối oan khi các unit cuối đang bị transaction khác khóa (mục 8.2).
+  - Đổi sức chứa là thêm hoặc bỏ dòng thay vì sửa một số; bảng bị cập nhật nhiều nên phụ thuộc autovacuum.
+
+Đây là mẫu Shopify chuyển sang sau khi bỏ Redis: một dòng cho mỗi đơn vị bán được thay cho một dòng có cột số lượng. Khác biệt ở đây: Shopify giữ một pool tối đa 1.000 dòng còn trống cho mỗi mặt hàng và bổ sung dần; sức chứa của một sự kiện hữu hạn và biết trước, nên hệ thống này tạo đủ số dòng khi xuất bản và không cần bước bổ sung. Nếu sau này có pool hàng triệu vé thì chuyển sang cách của Shopify.
+
+#### So sánh và lý do chọn
+
+| Phương án | Tranh chấp khi giữ vé | Tính nhất quán | Độ phức tạp | Kết luận |
+| --- | --- | --- | --- | --- |
+| A. Một dòng bộ đếm mỗi pool | Mọi request xếp hàng trên một lock | Một transaction | Thấp nhất | Loại: hot row |
+| B. K dòng bộ đếm mỗi pool | Giảm K lần, vẫn còn | Một transaction | Cao: chọn K, gom vé cuối | Loại |
+| C1. Redis là nguồn chuẩn | Không có | Hai hệ thống, không nguyên tử | Trung bình | Loại: có thể bán vượt |
+| C2. Redis là cổng chặn trước A | Hot row vẫn còn cho request thắng | Database quyết định; Redis có thể lệch tạm | Cao: bù trừ và đồng bộ | Loại |
+| D. Một dòng mỗi vé, `SKIP LOCKED` | Không có | Một transaction | Thấp: dùng chung với ghế | **Chọn** |
+
+1. **Không bán vượt là yêu cầu đứng trên mọi yêu cầu khác**, nên mọi phương án để kho vé nằm ngoài transaction của database bị loại trước: C1.
+2. **Trong các phương án còn lại, chỉ D bỏ hẳn tranh chấp.** A có trần thông lượng trên mỗi pool; B và C2 chỉ dời hoặc che trần đó và phải trả bằng độ phức tạp.
+3. **D làm hệ thống đơn giản hơn chứ không phức tạp hơn**: cơ chế mỗi ghế một dòng với `SKIP LOCKED` đã có sẵn cho bán theo ghế, nên zone và GA chỉ dùng lại nó.
+4. **Cái giá của D nhỏ trong bài toán này**: sức chứa một sự kiện ở mức nghìn đến trăm nghìn, nên số dòng và chi phí đếm đều không đáng kể.
+5. **Lựa chọn được kiểm chứng bằng số đo**: EXP-10 chạy cùng một kịch bản trên A và D để so thông lượng, p95 và thời gian chờ lock.
+
+Redis vẫn có mặt trong hệ thống nhưng không giữ số vé: phòng chờ và cờ hết vé chặn request thua trước khi chúng chiếm connection.
 
 ### 10.4 Giới hạn thật là connection pool
 
