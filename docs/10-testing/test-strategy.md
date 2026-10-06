@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-69
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-69
 > Phụ thuộc: SDD gốc §15.1, §15.2, [Sổ quyết định](../00-decision-register.md) (DR-08, 51, 73, 75, 76, 77, 78, 81), [Master plan](../00-master-plan.md) §0.4, §7.2, §7.4, [DOC-06](../02-glossary.md), [DOC-11](../03-architecture/tech-stack-and-versions.md) §4, [DOC-12](../03-architecture/code-architecture.md) §5, §8, [DOC-61](../09-operations/local-dev.md), [DOC-62](../09-operations/deploy-compose.md), [DOC-63](../09-operations/ci-cd.md), [DOC-36](../07-api/api-guidelines.md), [DOC-37](../07-api/api-endpoints.md)
 > Người dùng chính: P1-01 (khung test, JaCoCo, Vitest), P1-05 (test kiến trúc), P1-08 (CI), P1-10 (E2E đầu tiên); mọi task `Pn-xx` khi viết test; người review PR
 

@@ -1,6 +1,6 @@
 # Luồng: Đăng nhập và tài khoản
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-83
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-83
 > Phụ thuộc: [DOC-82](README.md) (tên thành phần tham gia), [DOC-04](../../01-product/use-cases.md) UC-01, UC-20, [DOC-15](../../05-data/ops-model.md) §3, §4, [DOC-14](../../05-data/domain-model.md) (`app_user`), [DOC-35](../error-handling.md), [DOC-36](../../07-api/api-guidelines.md), [DOC-31](../i18n.md) §2, [DOC-40](../../08-ux-ui/ui-states-and-copy.md) §3.2, [DOC-51](../../08-ux-ui/screens/emails.md) §3, [DOC-38](../../08-ux-ui/ux-principles-and-ia.md), [Sổ quyết định](../../00-decision-register.md) (DR-10, 21, 22, 23, 55, 56, 64, 67), [ADR-0007](../../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth backend và frontend), P1-10 (i18n), DOC-19 (thuật toán), DOC-44 (màn Đăng nhập), DOC-52 (trang lỗi), mọi màn cần đăng nhập
 

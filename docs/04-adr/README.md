@@ -1,6 +1,6 @@
 # Danh mục ADR
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-13
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-13
 > Phụ thuộc: [Master plan](../00-master-plan.md) §3.2, [Sổ quyết định](../00-decision-register.md), [ADR-0001](0001-record-architecture-decisions.md)
 > Người dùng chính: P0-12; mọi người cần biết vì sao một quyết định kiến trúc được chọn
 

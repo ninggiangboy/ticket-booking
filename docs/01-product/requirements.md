@@ -1,6 +1,6 @@
 # Yêu cầu
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-03
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-03
 > Phụ thuộc: SDD gốc §3.3–§3.4, [DOC-01](vision-and-scope.md), [DOC-02](personas-and-journeys.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-10…13, 21…28, 31…38, 41…49, 52, 55…66, 70, 71, 73, 74, 75)
 > Người dùng chính: P0-11; [DOC-04](use-cases.md), [DOC-05](feature-catalog.md); mọi tài liệu thiết kế; mọi task `Pn-xx` khi viết test nghiệm thu
 

@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: ticket-booking
+  threads:
+    virtual:
+      enabled: false

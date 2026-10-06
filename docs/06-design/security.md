@@ -1,6 +1,6 @@
 # Bảo mật
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-32
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-32
 > Phụ thuộc: SDD gốc §5, §9.3, §12, §14.1, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §5, [DOC-15](../05-data/ops-model.md), [DOC-35](error-handling.md), [DOC-36](../07-api/api-guidelines.md), [DOC-62](../09-operations/deploy-compose.md) §8, [DOC-63](../09-operations/ci-cd.md) §9, [Sổ quyết định](../00-decision-register.md) (DR-21, 22, 23, 38, 48, 51, 55, 56, 58, 61, 64, 65), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth), P1-02 (nginx), mọi task viết endpoint, [DOC-19](auth-and-sessions.md), DOC-37, DOC-69, người review PR (checklist [DOC-12](../03-architecture/code-architecture.md) §7)
 

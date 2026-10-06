@@ -1,6 +1,6 @@
 # Use case
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-04
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-04
 > Phụ thuộc: SDD gốc §3.2, §5, §8–§10, §13, [DOC-02](personas-and-journeys.md), [DOC-03](requirements.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-21…24, 28, 31, 37, 41…47, 57, 58, 64, 65, 67, 70, 73)
 > Người dùng chính: P0-11; DOC-83…90 (luồng chi tiết `FL-xx` bám sát từng UC); tác giả màn hình DOC-42…60; DOC-37 (endpoint)
 

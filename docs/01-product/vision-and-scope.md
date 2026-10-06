@@ -1,6 +1,6 @@
 # Tầm nhìn và phạm vi
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-01
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-01
 > Phụ thuộc: SDD gốc §1–§3, §16–§17, [Sổ quyết định](../00-decision-register.md) (DR-13, 28, 37, 41, 44, 57, 68, 75), [Master plan](../00-master-plan.md) §4.3, [DOC-06](../02-glossary.md)
 > Người dùng chính: P0-09, P0-10; mọi người mới đọc dự án; tài liệu DOC-03, DOC-05 khi cần "vì sao"
 

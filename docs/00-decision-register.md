@@ -48,6 +48,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-123–130: Profile `seed`, ba file compose, `PAYMENTS_MODE` khớp profile, khóa Stripe cho frontend, 429 do nginx, E2E riêng, `audit`/`breaking-ok`, branch protection (đề xuất) (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-123–130, DOC-61, DOC-62, DOC-63 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-131–142: Menu tài khoản, tự thử lại, token mở rộng, lint hex, namespace i18n, lỗi theo `code`, định dạng ngày; chi tiết màn Đăng nhập và trang lỗi; tên component do DOC-41 chốt (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-131–142, DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-52, DOC-82 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-143–151: Khóa `saleStartsAt`, loại vé chỉ thêm khi DRAFT, `PUT draft` chỉ kiểm schema; quy ước cấu hình, `ConfigurationGuard`, tên khóa; mã mức test, ID test trong `@DisplayName`, ngưỡng nhánh 75% (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-143–151, DOC-37, DOC-34, DOC-69 |
+| 2026-10-06 | Claude (Owner yêu cầu chạy) | Chốt qua spike S-01: giữ Java 25 + Spring Boot 4.0.8, không lùi Java 21; 9 kịch bản tích hợp xanh trên PostgreSQL 18 và SeaweedFS 4.48. Phát hiện: Boot 4 dùng Jackson 3 nên networknt đổi từ 1.5.x sang 3.0.8; SeaweedFS cần `-s3.config` | DR-02, DR-81, ADR-0011, DOC-11 |
 
 ---
 
@@ -77,6 +78,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Các phương án:** (1) Java 21 + Boot 3.5: đúng SDD, thư viện chắc chắn tương thích, nhưng đã hết hỗ trợ OSS; (2) Java 25 + Boot 4.0.x: được hỗ trợ dài, virtual thread và structured logging sẵn, nhưng cần kiểm tra tương thích springdoc, stripe-java, Testcontainers, Spring Modulith.
 - **Quyết định (Owner chốt):** Phương án 2: Java 25 (Temurin), Spring Boot 4.0.x bản patch mới nhất tại lúc P1-01, khóa trong version catalog. Spike **S-01** dựng một ứng dụng rỗng với Spring Web, Security, Spring Data JDBC, Flyway (PostgreSQL 18), springdoc-openapi, stripe-java, AWS SDK v2 S3 (với SeaweedFS, DR-38), Spring Modulith, Testcontainers và chạy một test tích hợp. Spike thất bại ở thư viện nào thì lùi về phương án 1 cho toàn bộ dự án, không trộn.
 - **Hệ quả:** Không dùng virtual thread cho đường giữ vé ở P2 (số luồng phải nhỏ hơn connection pool, DR-61); để mặc định platform thread, đo lại ở EXP-05.
+- **Kết quả S-01 (2026-10-06):** đạt, giữ phương án 2. Boot 4.0.8, Modulith 2.0.8, springdoc 3.0.2, Testcontainers 2.0.5, networknt 3.0.8 (Jackson 3). Chi tiết ở DOC-11 §8.
 - **Ghi vào:** DOC-11, ADR-0011.
 
 ### DR-03 · Stack và phiên bản frontend — **Chốt**

@@ -1,6 +1,6 @@
 # Màn hình: Đăng nhập
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-44
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-44
 > Phụ thuộc: SDD gốc §5, §13, [Sổ quyết định](../../00-decision-register.md) (DR-10, 21, 22, 23, 56, 63, 64, 66, 67, 68), [DOC-03](../../01-product/requirements.md) (FR-01, FR-17), [DOC-04](../../01-product/use-cases.md) (UC-01, UC-20), [DOC-06](../../02-glossary.md), [DOC-37](../../07-api/api-endpoints.md) (E-01…05), [DOC-38](../ux-principles-and-ia.md) §3, §5, §8.5, [DOC-39](../design-system.md), [DOC-40](../ui-states-and-copy.md) §3.2, §4, [DOC-41](README.md), [DOC-82](../../06-design/flows/README.md) (FL-01…04); canvas: artboard `02`, `02b`, `E2`, `M02` (và email `03`)
 > Người dùng chính: P1-01 (khung frontend), P1-04 (nhóm xác thực), tác giả DOC-83 (FL-01…04) và DOC-19, người viết test E2E đăng nhập
 

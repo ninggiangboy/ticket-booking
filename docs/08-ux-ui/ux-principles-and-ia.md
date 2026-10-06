@@ -1,6 +1,6 @@
 # Nguyên tắc UX và kiến trúc thông tin
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-38
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-38
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 24, 36, 41, 44, 57, 66, 67, 68, 69, 70), [DOC-02](../01-product/personas-and-journeys.md), [DOC-04](../01-product/use-cases.md), [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md) §6, [DOC-39](design-system.md), [DOC-40](ui-states-and-copy.md)
 > Người dùng chính: P1-01 (khung frontend), mọi task màn hình P1–P5, DOC-41…60 (đặc tả từng màn hình), người review PR frontend
 

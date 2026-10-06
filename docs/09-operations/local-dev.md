@@ -1,6 +1,6 @@
 # Môi trường dev
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-61
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-61
 > Phụ thuộc: SDD gốc §14, [DOC-07](../03-architecture/system-context-and-containers.md) §2, [DOC-11](../03-architecture/tech-stack-and-versions.md) §7, [DOC-12](../03-architecture/code-architecture.md), [DOC-62](deploy-compose.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 07, 22, 51, 72, 73, 77, 78, 80)
 > Người dùng chính: P1-01, P1-02, P1-11 (người mới phải đăng nhập `buyer1@demo.test` trong ≤ 15 phút); mọi task `Pn-xx` khi chạy và kiểm thử cục bộ; DOC-81 (kịch bản demo)
 

@@ -1,6 +1,6 @@
 # Mô hình vận hành
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-15
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-15
 > Phụ thuộc: SDD gốc §4.2, §5, §8.6, §9.3, §11, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-14](domain-model.md), [Sổ quyết định](../00-decision-register.md) (DR-14, 19, 21, 22, 45, 48, 51, 53, 54, 74, 76), [ADR-0006](../04-adr/0006-transactional-outbox-for-email.md), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-03 (migration), P1-07 (auth), P2-xx (idempotency, outbox), P3-xx (webhook, cổng giả), [DOC-19](../06-design/auth-and-sessions.md), [DOC-25](../06-design/idempotency.md), [DOC-27](../06-design/tickets-and-notifications.md), [DOC-70](../10-testing/experiments/README.md)
 

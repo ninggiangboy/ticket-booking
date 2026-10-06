@@ -1,6 +1,6 @@
 # Stack và phiên bản
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-11
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 (S-01 xong) · DOC-11
 > Phụ thuộc: SDD gốc §4.3, [DOC-07](system-context-and-containers.md), [Sổ quyết định](../00-decision-register.md) (DR-01…05, 08, 38, 51, 68, 72, 77, 81), [ADR-0011](../04-adr/0011-java-25-spring-boot-4.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P0-02 (spike S-01), P1-01 (khởi tạo monorepo), P1-02 (compose), P1-09 (khung frontend); DOC-12, DOC-61, DOC-62, DOC-63
 
@@ -12,7 +12,7 @@ Tài liệu khóa thư viện và công cụ của dự án kèm lý do và gi�
 - **Cột "Khóa" có ba mức.** `Khóa` (có số trong DR, dùng nguyên), `Dòng` (DR chốt dòng chính, patch khóa ở P1-01 sau S-01), `Theo BOM` (phiên bản do Spring Boot BOM quản lý, không tự khóa riêng).
 - **Một lần nâng cấp = một PR.** Đổi version ở catalog hoặc lockfile, chạy `make lint test it`, ghi lý do vào PR; thư viện cần đổi API thì sửa [DOC-12](code-architecture.md) cùng PR.
 - **Spike thất bại thì lùi toàn bộ, không trộn** (DR-02): nếu S-01 làm thư viện nào không khởi động được, cả dự án lùi về Java 21 + Spring Boot 3.5, ghi ADR thay ADR-0011 và đổi bảng ở đây.
-- Mọi dòng "Dòng" và "Theo BOM" được thay bằng con số cụ thể ở §6 khi S-01 xong; đến lúc đó tài liệu này ở trạng thái `Review`, chưa `Approved` (xem Câu hỏi còn mở).
+- Số version cụ thể của mọi dòng "Dòng" và "Theo BOM" nằm ở §8 (kết quả S-01, 2026-10-06) và được khóa trong `backend/gradle/libs.versions.toml`.
 
 ## 2. Runtime và build
 
@@ -47,7 +47,7 @@ Tài liệu khóa thư viện và công cụ của dự án kèm lý do và gi�
 | i18n | Spring `MessageSource` (`messages_vi`, `messages_en`) | Theo BOM | Email và Problem Details (DR-10) | Apache-2.0 | DR-10 |
 | Hình học | JTS Topology Suite (`org.locationtech.jts:jts-core`) | Dòng: 1.20.x | `IsSimpleOp`, `PreparedGeometry.contains` cho validate sơ đồ (DR-35) | EPL-2.0 / EDL-1.0 (BSD-3-Clause) | DR-35 |
 | JSON chuẩn hóa | `io.github.erdtman:java-json-canonicalization` | Dòng: 1.x | RFC 8785 JCS cho checksum phiên bản sơ đồ (DR-32) | Apache-2.0 | DR-32, DR-81 |
-| JSON Schema | Thư viện validate JSON Schema 2020-12 cho Java (`com.networknt:json-schema-validator`) | Dòng: 1.5.x | Server nạp cùng file `seat-map.v1.json` với client (DR-32) | Apache-2.0 | DR-32, DR-81 |
+| JSON Schema | Thư viện validate JSON Schema 2020-12 cho Java (`com.networknt:json-schema-validator`) | Khóa: 3.0.8 (S-01: Boot 4 dùng Jackson 3 `tools.jackson`, dòng 1.5.x dùng Jackson 2 nên không nhận `JsonNode` của Boot; API 3.x là `SchemaRegistry`, `Schema`, `SpecificationVersion`) | Server nạp cùng file `seat-map.v1.json` với client (DR-32) | Apache-2.0 | DR-32, DR-81 |
 | JSON | Jackson (kèm Boot) | Theo BOM | camelCase, `null` thay vì bỏ trường (DR-63) | Apache-2.0 | DR-63 |
 | Observability | Spring Boot Actuator, Micrometer + `micrometer-registry-prometheus` | Theo BOM | Cổng 9090 (`health`, `prometheus`); metric riêng `ticket_*` (DR-09) | Apache-2.0 | DR-09 |
 | Log | Logback + structured logging `ecs` của Boot | Theo BOM | Trường bắt buộc `trace_id`, `user_id`… (DR-09) | EPL-1.0 / LGPL-2.1 | DR-09 |
@@ -119,26 +119,32 @@ Khóa tag theo minor (DR-04); cập nhật có chủ đích bằng một PR.
 
 ## 8. Bảng tương thích từ spike S-01
 
-S-01 (P0-02) dựng một ứng dụng rỗng trong repo nháp với Spring Web, Security, Spring Data JDBC (chèn với ID gán trước, converter `jsonb`, `@Modifying @Query`), Flyway trên PostgreSQL 18, springdoc, stripe-java, AWS SDK v2 S3 với SeaweedFS, Spring Modulith, Testcontainers, và chạy một test tích hợp. Mỗi dòng dưới đây được điền số version và kết quả khi spike chạy; **chưa có dòng nào được đo**.
+S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Docker 29.4.0 (macOS arm64). Ứng dụng rỗng nằm ở `backend/api` (gói `app.ticket.spike`), test `S01CompatibilityIT` chạy 9 kịch bản trên Testcontainers (`postgres:18-alpine`, `chrislusf/seaweedfs:4.48`), tất cả xanh. **Kết luận: giữ Java 25 + Spring Boot 4.0.x, không lùi về Java 21.**
 
-| # | Thành phần | Dòng phiên bản kiểm | Phải khớp với | Điều kiểm tra ở S-01 | Version khóa | Kết quả |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Java 25 + Gradle 9 + Kotlin DSL | 25 / 9.x | Spring Boot 4.0.x | Build, test chạy trên JDK 25 | — | Chưa chạy |
-| 2 | Spring Boot 4.0.x + Spring Security | 4.0.x | Java 25 | Bộ lọc session + CSRF khởi động được | — | Chưa chạy |
-| 3 | Spring Data JDBC | theo Boot 4 | PostgreSQL 18, driver | `JdbcAggregateTemplate.insert` với UUID gán trước; converter `jsonb` đọc/ghi qua `PGobject`; `@Modifying @Query` có điều kiện trả `int`; `@MappedCollection` | — | Chưa chạy |
-| 4 | Flyway + PostgreSQL 18 | theo Boot 4 | `postgres:18-alpine` | Chạy migration có `uuidv7()`, trigger, index một phần | — | Chưa chạy |
-| 5 | springdoc-openapi | dòng cho Boot 4 | Spring Web MVC 7 | Sinh `/v3/api-docs` OpenAPI 3.1; `openapi-typescript` đọc được | — | Chưa chạy |
-| 6 | stripe-java | mới nhất | Java 25 | Tạo PaymentIntent test mode, `Webhook.constructEvent` | — | Chưa chạy |
-| 7 | AWS SDK v2 S3 + SeaweedFS | 2.x | `chrislusf/seaweedfs` | `PutObject`, `GetObject`, `DeleteObject`, `forcePathStyle`, `requestChecksumCalculation(WHEN_REQUIRED)` | — | Chưa chạy |
-| 8 | Spring Modulith | dòng cho Boot 4 | Spring Boot 4.0.x | `ApplicationModules.verify()` trên khung 13 module và đồ thị DR-79 | — | Chưa chạy |
-| 9 | ArchUnit | 1.x | Java 25 (bytecode) | `layeredArchitecture()` đọc được class biên dịch bằng JDK 25 | — | Chưa chạy |
-| 10 | Testcontainers | dòng cho Boot 4 | Docker 29 | Postgres 18, Redis 8.2, SeaweedFS khởi động; một test tích hợp xanh | — | Chưa chạy |
-| 11 | JTS, JCS, networknt | như §3 | Java 25 | Đọc một tài liệu sơ đồ mẫu, tính checksum, validate schema | — | Chưa chạy |
+| # | Thành phần | Version khóa | Điều kiểm tra ở S-01 | Kết quả |
+| --- | --- | --- | --- | --- |
+| 1 | Java 25 + Gradle 9 + Kotlin DSL | Temurin 25.0.4; Gradle 9.8.0 | Build, test trên JDK 25 (toolchain 25) | Đạt |
+| 2 | Spring Boot + Spring Security | Boot 4.0.8; Framework 7.0.9; Security 7.0.7 | Context khởi động; `POST` không có token CSRF → 403, có token → 200 | Đạt |
+| 3 | Spring Data JDBC | 4.0.7; PostgreSQL JDBC 42.7.13 | `JdbcAggregateTemplate.insert` với UUID gán trước; converter `jsonb` qua `PGobject` (cột đúng kiểu `jsonb`); `@Modifying @Query` có điều kiện trả `int` (1 rồi 0); `@MappedCollection` | Đạt |
+| 4 | Flyway + PostgreSQL 18 | Flyway 11.14.1 + `flyway-database-postgresql` | Migration có `uuidv7()` (UUID version 7), index một phần, trigger `forbid_update` chặn UPDATE | Đạt |
+| 5 | springdoc-openapi | 3.0.2 | `/v3/api-docs` trả OpenAPI 3.1; `openapi-typescript` 7.13.0 sinh `schema.d.ts` từ tài liệu đó | Đạt |
+| 6 | stripe-java | 34.0.0 | `Webhook.constructEvent` xác minh chữ ký (offline). Tạo PaymentIntent thật thuộc S-02 | Đạt (phần offline) |
+| 7 | AWS SDK v2 S3 + SeaweedFS | BOM 2.55.11; SeaweedFS 4.48 | `PutObject`, `GetObject`, `DeleteObject`, `forcePathStyle`, `requestChecksumCalculation(WHEN_REQUIRED)`; xóa xong thì `GetObject` trả `NoSuchKey` | Đạt, có điều kiện: SeaweedFS phải chạy với `-s3 -s3.config=<json identities>`, thiếu thì mọi request ký bị 400 "requires setting up SeaweedFS S3 authentication" |
+| 8 | Spring Modulith | 2.0.8 | `ApplicationModules.verify()` chạy được. Khung 13 module và đồ thị DR-79 kiểm ở P1-05 | Đạt (phần khởi động) |
+| 9 | ArchUnit | 1.5.1 | `layeredArchitecture()` đọc class biên dịch bằng JDK 25 | Đạt |
+| 10 | Testcontainers | 2.0.5 | Postgres 18 và SeaweedFS khởi động, test tích hợp xanh; `redis:8.2-alpine` khởi động và trả `PONG` (kiểm bằng `docker run`) | Đạt |
+| 11 | JTS, JCS, networknt | JTS 1.20.0; java-json-canonicalization 1.1; networknt 3.0.8 | `IsSimpleOp` nhận ra đa giác tự cắt; `PreparedGeometry.contains`; JCS ra `{"a":[1,0.5],"b":2}`; validate JSON Schema 2020-12 | Đạt, sau khi đổi networknt 1.5.x → 3.0.8 |
 
-Nếu một dòng thất bại: lùi toàn bộ về Java 21 + Spring Boot 3.5 (DR-02), thay §2–§3 và ghi ADR mới thay [ADR-0011](../04-adr/0011-java-25-spring-boot-4.md).
+**Khác biệt so với giả định ban đầu, cần theo khi viết code:**
+- Spring Boot 4 dùng **Jackson 3** (`tools.jackson.databind.*`). Thư viện còn dùng Jackson 2 (`com.fasterxml`) không nhận `JsonNode` của Boot; vì vậy phải chọn networknt 3.x.
+- Tên starter và gói mới của Boot 4: `spring-boot-starter-webmvc`, `-flyway`, `-security-test`, `-webmvc-test`; `@AutoConfigureMockMvc` ở `org.springframework.boot.webmvc.test.autoconfigure`; mỗi starter kiểm thử tách riêng.
+- Testcontainers 2.x đổi tên: `org.testcontainers:testcontainers-postgresql`, `testcontainers-junit-jupiter`; lớp `org.testcontainers.postgresql.PostgreSQLContainer` (không còn generic type).
+- Driver PostgreSQL phải là `implementation`, vì converter `jsonb` dùng `PGobject` trong code chính.
+- Spring Modulith `starter-core` và `starter-test` đi chung BOM `spring-modulith-bom`; AWS SDK đi qua `software.amazon.awssdk:bom`.
 
 ## Câu hỏi còn mở
 
-- Điền số version cụ thể vào cột "Khóa" và "Kết quả" của §8 sau khi chạy S-01 (P0-02). Đây là điều kiện để `Approved`; mọi lựa chọn khác trong tài liệu đã có DR.
+- S-02 (P0-03) sẽ kiểm `stripe-java` với PaymentIntent thật ở test mode; nếu thất bại chỉ ảnh hưởng thư viện này, không kéo theo lùi Java.
+- `S01CompatibilityIT` và gói `app.ticket.spike` là mã tạm: xóa khi P1-05 dựng khung module thật; các kịch bản còn giá trị (CSRF, `jsonb`, S3, Modulith) chuyển thành test của task tương ứng.
 
 Quyết định phát sinh khi viết tài liệu này: DR-81 (thư viện bổ sung ngoài DR-02…05: JCS, networknt JSON Schema, Immer, MSW, Awaitility, Spotless, Lettuce và các thư viện kèm theo).

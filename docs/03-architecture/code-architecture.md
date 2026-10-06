@@ -1,6 +1,6 @@
 # Kiến trúc code
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-12
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-12
 > Phụ thuộc: SDD gốc §4, §13.2, phụ lục, [DOC-07](system-context-and-containers.md), [DOC-11](tech-stack-and-versions.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 03, 05, 06, 10, 11, 39, 41, 67, 76, 79, 81), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P1-01, P1-05 (khung module và test kiến trúc); mọi task backend và frontend; người review PR
 

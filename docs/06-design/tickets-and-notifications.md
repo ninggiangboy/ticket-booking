@@ -1,6 +1,6 @@
 # Vé và thông báo
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-27
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-27
 > Phụ thuộc: SDD gốc §4.2, §9.4, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 19, 21, 28, 29, 44, 52, 53, 54, 74), [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md) §2–§3, [DOC-14](../05-data/domain-model.md) (`ticket`, `orders`, `event.ticket_code_prefix`, §7 truy vấn xác nhận), [DOC-15](../05-data/ops-model.md) §7 (`outbox`), [DOC-19](auth-and-sessions.md) §3 và §14 (`common.mail`), [DOC-31](i18n.md) §5, [DOC-35](error-handling.md), [DOC-51](../08-ux-ui/screens/emails.md)
 > Người dùng chính: P1-07 (`common.mail`, `OutboxRelay`), P2-xx (phát hành vé, email `tickets`), P3-xx (email `refund-pending`, đổi lịch), [DOC-26](checkout-and-payment.md) (transaction xác nhận), [DOC-20](events-and-ticket-types.md), [DOC-37](../07-api/api-endpoints.md), [DOC-69](../10-testing/test-strategy.md)
 

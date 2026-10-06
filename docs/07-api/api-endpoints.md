@@ -1,6 +1,6 @@
 # Danh mục endpoint
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-37
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-37
 > Phụ thuộc: SDD gốc §12.1–12.2, [DOC-06](../02-glossary.md), [DOC-14](../05-data/domain-model.md), [DOC-15](../05-data/ops-model.md), [DOC-31](../06-design/i18n.md), [DOC-35](../06-design/error-handling.md) §3–§4, [DOC-36](api-guidelines.md), [DOC-82](../06-design/flows/README.md), [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 35, 36, 37, 38, 41, 43, 44, 45, 46, 47, 48, 57, 58, 59, 62, 63, 64, 65, 66, 70, 71)
 > Người dùng chính: P1-04 (nhóm xác thực), P2-xx, P3-xx, P4-xx, P5-xx, P6-xx (mỗi phase cài nhóm endpoint của mình); tác giả DOC-42…60 (cột "Endpoint" của màn hình); DOC-32 (ma trận quyền); `OpenApiExportTest` (so `operationId`)
 

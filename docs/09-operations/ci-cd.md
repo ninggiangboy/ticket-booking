@@ -1,6 +1,6 @@
 # CI
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-63 (khung ở P1)
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-63 (khung ở P1)
 > Phụ thuộc: SDD gốc §14, §15, [DOC-11](../03-architecture/tech-stack-and-versions.md) §2, §4, [DOC-12](../03-architecture/code-architecture.md) §8, [DOC-61](local-dev.md) §3, [DOC-62](deploy-compose.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 07, 08, 77, 81), master plan §7
 > Người dùng chính: P1-01 (khởi tạo `ci.yml`), mọi PR; P1-08 (`make contract`); P1-09 (kích thước bundle); DOC-69, DOC-32 (quét phụ thuộc)
 

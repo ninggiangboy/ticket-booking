@@ -1,6 +1,6 @@
 # Trạng thái giao diện và microcopy
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-40
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-40
 > Phụ thuộc: SDD gốc §12.3, §13, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 24, 25, 26, 28, 41, 44, 45, 52, 57, 58, 59, 63, 64, 66, 70), [DOC-06](../02-glossary.md), [DOC-31](../06-design/i18n.md) (quy trình thêm chuỗi), [DOC-35](../06-design/error-handling.md) (bảng exception → mã lỗi), [DOC-38](ux-principles-and-ia.md), [DOC-39](design-system.md)
 > Người dùng chính: P1-01 (khung frontend, i18n), mọi task màn hình P1–P6, DOC-41…60 (màn hình dẫn key ở đây), DOC-51 (email dùng cùng phong cách), người dịch
 

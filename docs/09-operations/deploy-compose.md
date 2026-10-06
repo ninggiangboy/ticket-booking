@@ -1,6 +1,6 @@
 # Triển khai compose
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-62
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-62
 > Phụ thuộc: SDD gốc §10, §14, [DOC-07](../03-architecture/system-context-and-containers.md) §2, [DOC-11](../03-architecture/tech-stack-and-versions.md) §6, [DOC-61](local-dev.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 09, 22, 38, 51, 55, 56, 61, 72, 73, 74, 75, 76, 80)
 > Người dùng chính: P1-02 (compose), P1-01, P6-08 (profile `obs`), P0-14, DOC-70 (giới hạn tài nguyên thực nghiệm), DOC-33, DOC-34, người vận hành
 

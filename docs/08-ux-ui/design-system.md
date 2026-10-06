@@ -1,6 +1,6 @@
 # Design system "Vé giấy"
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-39
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-39
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../00-decision-register.md) (DR-03, 10, 26, 54, 68, 69), [DOC-06](../02-glossary.md), [DOC-38](ux-principles-and-ia.md) (UXP-01, 08, 09), [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-12](../03-architecture/code-architecture.md) §6
 > Người dùng chính: P1-01 (khung frontend), mọi task frontend; DOC-41…60 (màn hình dẫn component theo tên ở đây); DOC-51 (email dùng cùng token)
 

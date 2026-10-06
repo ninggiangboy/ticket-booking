@@ -1,6 +1,6 @@
 # Email
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-51
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-51
 > Phụ thuộc: SDD gốc §9.4, [DOC-06](../../02-glossary.md), [DOC-15](../../05-data/ops-model.md) §3, §7 (payload outbox), [DOC-14](../../05-data/domain-model.md) (`ticket.label`, `event.ticket_code_prefix`), [DOC-31](../../06-design/i18n.md) §5, [DOC-39](../design-system.md), [DOC-40](../ui-states-and-copy.md) §2, [Sổ quyết định](../../00-decision-register.md) (DR-10, 12, 21, 28, 29, 44, 52, 53, 54, 78), canvas `EmailDangNhap` (03), `EmailVe` (07b), `EmailDoiLich` (07c)
 > Người dùng chính: P1-07 (email `magic-link`), P2-xx (email `tickets`), P3-xx (email `refund-pending`), [DOC-27](../../06-design/tickets-and-notifications.md) (relay và dựng email), [DOC-83](../../06-design/flows/auth-and-account.md) (FL-01), người dịch
 

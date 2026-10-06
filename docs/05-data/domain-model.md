@@ -1,6 +1,6 @@
 # Mô hình miền
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-14
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-14
 > Phụ thuộc: SDD gốc §6, §7.8, §8, §9, §11, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md), [Sổ quyết định](../00-decision-register.md) (DR-05, 11, 12, 13, 14, 15, 16, 17, 18, 20, 24, 27, 28, 38, 40, 41, 43, 44, 52), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md), [ADR-0018](../04-adr/0018-uuidv7-primary-keys.md)
 > Người dùng chính: P1-03 (Flyway migration đầu tiên), P1-05 (ArchUnit sở hữu bảng), mọi task của module `event`, `map`, `inventory`, `reservation`, `order`, `ticket`, `media`, `auth`; [DOC-24](../06-design/inventory-and-reservation.md), [DOC-26](../06-design/checkout-and-payment.md), [DOC-30](../06-design/invariant-checker.md)
 

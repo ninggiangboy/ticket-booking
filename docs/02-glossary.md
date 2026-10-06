@@ -1,6 +1,6 @@
 # Thuật ngữ
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-06
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-06
 > Phụ thuộc: SDD gốc §1–§17, [Sổ quyết định](00-decision-register.md) (DR-01…151), [Master plan](00-master-plan.md) §0.4, §3.2
 > Người dùng chính: mọi tài liệu khác; P0-08; mọi task `Pn-xx` khi đặt tên class, bảng, key cấu hình, chuỗi giao diện
 

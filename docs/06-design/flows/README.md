@@ -1,6 +1,6 @@
 # Mục lục luồng chi tiết
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-82
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-82
 > Phụ thuộc: [DOC-04](../../01-product/use-cases.md) (22 UC), [DOC-12](../../03-architecture/code-architecture.md) §2 (module và layer), [DOC-07](../../03-architecture/system-context-and-containers.md), [DOC-06](../../02-glossary.md), [Sổ quyết định](../../00-decision-register.md) (DR-06, 10, 21, 41, 57, 58, 62, 63, 65, 67), master plan §3.2, §3.4
 > Người dùng chính: tác giả DOC-83…90; tác giả màn hình DOC-42…60 (cột "Luồng"); mọi task `Pn-xx` có tham chiếu `FL-xx`
 

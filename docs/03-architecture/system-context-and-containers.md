@@ -1,6 +1,6 @@
 # Bối cảnh hệ thống và container
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-07
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-07
 > Phụ thuộc: SDD gốc §4, §10, §14, [DOC-01](../01-product/vision-and-scope.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 05, 06, 09, 38, 51, 53, 55, 56, 61, 62, 72, 79), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md)
 > Người dùng chính: P0-12; P1-02 (compose), P1-05 (khung module, test kiến trúc), DOC-12, DOC-14, DOC-15, DOC-17, DOC-62
 

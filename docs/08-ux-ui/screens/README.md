@@ -1,6 +1,6 @@
 # Danh mục màn hình
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-41
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-41
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../../00-decision-register.md) (DR-10, 24, 37, 41, 67, 68, 69, 70), [DOC-06](../../02-glossary.md), [DOC-38](../ux-principles-and-ia.md) §3 (bản đồ URL), [DOC-39](../design-system.md), [DOC-40](../ui-states-and-copy.md), [DOC-82](../../06-design/flows/README.md) §3–§4, [DOC-44](login.md), [DOC-51](emails.md), [DOC-52](error-pages.md)
 > Người dùng chính: tác giả DOC-42…60 (mẫu A.5 và tên component), mọi task `Pn-xx.2` (frontend) khi tìm màn hình cần dựng, người viết sơ đồ luồng DOC-83…90
 

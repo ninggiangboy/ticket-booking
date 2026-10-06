@@ -1,6 +1,6 @@
 # Màn hình: Trang lỗi
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-52
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-52
 > Phụ thuộc: SDD gốc §10.5, §12.3, §13, [Sổ quyết định](../../00-decision-register.md) (DR-10, 23, 55, 56, 63, 64, 66, 67, 68), [DOC-06](../../02-glossary.md), [DOC-35](../../06-design/error-handling.md) §3–§7, [DOC-36](../../07-api/api-guidelines.md), [DOC-37](../../07-api/api-endpoints.md) (E-04), [DOC-38](../ux-principles-and-ia.md) §3, §8.2, §8.5, [DOC-39](../design-system.md) §7.18, [DOC-40](../ui-states-and-copy.md) §1.4, §1.5, §3.7, §4, [DOC-41](README.md), [DOC-44](login.md) (E2); canvas: artboard `E1`, `E2`, `E3`, `E4`, `E5`
 > Người dùng chính: P1-01 (khung frontend, router, error boundary), mọi task màn hình (trang lỗi là đích của lỗi toàn trang), người viết test E2E lỗi
 

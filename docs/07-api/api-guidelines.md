@@ -1,6 +1,6 @@
 # Hướng dẫn API
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-36
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-36
 > Phụ thuộc: SDD gốc §12, §10.5, [DOC-06](../02-glossary.md), [DOC-35](../06-design/error-handling.md), [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-12](../03-architecture/code-architecture.md) §4, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 22, 45, 55, 62, 63, 64, 66, 67, 77)
 > Người dùng chính: P1-01 (khung `common`), P1-04, P1-06 (sinh `schema.d.ts`); [DOC-37](api-endpoints.md) khi viết từng `E-xx`; mọi task backend và frontend gọi API
 

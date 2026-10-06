@@ -1,6 +1,6 @@
 # Danh mục tính năng
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-05
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-05
 > Phụ thuộc: [DOC-01](vision-and-scope.md), [DOC-03](requirements.md), [DOC-04](use-cases.md), [DOC-06](../02-glossary.md), [Master plan](../00-master-plan.md) §4.1, §4.3, §5, [Sổ quyết định](../00-decision-register.md)
 > Người dùng chính: P0-11; lập kế hoạch từng phase; quyết định cắt giảm khi trễ milestone
 

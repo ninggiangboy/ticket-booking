@@ -1,6 +1,6 @@
 # Persona và hành trình
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-02
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-02
 > Phụ thuộc: SDD gốc §3.1, §13, §16.1, [DOC-01](vision-and-scope.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-23, 41, 44, 57, 67, 69, 70, 72)
 > Người dùng chính: P0-10, P0-11; [DOC-03](requirements.md), [DOC-04](use-cases.md); tác giả các màn hình DOC-42…60
 

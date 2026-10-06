@@ -1,6 +1,6 @@
 # Xử lý lỗi
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-35
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-35
 > Phụ thuộc: SDD gốc §10.5, §12.3, [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md) §4, [DOC-36](../07-api/api-guidelines.md), [Sổ quyết định](../00-decision-register.md) (DR-09, 10, 12, 21, 25, 35, 41, 43, 44, 45, 47, 48, 55, 56, 58, 61, 63, 64, 66)
 > Người dùng chính: P1-01 (khung `common.error`), P1-04 (Problem Details và i18n); mọi task backend khi thêm exception; [DOC-37](../07-api/api-endpoints.md) (cột mã lỗi), [DOC-40](../08-ux-ui/ui-states-and-copy.md) (ánh xạ mã lỗi → thông báo)
 

@@ -1,6 +1,6 @@
 # Observability
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 · DOC-33
+> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-33
 > Phụ thuộc: SDD gốc §2.3, §10.4, §14.3, §15, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §3, [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-35](error-handling.md) §5, [DOC-36](../07-api/api-guidelines.md), [DOC-62](../09-operations/deploy-compose.md) §2, §7, [Sổ quyết định](../00-decision-register.md) (DR-09, 22, 42, 53, 56, 57, 60, 61, 62, 73, 75), [DOC-03](../01-product/requirements.md) NFR-02, NFR-03
 > Người dùng chính: P1-01 (khung log), P6-08 (profile `obs`), mọi task thêm metric (checklist [DOC-12](../03-architecture/code-architecture.md) §7 mục 10), người chạy EXP-02, EXP-04, EXP-05, EXP-08 ([DOC-70](../10-testing/experiments/README.md))
 
