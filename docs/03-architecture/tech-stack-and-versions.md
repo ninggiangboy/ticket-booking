@@ -119,7 +119,7 @@ Khóa tag theo minor (DR-04); cập nhật có chủ đích bằng một PR.
 
 ## 8. Bảng tương thích từ spike S-01
 
-S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Docker 29.4.0 (macOS arm64). Ứng dụng rỗng nằm ở `backend/api` (gói `app.ticket.spike`), test `S01CompatibilityIT` chạy 9 kịch bản trên Testcontainers (`postgres:18-alpine`, `chrislusf/seaweedfs:4.48`), tất cả xanh. **Kết luận: giữ Java 25 + Spring Boot 4.0.x, không lùi về Java 21.**
+S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Docker 29.4.0 (macOS arm64). Ứng dụng rỗng nằm ở `spikes/s01/` (project Gradle riêng, tách khỏi `backend/`), test `S01CompatibilityIT` chạy 9 kịch bản trên Testcontainers (`postgres:18-alpine`, `chrislusf/seaweedfs:4.48`), tất cả xanh. **Kết luận: giữ Java 25 + Spring Boot 4.0.x, không lùi về Java 21.**
 
 | # | Thành phần | Version khóa | Điều kiểm tra ở S-01 | Kết quả |
 | --- | --- | --- | --- | --- |
@@ -145,6 +145,6 @@ S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Doc
 ## Câu hỏi còn mở
 
 - S-02 (P0-03) sẽ kiểm `stripe-java` với PaymentIntent thật ở test mode; nếu thất bại chỉ ảnh hưởng thư viện này, không kéo theo lùi Java.
-- `S01CompatibilityIT` và gói `app.ticket.spike` là mã tạm: xóa khi P1-05 dựng khung module thật; các kịch bản còn giá trị (CSRF, `jsonb`, S3, Modulith) chuyển thành test của task tương ứng.
+- `spikes/s01/` chỉ để chạy lại khi nâng version (`./gradlew test`, cần Docker); các kịch bản còn giá trị (CSRF, `jsonb`, S3, Modulith) được viết lại thành test của task P1 tương ứng.
 
 Quyết định phát sinh khi viết tài liệu này: DR-81 (thư viện bổ sung ngoài DR-02…05: JCS, networknt JSON Schema, Immer, MSW, Awaitility, Spotless, Lettuce và các thư viện kèm theo).
