@@ -4,8 +4,8 @@ Tài liệu thiết kế gốc: [`../event-ticket-booking-sdd.md`](../event-tick
 
 ## Bắt đầu từ đây
 
-1. [00-master-plan.md](00-master-plan.md): master plan. Khoảng trống của SDD gốc, toàn bộ tài liệu cần viết kèm nội dung bắt buộc và gate, công việc theo phase P0–P7, ma trận truy vết.
-2. [00-decision-register.md](00-decision-register.md): sổ quyết định mở. 78 quyết định (DR-01…78) với một phương án đề xuất cho mỗi mục; Owner duyệt trước khi bắt đầu P1.
+1. [00-master-plan.md](00-master-plan.md): master plan. Khoảng trống của SDD gốc, toàn bộ 90 tài liệu cần viết kèm nội dung bắt buộc và gate, công việc theo phase P0–P7, ma trận truy vết.
+2. [00-decision-register.md](00-decision-register.md): sổ quyết định mở. 78 quyết định (DR-01…78), tất cả đã Chốt hoặc Đổi (2026-10-06); spike S-01…S-06 vẫn có thể mở lại mục tương ứng.
 
 Thứ tự đọc cho người mới: master plan §1 → §4 → phase hiện tại ở §5 → các tài liệu phase đó tham chiếu.
 
@@ -37,7 +37,7 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-20 | Sự kiện và loại vé (`06-design/events-and-ticket-types.md`) | P2 | Chưa viết |
 | DOC-21 | Hình học và validate của map-core (`06-design/map-core-geometry-and-validation.md`) | P4 | Chưa viết |
 | DOC-22 | Seat map editor (`06-design/seat-map-editor.md`) | P4 | Chưa viết |
-| DOC-23 | Phiên bản sơ đồ và so sánh (`06-design/map-versioning-and-diff.md`) | P4 | Chưa viết |
+| DOC-23 | Phiên bản sơ đồ, nhân bản và so sánh (`06-design/map-versioning-and-diff.md`) | P4 | Chưa viết |
 | DOC-24 | Kho vé và giữ vé (`06-design/inventory-and-reservation.md`) | P2 | Chưa viết |
 | DOC-25 | Idempotency (`06-design/idempotency.md`) | P2 | Chưa viết |
 | DOC-26 | Checkout và thanh toán (`06-design/checkout-and-payment.md`) | P3 | Chưa viết |
@@ -79,7 +79,7 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-62 | Triển khai compose (`09-operations/deploy-compose.md`) | P1 | Chưa viết |
 | DOC-63 | CI (`09-operations/ci-cd.md`) | P1 | Chưa viết |
 | DOC-64 | Danh mục runbook (`09-operations/runbooks/README.md`) | P3 | Chưa viết |
-| DOC-65 | RB-01 Hoàn tiền đơn NEEDS_REVIEW (`09-operations/runbooks/RB-01-needs-review-refund.md`) | P3 | Chưa viết |
+| DOC-65 | RB-01 Hoàn tiền thủ công đơn REFUND_PENDING (`09-operations/runbooks/RB-01-manual-refund.md`) | P3 | Chưa viết |
 | DOC-66 | RB-02 Sai lệch bất biến (`09-operations/runbooks/RB-02-invariant-violation.md`) | P2 | Chưa viết |
 | DOC-67 | RB-03 Reservation kẹt và webhook thất lạc (`09-operations/runbooks/RB-03-stuck-reservations-and-webhooks.md`) | P3 | Chưa viết |
 | DOC-68 | RB-04 Đặt lại dữ liệu demo (`09-operations/runbooks/RB-04-reset-demo-data.md`) | P7 | Chưa viết |
@@ -96,6 +96,15 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-79 | EXP-09 Hiệu năng editor (`10-testing/experiments/EXP-09-editor-performance.md`) | P4 | Chưa viết |
 | DOC-80 | EXP-10 Một dòng mỗi vé và bộ đếm (`10-testing/experiments/EXP-10-unit-rows-vs-counter.md`) | P2 | Chưa viết |
 | DOC-81 | Kịch bản demo (`10-testing/demo-script.md`) | P7 | Chưa viết |
+| DOC-82 | Mục lục luồng chi tiết (`06-design/flows/README.md`) | P1 | Chưa viết |
+| DOC-83 | Luồng: Đăng nhập và tài khoản (`06-design/flows/auth-and-account.md`) | P1 | Chưa viết |
+| DOC-84 | Luồng: Studio sự kiện (`06-design/flows/studio-events.md`) | P2 | Chưa viết |
+| DOC-85 | Luồng: Mua vé GA (`06-design/flows/ga-purchase.md`) | P2 | Chưa viết |
+| DOC-86 | Luồng: Vận hành và thực nghiệm (`06-design/flows/operations.md`) | P2 | Chưa viết |
+| DOC-87 | Luồng: Thanh toán (`06-design/flows/payment.md`) | P3 | Chưa viết |
+| DOC-88 | Luồng: Soạn sơ đồ chỗ ngồi (`06-design/flows/seat-map-editing.md`) | P4 | Chưa viết |
+| DOC-89 | Luồng: Bán theo ghế và khu vực (`06-design/flows/seat-sales.md`) | P5 | Chưa viết |
+| DOC-90 | Luồng: Phòng chờ (`06-design/flows/waiting-room.md`) | P6 | Chưa viết |
 
 ADR: danh sách ADR-0001…0018 ở master plan §3.2; mục lục `04-adr/README.md` (DOC-13) được tạo khi viết ADR đầu tiên.
 
@@ -110,7 +119,7 @@ Tài liệu chưa viết ghi đường dẫn dạng code; khi file được tạ
 | `03-architecture/` | Bối cảnh và container, luồng dữ liệu, hợp đồng tích hợp, thuộc tính chất lượng, stack, kiến trúc code |
 | `04-adr/` | Quyết định kiến trúc |
 | `05-data/` | Mô hình miền và DDL, bảng vận hành, tài liệu sơ đồ, key Redis, vòng đời dữ liệu |
-| `06-design/` | Thiết kế từng thành phần và các tài liệu xuyên suốt (bảo mật, observability, cấu hình, lỗi, i18n) |
+| `06-design/` | Thiết kế từng thành phần, các tài liệu xuyên suốt (bảo mật, observability, cấu hình, lỗi, i18n) và luồng chi tiết `flows/` (FL-01…35, mỗi UC qua từng tầng) |
 | `07-api/` | Quy ước API, danh mục endpoint |
 | `08-ux-ui/` | Nguyên tắc UX, design system, microcopy, đặc tả từng màn hình |
 | `09-operations/` | Môi trường dev, triển khai compose, CI, runbook |
