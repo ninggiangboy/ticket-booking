@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 (mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Review** · Cập nhật: 2026-10-06 (DR-01…122 và DR-131…151 đã Chốt hoặc Đổi, DR-123…130 (ops) đang Đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -40,6 +40,14 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
 | 2026-10-06 | Owner | Đổi theo đề xuất đơn giản hóa của Claude (dự án để học): magic link gửi trực tiếp sau commit, bỏ mã hóa token trong outbox; bỏ token vào cửa, kiểm tra `ZSCORE admitted` theo session; `admit_rate` cố định, bỏ AIMD; bỏ rate limiter dự phòng khi mất Redis; cache tình trạng chỗ bằng Caffeine trong tiến trình; idempotency băm body thô; tiền tố mã vé do người tổ chức nhập; bỏ quét bucket | DR-21, DR-19, DR-38, DR-45, DR-52, DR-56, DR-57, DR-58, DR-60, DR-62, DR-64, DR-74, ADR-0007, ADR-0013, DOC-17, DOC-18, DOC-19, DOC-28, DOC-29, DOC-32, DOC-36, DOC-83, DOC-90, P1-07, P5-03, P6-02, P6-05, P6-06 |
 | 2026-10-06 | Owner | Đổi: sơ đồ khóa toàn bộ từ giờ mở bán, kể cả khi chưa ai mua; trước giờ mở bán xuất bản phiên bản mới thì dựng lại kho vé; bỏ diff và `MAP_VERSION_CONFLICT`. Thêm đóng bán sớm (`close-sale`). DR-36 (tự lưu, IndexedDB) giữ nguyên | DR-37, DR-24, DR-40, DR-64, FR-15, UC-09, UC-14, DOC-20, DOC-22, DOC-23, DOC-57, DOC-59, DOC-84, DOC-89, P2-05.1, P5-05.1 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-79 (đồ thị phụ thuộc module, module `studio`), DR-80 (cổng `api` 8081), DR-81 (thư viện bổ sung) khi viết DOC-07, 11, 12 | DR-79, DR-80, DR-81, DOC-07, DOC-11, DOC-12, ADR-0002 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-82–89: Mã lỗi bổ sung, `rule` khác `code`, `retryAfterSeconds`, retry CSRF, cache `GET /events`, xuất OpenAPI, body chặt, trường giờ `…Local` (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-82–89, DOC-35, DOC-36, DOC-37, DOC-62 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-90–95: Ngữ nghĩa đóng reservation, đơn chưa thu tiền khi hủy sự kiện, index khóa ngoại, DDL bảng profile, Flyway profile, index dọn dữ liệu (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-90–95, DOC-14, DOC-15 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-96–115: Gửi SMTP ở `common.mail`, khóa advisory, cookie sliding, token ngoài log, IP, upsert user; `AuthApi` cho email; mã vé, ngân sách relay, lỗi SMTP vĩnh viễn, fan-out, metric, nhãn GA; mẫu email và luồng đăng nhập (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-96–115, DOC-19, DOC-27, DOC-51, DOC-83 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-116–122: Ma trận quyền: 404 cho tài nguyên người khác, `OriginCheckFilter`, `denyAll`, `no-store`; metric bổ sung, tập label đóng, Redis `DOWN` không làm readiness DOWN (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-116–122, DOC-32, DOC-33 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-123–130: Profile `seed`, ba file compose, `PAYMENTS_MODE` khớp profile, khóa Stripe cho frontend, 429 do nginx, E2E riêng, `audit`/`breaking-ok`, branch protection (đề xuất) (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-123–130, DOC-61, DOC-62, DOC-63 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-131–142: Menu tài khoản, tự thử lại, token mở rộng, lint hex, namespace i18n, lỗi theo `code`, định dạng ngày; chi tiết màn Đăng nhập và trang lỗi; tên component do DOC-41 chốt (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-131–142, DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-52, DOC-82 |
+| 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-143–151: Khóa `saleStartsAt`, loại vé chỉ thêm khi DRAFT, `PUT draft` chỉ kiểm schema; quy ước cấu hình, `ConfigurationGuard`, tên khóa; mã mức test, ID test trong `@DisplayName`, ngưỡng nhánh 75% (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-143–151, DOC-37, DOC-34, DOC-69 |
 
 ---
 
@@ -186,6 +194,20 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Hệ quả:** Mọi microcopy trong DOC-40 có cột `vi` và `en`; màn hình spec trích key, không trích chuỗi cứng. CI kiểm tra hai locale có cùng tập key (script `pnpm i18n:check`, và test JUnit cho `messages_*.properties`).
 - *Đổi 2026-10-06:* đề xuất cũ lấy `en` làm ngôn ngữ mặc định và dự phòng.
 - **Ghi vào:** DOC-31, ADR-0016, DOC-40, DOC-27.
+
+### DR-79 · Đồ thị phụ thuộc giữa module, module `studio`, ngoại lệ chỉ đọc của `invariant` — **Chốt** (Claude, Owner ủy quyền)
+- **Vấn đề:** DR-05/06 cấm vòng phụ thuộc nhưng không nêu đồ thị cụ thể. Các transaction liên module (xuất bản, hủy event, xác nhận thanh toán) và việc job trả vé cần hủy PaymentIntent tạo vòng nếu để mỗi module gọi tự do; kiểm tra bất biến cần đọc mọi bảng.
+- **Quyết định:** Đồ thị ở DOC-07 §3.1 và `allowedDependencies` ở DOC-12 §2.2. Thêm module `studio` (API người tổ chức cho event và các thao tác xuyên module: xuất bản, hủy, đổi lịch). Đảo chiều bằng SPI: `reservation.PaymentIntentCanceller` do `payment` cài đặt; `common.RetentionContributor` do từng module cài đặt cho `RetentionJob`. Tài liệu sơ đồ truyền cho `InventoryApi.createSeatUnits` dưới dạng tham số `jsonb` để SQL của `inventory` chỉ nhắc bảng của mình. Package `io.ticket.invariant` được `SELECT` mọi bảng, cấm ghi (ArchUnit).
+- **Hệ quả:** Module bổ sung so với SDD gốc: `media`, `studio`. Transaction liên module có module điều phối cố định (DOC-07 §4.3).
+- **Ghi vào:** DOC-07, DOC-12, ADR-0002.
+
+### DR-80 · Thông số hạ tầng nhỏ — **Chốt** (Claude, Owner ủy quyền)
+- **Quyết định:** Cổng nội bộ `api` là 8081 (`server.port`), quản trị 9090, để `make dev` (API chạy trên host) không đụng cổng 8080 của nginx.
+- **Ghi vào:** DOC-07, DOC-62, DOC-34.
+
+### DR-81 · Thư viện và package kỹ thuật bổ sung — **Chốt** (Claude, Owner ủy quyền)
+- **Quyết định:** Thêm ngoài DR-02…05: JCS `io.github.erdtman:java-json-canonicalization`, `com.networknt:json-schema-validator`, Spring Data Redis (Lettuce), Awaitility, Spotless + google-java-format, Immer, MSW, `oasdiff`, `@fontsource/*`. Package kỹ thuật `<module>.config` (`@Configuration`, `@ConfigurationProperties`) không phải layer. Ngưỡng JS ban đầu trang sự kiện ≤ 200 KB gzip kiểm bằng script kích thước.
+- **Ghi vào:** DOC-11, DOC-12.
 
 ---
 
@@ -1227,6 +1249,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 ### DR-71 · Số liệu bán vé cho người tổ chức — **Chốt**
 - **Vấn đề:** SDD gốc mục 12.1 có `GET /organizer/events/{id}/sales` "theo loại vé"; canvas Studio 07 có thêm sơ đồ tô theo trạng thái, bộ lọc loại vé, "Cập nhật lúc …", nút "Làm mới"; Studio 01 có số đã bán/đang giữ/còn trống cho mỗi sự kiện.
 - **Quyết định (Claude chốt, Owner ủy quyền):** `sales` tính bằng `SELECT ticket_type_id, status, count(*) FROM inventory_unit WHERE event_id = :e AND status <> 'REMOVED' GROUP BY 1, 2`, cache Redis 5 giây. `seat-status` trả đúng snapshot của DR-62 (dùng chung cache). Giao diện tự làm mới mỗi 15 giây và khi bấm "Làm mới". Studio 01 dùng một truy vấn gộp theo `event_id` cho tối đa 20 sự kiện mỗi trang.
+- *Đổi (DR-62, DR-148):* "dùng chung cache" chỉ còn đúng ở nghĩa dùng chung một nguồn dữ liệu: snapshot ghế nằm trong Caffeine (`availability.cache-ttl`), còn số liệu `sales` vẫn nằm trong Redis (`sales.cache-ttl`).
 - **Ghi vào:** DOC-60, DOC-37, DOC-29.
 
 ---
@@ -1240,7 +1263,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   | Service | Cổng host | Healthcheck | Profile |
   | --- | --- | --- | --- |
   | `nginx` (frontend build + proxy) | 8080 | `GET /healthz` | mặc định |
-  | `api` | — (9090 quản trị chỉ trong profile `obs`) | `/actuator/health/readiness` | mặc định |
+  | `api` | — (9090 quản trị luôn mở trong container, không bao giờ ra host; `prometheus` chỉ ở `dev` và `obs`; *Đổi, DR-148*) | `/actuator/health/readiness` | mặc định |
   | `postgres` | 5432 | `pg_isready` | mặc định |
   | `redis` | 6379 | `redis-cli ping` | mặc định |
   | `mailpit` | 8025 (UI), 1025 (SMTP) | HTTP | mặc định |
@@ -1308,6 +1331,425 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 
 ---
 
+## N. Quyết định phát sinh khi viết tài liệu gate P1
+
+Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-10-06). Mỗi mục có nguồn đầy đủ ở tài liệu ghi trong dòng *Nguồn*; sổ chỉ tóm tắt. Người chốt là Claude (Owner ủy quyền); nhóm `ops` ở trạng thái Đề xuất chờ Owner duyệt. Các mục này xếp theo nhóm chủ đề riêng thay vì rải vào A–M để giữ số DR liên tục.
+
+### Mã lỗi, quy ước API và cấu hình
+
+#### DR-82 · Mã lỗi bổ sung cho lỗi kỹ thuật chung — **Chốt**
+- **Vấn đề:** SDD gốc 12.3 và DR-64 không có mã cho JSON hỏng, sai phương thức, sai `Content-Type`, sai chữ ký webhook và sai CSRF; không có mã thì bộ xử lý phải bịa hoặc rơi vào `INTERNAL_ERROR`, sai về lớp lỗi.
+- **Quyết định:** thêm 5 mã: 400 `BAD_REQUEST`, 400 `INVALID_SIGNATURE`, 403 `CSRF_TOKEN_INVALID`, 405 `METHOD_NOT_ALLOWED`, 415 `UNSUPPORTED_MEDIA_TYPE` (mục 3).
+- **Hệ quả:** bảng có 40 mã; mỗi mã có key `errors.<code viết thường>` (giao diện) và `problem.<code viết thường>.*` (backend) trong DOC-40.
+- **Nguồn:** `06-design/error-handling.md`
+
+#### DR-83 · `rule` của `VALIDATION_FAILED` là `snake_case` và không phải `code` — **Chốt**
+- **Vấn đề:** DR-12 và DR-25 viết "422 `invalid_timezone`", lẫn `rule` với `code`.
+- **Quyết định:** mọi giá trị chữ thường như vậy là `rule` trong `errors[]`; `code` luôn chữ hoa (mục 3).
+- **Hệ quả:** không thêm mã lỗi, test `ERR-03`.
+- **Nguồn:** `06-design/error-handling.md`
+
+#### DR-84 · `retryAfterSeconds` trong body trùng `Retry-After` — **Chốt**
+- **Vấn đề:** SPA đọc header `Retry-After` qua CORS-less fetch được nhưng body tiện hơn cho interceptor và test.
+- **Quyết định:** mọi 429/503 có cả header và thành viên `retryAfterSeconds` cùng giá trị nguyên giây ≥ 1.
+- **Hệ quả:** nginx `RATE_LIMITED` (DR-55) cũng phải đặt hai nơi (DOC-62).
+- **Nguồn:** `06-design/error-handling.md`
+
+#### DR-85 · Một lần retry cho `CSRF_TOKEN_INVALID` — **Chốt**
+- **Quyết định:** client gọi `GET /me` lấy `csrfToken` mới rồi gửi lại đúng một lần; lần hai vẫn lỗi coi như lỗi lập trình (mục 7).
+- **Nguồn:** `06-design/error-handling.md`
+
+#### DR-86 · Cache công khai của `GET /events` — **Chốt**
+- **Vấn đề:** DR-55 chỉ nêu cache `GET /events/{id}` (5 giây), không nêu danh sách; trang chủ là endpoint được đọc nhiều nhất lúc mở bán.
+- **Quyết định:** `GET /events` cache `public, max-age=5` cùng `proxy_cache` 5 giây, khóa gồm query string và `Accept-Language`.
+- **Hệ quả:** sự kiện mới xuất bản hiện chậm tối đa 5 giây; thêm `proxy_cache_path` ở DOC-62.
+- **Nguồn:** `07-api/api-guidelines.md`
+
+#### DR-87 · Xuất OpenAPI cho CI bằng test tích hợp — **Chốt**
+- **Vấn đề:** sinh `schema.d.ts` và `oasdiff` cần file OpenAPI mà không muốn thêm plugin Gradle chưa chắc tương thích Boot 4 (S-01).
+- **Quyết định:** `OpenApiExportTest` (Testcontainers) ghi `backend/build/openapi.json`; `make contract` gọi nó.
+- **Hệ quả:** thêm một test chậm ~vài giây; đổi sang plugin sau không đổi hợp đồng.
+- **Nguồn:** `07-api/api-guidelines.md`
+
+#### DR-88 · Body request chặt — **Chốt**
+- **Vấn đề:** mặc định Jackson bỏ qua trường lạ, che lỗi gõ sai (`quantiy`).
+- **Quyết định:** `spring.jackson.deserialization.fail-on-unknown-properties=true` → 400 `BAD_REQUEST`; client sinh từ OpenAPI không gửi trường lạ.
+- **Hệ quả:** thêm trường request ở server là thay đổi phải đi cùng client mới (không phá vỡ nếu trường tùy chọn và client cũ không gửi).
+- **Nguồn:** `07-api/api-guidelines.md`
+
+#### DR-89 · Trường giờ của studio có hậu tố `Local` — **Chốt**
+- **Vấn đề:** DR-12 nói form studio gửi giờ địa phương kèm `timezone` nhưng chưa nêu tên trường.
+- **Quyết định:** request ghi dùng `startsAtLocal`, `endsAtLocal`, `saleStartsAtLocal`, `saleEndsAtLocal`, `prequeueOpensLocal` (`yyyy-MM-dd'T'HH:mm`) kèm `timezone`; response trả `startsAt`… UTC và `timezone`, cộng thêm các trường `…Local` để form điền lại không phải tính.
+- **Hệ quả:** DOC-37 mục E của event dùng đúng tên này; DOC-20 chỉnh nếu khác.
+- **Nguồn:** `07-api/api-guidelines.md`
+
+### Mô hình dữ liệu (DOC-14, DOC-15)
+
+#### DR-90 · Ngữ nghĩa đóng của `reservation` (`closed_at`, `close_reason`) — **Chốt**
+- **Vấn đề:** DR-18 có `close_reason` và `closed_at` nhưng không nói mỗi lý do dẫn tới trạng thái cuối nào.
+- **Quyết định (Claude, Owner ủy quyền):** `closed_at` đặt khi vào `CONFIRMED`, `EXPIRED`, `CANCELLED`; `TIMEOUT → EXPIRED`, `BUYER_CANCELLED` và `EVENT_CANCELLED → CANCELLED`; `close_reason` luôn có giá trị ở `EXPIRING`, `EXPIRED`, `CANCELLED` và NULL ở `ACTIVE`.
+- **Hệ quả:** Job trả vé và đường hủy nhanh dùng chung một quy tắc; thêm `CHECK` theo `status` khi triển khai (DOC-14 §10).
+- **Nguồn:** `05-data/domain-model.md`
+
+#### DR-91 · Đơn `PENDING_PAYMENT` bị đóng vì hủy sự kiện chuyển `CANCELLED`, không phải `REFUND_PENDING` — **Chốt**
+- **Vấn đề:** DR-28 hủy reservation `ACTIVE` bằng `EVENT_CANCELLED`, DR-44 không nói đơn `PENDING_PAYMENT` của chúng đi đâu.
+- **Quyết định (Claude, Owner ủy quyền):** Đơn chưa thu tiền sang `CANCELLED`; chỉ đơn đã có tiền (`PAID`, hoặc `EXPIRED`/`CANCELLED` nhận thanh toán trễ) sang `REFUND_PENDING`.
+- **Hệ quả:** Hàng đợi hoàn tiền chỉ chứa hoàn tiền thật; không gửi email chờ hoàn tiền cho đơn chưa trả tiền.
+- **Nguồn:** `05-data/domain-model.md`
+
+#### DR-92 · Index khóa ngoại còn thiếu, `inventory_pool.created_at` và khóa ngoại vòng của `event` — **Chốt**
+- **Vấn đề:** DDL của DR-15…18 có khóa ngoại không index (trái quy ước DR-14), có vòng `event → seat_map_version → seat_map → event`, và `inventory_pool` thiếu `created_at`.
+- **Quyết định (Claude, Owner ủy quyền):** Thêm 13 index khóa ngoại (`media_organizer_idx`, `event_media_idx`, `event_seat_map_version_idx`, `seat_map_organizer_idx`, `seat_map_clone_idx`, `pool_ticket_type_idx`, `reservation_event_idx`, `unit_ticket_type_idx`, `reservation_item_pool_idx`, `reservation_item_type_idx`, `orders_event_idx`, `ticket_event_idx`, `ticket_unit_idx`); thêm `inventory_pool.created_at`; tạo `event` không có khóa ngoại `seat_map_version_id` rồi `ALTER TABLE` thêm sau.
+- **Hệ quả:** Chèn khi xuất bản chậm hơn đôi chút; `unit_ticket_type_idx` là index duy nhất thêm vào bảng nóng nên S-03 đo lại.
+- **Nguồn:** `05-data/domain-model.md`
+
+#### DR-93 · DDL bảng profile, đặt lại outbox `FAILED → PENDING` bằng tay, `CHECK` của `stripe_event.outcome` — **Chốt**
+- **Vấn đề:** DDL của `fake_payment_intent` và `inventory_pool_counter` chưa nằm trong DR nào; dòng outbox `FAILED` không có đường phục hồi; `stripe_event.outcome` chưa có `CHECK`.
+- **Quyết định (Claude, Owner ủy quyền):** Định nghĩa hai DDL ở DOC-15 §8; cho phép `FAILED → PENDING` bằng `UPDATE` tay (không có giao diện admin); thêm `CHECK` cho `outcome` khi DOC-26 chốt tập giá trị.
+- **Hệ quả:** EXP-06 và EXP-08 chèn lỗi hủy PaymentIntent qua `fake_payment_intent.cancel_failure`.
+- **Nguồn:** `05-data/ops-model.md`
+
+#### DR-94 · Quy ước Flyway cho thư mục migration theo profile — **Chốt**
+- **Vấn đề:** Thư mục migration của profile có thể có phiên bản thấp hơn bản đã áp dụng, hoặc profile bị tắt sau khi đã chạy; Flyway mặc định từ chối cả hai.
+- **Quyết định (Claude, Owner ủy quyền):** `spring.flyway.out-of-order=true` và `spring.flyway.ignore-migration-patterns=*:missing`.
+- **Hệ quả:** Lỏng hơn mặc định, chấp nhận được ở dự án một người; DOC-34 và DOC-62 mang cả hai khóa.
+- **Nguồn:** `05-data/ops-model.md`
+
+#### DR-95 · Index dọn dữ liệu và index giới hạn gửi magic link theo IP — **Chốt**
+- **Vấn đề:** Job dọn của DR-74 và phép đếm giới hạn theo IP của DR-21 không có index hỗ trợ.
+- **Quyết định (Claude, Owner ủy quyền):** Thêm `login_token_ip_idx`, `login_token_expires_idx`, `session_last_seen_idx`, `session_revoked_idx`, `stripe_event_received_idx`, `stripe_event_pi_idx`, `outbox_done_idx`.
+- **Hệ quả:** Index nhỏ hoặc một phần trên bảng ít dòng.
+- **Nguồn:** `05-data/ops-model.md`
+
+### Xác thực, session và thông báo
+
+#### DR-96 · Gửi SMTP và dựng mẫu email nằm ở `common.mail` — **Chốt**
+- **Vấn đề:** DR-21 bắt `auth` gửi email magic link trực tiếp, nhưng DOC-12 §2.2 chỉ cho `auth` phụ thuộc `common`, còn mẫu Thymeleaf và SMTP thuộc `notification`.
+- **Quyết định:** đặt `MailSender` (cài đặt `SmtpMailSender`, Spring Mail) và `EmailRenderer` (Thymeleaf + `MessageSource` theo locale) ở package `io.ticket.common.mail`; `auth` dùng trực tiếp, `notification.OutboxRelay` dùng cùng class. Mẫu email vẫn ở `resources/templates/email/`.
+- **Hệ quả:** không cần nới `allowedDependencies`; `common` không phụ thuộc module nghiệp vụ nên luật 6 của DOC-12 §2.2 giữ nguyên.
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-97 · Khóa advisory theo email khi đếm giới hạn gửi — **Chốt**
+- **Vấn đề:** DR-21 đếm trong transaction nhưng hai transaction song song cùng đếm 2 rồi cùng chèn sẽ đạt 4 token.
+- **Quyết định:** mở đầu T1 bằng `pg_advisory_xact_lock(hashtextextended(:email, 0))`. Giới hạn theo IP không khóa (giới hạn mềm, vượt tối đa vài đơn vị khi tải song song cao).
+- **Hệ quả:** các yêu cầu cùng email xếp hàng, đúng ý; khác email không chặn nhau.
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-98 · Cookie sliding — **Chốt**
+- **Vấn đề:** DR-22 chốt hết hạn 30 ngày không hoạt động ở phía server nhưng không nói thuộc tính `Max-Age` của cookie.
+- **Quyết định:** `Max-Age = 2592000` (30 ngày) khi tạo session và cấp lại cùng lúc `last_seen_at` được cập nhật (mỗi giờ nhiều nhất). Cookie không có `Expires` cố định theo ngày tạo.
+- **Hệ quả:** cookie và DB hết hạn gần như cùng lúc; người dùng thường xuyên không bao giờ bị hỏi lại.
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-99 · Giữ token magic link ngoài log và `Referer` — **Chốt**
+- **Vấn đề:** token nằm trong query string của URL `GET /auth/callback`, dễ vào log truy cập, lịch sử trình duyệt và `Referer` của request tiếp theo.
+- **Quyết định:** SPA xóa token khỏi URL bằng `history.replaceState` trước khi gọi verify; nginx đặt `Referrer-Policy: no-referrer` cho `/auth/callback` và ghi access log bằng `$uri`, không bằng `$request`.
+- **Hệ quả:** token chỉ còn trong URL ở khoảng thời gian trang vừa tải; vẫn một lần dùng và hết hạn 15 phút.
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-100 · IP của người xin link lấy từ `X-Real-IP` — **Chốt**
+- **Vấn đề:** `login_token.requested_ip` (giới hạn 10 link/IP/giờ) cần IP thật của máy khách phía sau nginx.
+- **Quyết định:** nginx đặt `proxy_set_header X-Real-IP $remote_addr` (ghi đè giá trị client gửi); `api` chỉ nghe trong mạng compose nên không có đường tới `api` mà không qua nginx; thiếu header thì dùng `remoteAddr`. Không tin `X-Forwarded-For`.
+- **Hệ quả:** khi một NAT chung có nhiều người dùng, 10 link/giờ là chung cho cả nhóm (chấp nhận).
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-101 · Tạo hoặc cập nhật người dùng bằng một upsert; locale của người đã có không bị ghi đè — **Chốt**
+- **Vấn đề:** DR-21 nói "tạo `app_user` nếu chưa có" nhưng không nói đua giữa hai verify của hai email-mới cùng lúc (không thể, vì mỗi email chỉ một token hợp lệ) và locale của người đã có.
+- **Quyết định:** `INSERT … ON CONFLICT (email) DO UPDATE SET last_login_at = now()`; `locale` chỉ lấy từ `login_token.locale` khi tạo mới. Người dùng đổi ngôn ngữ bằng `PATCH /me`.
+- **Hệ quả:** đăng nhập từ trình duyệt đặt ngôn ngữ khác không đổi tùy chọn đã lưu của người dùng.
+- **Nguồn:** `06-design/auth-and-sessions.md`
+
+#### DR-102 · `AuthApi` cung cấp địa chỉ nhận email cho `payment` và `studio` — **Chốt**
+- **Vấn đề:** `payment` và `studio` cần địa chỉ người nhận để dựng payload outbox nhưng không được đọc bảng của `auth` (DOC-12 §2.2).
+- **Quyết định (Claude, Owner ủy quyền):** `auth` mở giao diện ở package gốc `io.ticket.auth` trả địa chỉ email theo `userId`; bên gọi dựng payload đủ dữ liệu rồi gọi `NotificationApi.enqueue` trong transaction của mình.
+- **Hệ quả:** Giữ ranh giới module; mô tả ở DOC-19 §9 và DOC-27 §2.
+- **Nguồn:** ``
+
+#### DR-103 · Trùng mã vé không được thử lại ở câu `INSERT` — **Chốt**
+- **Vấn đề:** DR-52 nói "sinh lại trong cùng transaction tối đa 3 lần" nhưng một `unique violation` làm hỏng cả transaction PostgreSQL, nên không thể bắt lỗi rồi thử tiếp trong chính transaction xác nhận.
+- **Quyết định:** kiểm tra trước bằng `SELECT code … WHERE code = ANY(:codes)` và loại trùng trong lô, lặp tối đa 3 vòng; trùng sót lại sau kiểm tra thì transaction thất bại như lỗi tạm và lượt chạy lại sinh mã mới (webhook gửi lại hoặc `PaymentReconcileJob`).
+- **Hệ quả:** thêm một câu `SELECT` theo index `UNIQUE` mỗi lần phát hành; xác suất thất bại tạm thời ~ `N × 2^-40` nhân cửa sổ đua vài mili giây.
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-104 · Ngân sách thời gian của một lượt `OutboxRelay` — **Chốt**
+- **Vấn đề:** 50 dòng × SMTP timeout 5 giây vượt lease 60 giây, gây gửi trùng khi SMTP chậm (DR-53 không nói).
+- **Quyết định:** khóa `outbox.relay.batch-budget` (40 giây); dòng chưa xử lý khi hết ngân sách được trả lại bằng `attempts - 1`, `next_attempt_at = now()`; kiểm tra khi khởi động `batch-budget + mail.smtp.timeout < lease`.
+- **Hệ quả:** khi SMTP rất chậm, thông lượng giảm thay vì gửi trùng.
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-105 · Lỗi vĩnh viễn của SMTP không đi hết 12 lần thử — **Chốt**
+- **Vấn đề:** DR-53 backoff áp dụng cho mọi lỗi; thư tới địa chỉ bị từ chối (550) sẽ chiếm hàng đợi 3 giờ 25 phút vô ích.
+- **Quyết định:** phản hồi SMTP loại 5xx từ chối người nhận (550, 551, 553, 554) → `FAILED` ngay; 4xx và lỗi kết nối vẫn theo backoff.
+- **Hệ quả:** địa chỉ sai lộ ra sớm trong log ERROR; thư có địa chỉ đúng nhưng bị lọc spam cũng `FAILED` ngay (đặt lại tay được).
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-106 · Fan-out theo lô JDBC 500 — **Chốt**
+- **Vấn đề:** đổi lịch và hủy sự kiện ghi một dòng cho mỗi đơn `PAID` trong một transaction; một event 5.000 đơn không nên gọi `enqueue` 5.000 lần qua 5.000 round-trip.
+- **Quyết định:** `NotificationApi.enqueueAll` dùng `JdbcClient.batchUpdate` theo lô `outbox.enqueue-batch-size` = 500, vẫn trong transaction của người gọi.
+- **Hệ quả:** transaction `PATCH` và hủy sự kiện giữ lâu hơn một chút với event lớn (`statement_timeout` 60 giây của DR-28 đủ).
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-107 · Metric của vé và thông báo — **Chốt**
+- **Vấn đề:** DR-09 chỉ có `ticket_outbox_pending` cho mảng này; thiếu số đo gửi, phát hành, va chạm mã.
+- **Quyết định:** thêm `ticket_outbox_enqueued_total{kind}`, `ticket_mail_send_seconds{kind,result}`, `ticket_tickets_issued_total`, `ticket_ticket_code_collisions_total` (mục 11).
+- **Hệ quả:** DOC-33 thêm bốn dòng; không alert (không alerting ở giai đoạn này).
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-108 · `ticket.label` của vé GA là `{}` — **Chốt**
+- **Vấn đề:** DOC-14 chỉ mô tả `label` của ghế và khu vực, và DOC-51 (`DR-110`) cần biết GA ghi gì.
+- **Quyết định:** GA ghi `{}`, không `null`, không khóa `ticketType`; loại vé nằm ở `ticket_type_name`.
+- **Hệ quả:** mọi nơi đọc `label` kiểm tra bằng khóa có mặt, không bằng `label IS NULL`.
+- **Nguồn:** `06-design/tickets-and-notifications.md`
+
+#### DR-109 · Bố cục và header kỹ thuật của email — **Chốt**
+- **Vấn đề:** canvas vẽ email bằng `div` flex, phông web và nửa tròn cuống vé định vị tuyệt đối; nhiều ứng dụng thư (Outlook, Gmail cũ) bỏ qua cả ba. DR-54 chưa nói `Message-ID` của email không qua outbox, và `Reply-To`.
+- **Quyết định:** bố cục `<table role="presentation">` tối đa 600 px với CSS inline; chuỗi phông dự phòng, không nhúng web font; cuống vé dùng đường đứt thay nửa tròn; `Message-ID` của `magic-link` là `<login-{12 hex đầu của token_hash}@APP_DOMAIN>`; không đặt `Reply-To`.
+- **Hệ quả:** hình dạng trong hộp thư khác canvas một chút (không nửa tròn, phông hệ thống); không email nào cho phép trả lời. Đổi bằng cách sửa template.
+- **Nguồn:** `08-ux-ui/screens/emails.md`
+
+#### DR-110 · Khối vé theo `ticket.label` — **Chốt**
+- **Vấn đề:** `label` có ba dạng (ghế, khu vực, GA) mà canvas chỉ vẽ ghế.
+- **Quyết định:** khóa `section`/`row`/`seat` → cột Hàng, Ghế, Loại vé; khóa `zone` → Khu vực, Loại vé; không khóa → Loại vé; mã vé luôn ở cột phải.
+- **Hệ quả:** DOC-27 và DOC-85 phải giữ `label` của GA không chứa khóa nào ở trên (câu hỏi mở).
+- **Nguồn:** `08-ux-ui/screens/emails.md`
+
+#### DR-111 · Chọn biến thể `event-changed` — **Chốt**
+- **Vấn đề:** DR-29 cho `endsAt` kích hoạt email nhưng canvas chỉ có ba biến thể theo giờ bắt đầu và địa điểm.
+- **Quyết định:** `startsAt` hoặc `endsAt` đổi → nhóm "giờ"; `venue` đổi → nhóm "địa điểm"; chỉ `endsAt` đổi → hàng "Giờ kết thúc" thay cho hàng "Thời gian".
+- **Hệ quả:** thêm một ca nhỏ vào test.
+- **Nguồn:** `08-ux-ui/screens/emails.md`
+
+#### DR-112 · `refundReason` ngoài ba giá trị — **Chốt**
+- **Vấn đề:** mẫu `refund-pending` chọn đoạn lý do từ enum; giá trị lạ không có đoạn nào.
+- **Quyết định:** ném lỗi khi dựng; dòng outbox thử lại theo DR-53 rồi `FAILED`, log ERROR; không gửi email chung chung.
+- **Hệ quả:** lỗi lập trình hiện ra ở outbox thay vì gửi email sai nghĩa về tiền.
+- **Nguồn:** `08-ux-ui/screens/emails.md`
+
+#### DR-113 · Giới hạn gửi magic link không phải bất biến chính xác — **Chốt**
+- **Vấn đề:** hai request đồng thời của cùng email đều đếm trước khi chèn.
+- **Quyết định:** không khóa (không `pg_advisory_xact_lock`); chấp nhận tối đa vài link thừa trong cửa sổ 15 phút vì giới hạn là chống lạm dụng, không phải bất biến NEVER OVERSELL.
+- **Hệ quả:** test `FLA-03` chạy tuần tự; không có test đồng thời cho giới hạn.
+- **Nguồn:** `06-design/flows/auth-and-account.md`
+
+#### DR-114 · `AuthCallback` bỏ token khỏi URL và gọi `verify` đúng một lần — **Chốt**
+- **Vấn đề:** token nằm trong URL của lịch sử trình duyệt và `Referer`; React StrictMode chạy effect hai lần ở dev nên gọi `verify` hai lần, lần hai nhận 401.
+- **Quyết định:** gọi `history.replaceState(null, "", "/auth/callback")` trước khi gọi API, giữ token trong biến cục bộ; bảo đảm một lời gọi bằng một `Promise` mức module theo token. Thêm `<meta name="referrer" content="no-referrer">` cho trang callback.
+- **Hệ quả:** làm mới trang sau khi mất token trong URL cho màn "link không còn dùng được"; người dùng xin link mới.
+- **Nguồn:** `06-design/flows/auth-and-account.md`
+
+#### DR-115 · Đăng xuất idempotent; lý do vào `Login` đi qua state điều hướng; ghi đè locale sau đăng nhập — **Chốt**
+- **Vấn đề:** (1) `POST /auth/logout` với cookie đã mất không nên 401 vì người dùng chỉ muốn thoát; (2) màn `Login` cần biết biến thể "Đã đăng xuất"/"Hết phiên" mà không thêm tham số URL có thể bị dán; (3) khách đổi sang `en` rồi đăng nhập vào tài khoản `vi` thì không rõ ai thắng.
+- **Quyết định:** (1) `/auth/logout` luôn 204 và xóa cookie; chỉ kiểm CSRF khi session hợp lệ; (2) router `navigate("/login?returnTo=…", { state: { reason: "signed_out" | "session_expired" } })`; mở `/login` trực tiếp luôn hiện biểu mẫu thường; (3) sau `FL-02`, nếu cookie `tb_lang` khác `me.locale` thì cookie thắng và client gửi một `PATCH /me` (lựa chọn gần nhất của người dùng).
+- **Hệ quả:** làm mới trang `/login` mất biến thể (chấp nhận); locale tài khoản có thể đổi vì người dùng đã chọn ở trình duyệt này.
+- **Nguồn:** `06-design/flows/auth-and-account.md`
+
+### Bảo mật và observability
+
+#### DR-116 · Tài nguyên của người mua thuộc người khác trả 404 — **Chốt**
+- **Quyết định:** ⚠ Tài nguyên của người mua (`reservation`, `orders`, `ticket`) thuộc người khác trả **404** `NOT_FOUND`, không phải 403 như SDD gốc 12.3. 403 `FORBIDDEN` chỉ cho vi phạm quyền không gắn tài nguyên cụ thể
+- **Hệ quả / lý do:** DR-23 đã chọn 404 cho studio để không lộ tồn tại; hai quy tắc khác nhau cho cùng loại lỗi dễ gây IDOR do sai sót; ID đơn lộ qua URL chia sẻ
+- **Nguồn:** `06-design/security.md`
+
+#### DR-117 · `OriginCheckFilter` kiểm header `Origin` ở request ghi — **Chốt**
+- **Quyết định:** Bộ lọc `OriginCheckFilter`: request ghi có header `Origin` mà khác `APP_BASE_URL` bị từ chối 403 `CSRF_TOKEN_INVALID`; không có `Origin` thì chỉ kiểm CSRF token
+- **Hệ quả / lý do:** Lớp phòng thủ thứ hai cho CSRF, rẻ, không đụng k6/curl
+- **Nguồn:** `06-design/security.md`
+
+#### DR-118 · Spring Security `denyAll` mặc định và `SecurityMatrixTest` — **Chốt**
+- **Quyết định:** Spring Security mặc định `denyAll`; mọi endpoint khai quyền tường minh và có dòng ở §2.3; `SecurityMatrixTest` đối chiếu OpenAPI với `security-matrix.csv`
+- **Hệ quả / lý do:** Endpoint quên khai quyền thì đóng, không mở
+- **Nguồn:** `06-design/security.md`
+
+#### DR-119 · `Cache-Control: no-store` cho nhóm endpoint cá nhân — **Chốt**
+- **Quyết định:** `Cache-Control: no-store` cho nhóm endpoint cá nhân (§8) đặt ở `api`, nginx tôn trọng và không `proxy_cache`
+- **Hệ quả / lý do:** Tránh cache dữ liệu người dùng ở nginx hay trình duyệt dùng chung
+- **Nguồn:** `06-design/security.md`
+
+#### DR-120 · Metric bổ sung ngoài sáu metric của DR-09 — **Chốt**
+- **Quyết định:** Bổ sung metric ngoài sáu metric của DR-09 (bảng §4.2), gồm `ticket_hold_bulkhead_in_use`, `ticket_expiry_lag_seconds`, `ticket_queue_waiting`, `ticket_queue_admit_total`, `ticket_ratelimit_total`, `ticket_payment_*`, `ticket_job_*`, `ticket_invariant_*`, `ticket_orders_refund_pending`; hai key lấy mẫu `ticket.metrics.sampler-interval`, `ticket.metrics.refund-pending-interval`; tên dashboard `ticket-exp05` với 12 panel
+- **Hệ quả / lý do:** DR-09 chỉ liệt kê sáu metric đủ để vẽ p95 và connection; EXP-02/04/06/08 và NFR-03 cần trễ trả vé, nhịp vào cửa, kết quả webhook, số sai lệch
+- **Nguồn:** `06-design/observability.md`
+
+#### DR-121 · Label metric thuộc tập đóng, không chứa ID, email, IP — **Chốt**
+- **Quyết định:** Label không bao giờ chứa ID, email, IP hoặc đường dẫn có tham số; mọi label lấy từ tập đóng ghi ở §4.2; test `OBS-12` đếm series
+- **Hệ quả / lý do:** Giữ Prometheus nhẹ khi 100.000 người dùng ảo và không lộ dữ liệu cá nhân
+- **Nguồn:** `06-design/observability.md`
+
+#### DR-122 · Redis `DOWN` không làm `readiness` DOWN — **Chốt**
+- **Quyết định:** Redis `DOWN` không làm `readiness` DOWN
+- **Hệ quả / lý do:** DR-56: hệ thống tiếp tục phục vụ khi mất Redis; compose không được khởi động lại `api` vì Redis
+- **Nguồn:** `06-design/observability.md`
+
+### Vận hành, CI và môi trường dev
+
+#### DR-123 · Profile `seed` và các target `make` bổ sung — **Đề xuất**
+- **Quyết định:** Thêm Spring profile `seed` (chạy một lần, idempotent, gọi service thật) cho `make seed`; thêm target `make login`, `logs`, `psql`, `fmt`, `up-obs`, `build`, `e2e-stripe`, `contract`; `make reset` không tự seed
+- **Hệ quả / lý do:** DR-01 chỉ liệt kê 10 target; seed qua service bảo đảm unit kho vé sinh đúng như xuất bản thật (DR-27)
+- **Nguồn:** `09-operations/local-dev.md`
+
+#### DR-124 · Ba file compose và giới hạn tài nguyên khởi điểm — **Đề xuất**
+- **Quyết định:** Ba file compose (gốc, `.dev`, `.experiment`); giới hạn tài nguyên khởi điểm ở §4; `redis` `noeviction`
+- **Hệ quả / lý do:** Cho phép mở cổng khi `make dev`, cố định tài nguyên thực nghiệm mà không sửa file gốc
+- **Nguồn:** `09-operations/deploy-compose.md`
+
+#### DR-125 · `PAYMENTS_MODE` phải khớp profile Spring — **Đề xuất**
+- **Quyết định:** `PAYMENTS_MODE` (`fake`\|`stripe`) và profile `fake-payments`/`stripe` phải khớp; API từ chối khởi động nếu lệch
+- **Hệ quả / lý do:** `docker compose up` thuần phải chạy được (NFR-08) nên `.env.example` đặt cả hai; kiểm tra lúc khởi động chặn cấu hình nửa vời
+- **Nguồn:** `09-operations/local-dev.md`
+
+#### DR-126 · Khóa công khai Stripe vào frontend bằng build arg — **Đề xuất**
+- **Quyết định:** Khóa công khai Stripe vào frontend bằng build arg `VITE_STRIPE_PUBLISHABLE_KEY` (biến `STRIPE_PUBLISHABLE_KEY`)
+- **Hệ quả / lý do:** DR-50 dùng Payment Element nhưng chưa nói khóa công khai tới trình duyệt bằng cách nào; build arg khớp `VITE_PAYMENTS` của DR-51
+- **Nguồn:** `09-operations/deploy-compose.md`
+
+#### DR-127 · Body 429 do nginx sinh, bỏ `Cookie` ở location cache, CSP cho Stripe Elements — **Đề xuất**
+- **Quyết định:** Body 429 do nginx sinh đủ trường Problem Details; `nginx` bỏ `Cookie` ở location cache; CSP có `style-src 'unsafe-inline'` cho Stripe Elements
+- **Hệ quả / lý do:** DR-55 chỉ nêu "Problem Details `RATE_LIMITED`"; cần chốt nội dung; CSP cần xác nhận với Payment Element ở P3-08
+- **Nguồn:** `09-operations/deploy-compose.md`
+
+#### DR-128 · E2E ở workflow `e2e.yml` riêng — **Đề xuất**
+- **Quyết định:** E2E ở workflow `e2e.yml` riêng, bắt buộc với PR `dev → main`, không bắt buộc với PR vào `dev`
+- **Hệ quả / lý do:** Hòa hợp DR-08 (E2E chạy tay) và DR-77 (E2E trong CI với `PAYMENTS_MODE=fake`)
+- **Nguồn:** `09-operations/ci-cd.md`
+
+#### DR-129 · Job `audit`, dependency locking, nhãn `breaking-ok`, kiểm tiêu đề PR — **Đề xuất**
+- **Quyết định:** Job `audit` (OSV-Scanner, chạy hằng tuần) **không** bắt buộc; bật Gradle dependency locking; `oasdiff` có nhãn `breaking-ok`; tiêu đề PR kiểm bằng script
+- **Hệ quả / lý do:** DOC-32 yêu cầu quét phụ thuộc; DR-08 chưa chọn công cụ; tránh chặn PR vì CVE ngoài phạm vi PR
+- **Nguồn:** `09-operations/ci-cd.md`
+
+#### DR-130 · Branch protection cho `dev` và `main` — **Đề xuất**
+- **Quyết định:** Branch protection cho cả `dev` và `main` với danh sách check ở §10
+- **Hệ quả / lý do:** DR-08 nói "chặn merge khi đỏ" nhưng chưa nêu tên check
+- **Nguồn:** `09-operations/ci-cd.md`
+
+### UX, design system và màn hình
+
+#### DR-131 · Mục "Tạo hồ sơ tổ chức" trong menu tài khoản; `returnTo` chỉ nhận đường dẫn nội bộ — **Chốt**
+- **Quyết định:** Thêm mục "Tạo hồ sơ tổ chức" vào menu tài khoản của người chưa có hồ sơ; `returnTo` chỉ nhận đường dẫn nội bộ một dấu `/`
+- **Hệ quả / lý do:** DOC-38, DOC-44, DOC-53, DOC-19
+- **Nguồn:** `08-ux-ui/ux-principles-and-ia.md`
+
+#### DR-132 · Quy tắc tự thử lại phía client — **Chốt**
+- **Quyết định:** Quy tắc tự thử lại: `clamp(Retry-After,1,32)` hoặc 8→16→32 giây; tối đa 10 lần liên tiếp rồi dừng và hiện nút thử lại
+- **Hệ quả / lý do:** DOC-38, DOC-40, DOC-36
+- **Nguồn:** `08-ux-ui/ux-principles-and-ia.md`
+
+#### DR-133 · Tên và giá trị token mở rộng của canvas — **Chốt**
+- **Quyết định:** Tên và giá trị token mở rộng của canvas (xem DOC-39 §2.4)
+- **Hệ quả / lý do:** DOC-39
+- **Nguồn:** `08-ux-ui/ux-principles-and-ia.md`
+
+#### DR-134 · Lint chặn mã hex ngoài `tokens.css` — **Chốt**
+- **Quyết định:** Lint chặn mã hex ngoài `tokens.css` (`stylelint`)
+- **Hệ quả / lý do:** DOC-39, DOC-63
+- **Nguồn:** `08-ux-ui/design-system.md`
+
+#### DR-135 · Namespace i18n bổ sung và key lỗi `errors.<code>` — **Chốt**
+- **Quyết định:** Thêm namespace i18n `auth`, `queue`, `orders`, `tickets`, `errors`, `validation` ngoài năm namespace của DR-10; key lỗi API là `errors.<code viết thường>`; chuỗi `problem.*` của backend sinh từ cùng JSON
+- **Hệ quả / lý do:** DOC-31, DOC-40, DOC-35
+- **Nguồn:** `08-ux-ui/ui-states-and-copy.md`
+
+#### DR-136 · Hiển thị lỗi theo `code`, không theo `title`/`detail` của server — **Chốt**
+- **Quyết định:** Hiển thị lỗi theo `code`, không theo `title`/`detail` của server (chỉ dự phòng); khi mã chưa ánh xạ dùng `errors.generic`
+- **Hệ quả / lý do:** DOC-36, DOC-40
+- **Nguồn:** `08-ux-ui/ui-states-and-copy.md`
+
+#### DR-137 · Định dạng ngày giữ `dd.MM.yyyy · HH:mm` ở cả hai locale — **Chốt**
+- **Quyết định:** Giữ cùng định dạng ngày `dd.MM.yyyy · HH:mm` ở cả `vi` và `en`, chỉ tên thứ đổi theo locale (khác `Intl` mặc định của `en`)
+- **Hệ quả / lý do:** DOC-31, DOC-40
+- **Nguồn:** `08-ux-ui/ui-states-and-copy.md`
+
+#### DR-138 · Chi tiết màn Đăng nhập: `reason`, mở hộp thư, đồng bộ giữa các tab — **Chốt**
+- **Vấn đề:** DOC-44 cần chốt các chi tiết mà DR-21/22/67 không nêu.
+- **Quyết định (Claude, Owner ủy quyền):** Query `reason` nhận `signed_out` hoặc `session_expired`, giá trị khác bị bỏ; nút "Mở hộp thư" mở webmail theo miền email; tab đã gửi link gọi `GET /me` (tối đa một lần mỗi 5 giây) khi lấy lại tiêu điểm để đồng bộ với tab đăng nhập khác.
+- **Hệ quả:** Chi tiết ở DOC-44.
+- **Nguồn:** ``
+
+#### DR-139 · Biến thể E2 (hết phiên) là trạng thái của `Login`; vị trí component trang lỗi — **Chốt**
+- **Vấn đề:** Canvas vẽ E2 (hết phiên) như một trang riêng.
+- **Quyết định (Claude, Owner ủy quyền):** E2 là biến thể của `Login` với `reason=session_expired`, không có route riêng; component trang lỗi (E1, E3, E4, E5) là lớp mỏng quanh `ErrorPage` dùng chung, đặt ở `frontend/src/app/errors/`.
+- **Hệ quả:** `SessionExpired` bị bỏ khỏi danh sách component (DR-141).
+- **Nguồn:** ``
+
+#### DR-140 · Điều kiện hiện E3, con dấu khi lỗi mạng, tải lại một lần khi lỗi chunk — **Chốt**
+- **Vấn đề:** DOC-52 cần điều kiện hiển thị còn thiếu.
+- **Quyết định (Claude, Owner ủy quyền):** E3 hiện khi API trả 403 `FORBIDDEN` ở route `/studio/**` (không hiện cho `ORGANIZER_PROFILE_REQUIRED`, chuyển tới `/studio/profile`); con dấu hiện mã HTTP của response lỗi gần nhất; lỗi tải chunk tự `window.location.reload()` một lần (cờ `sessionStorage["tb.chunkReload"]`), lần hai trong phiên hiện E5 không hộp mã.
+- **Hệ quả:** Chi tiết ở DOC-52.
+- **Nguồn:** ``
+
+#### DR-141 · Tên component màn hình do DOC-41 chốt, bỏ `SessionExpired`, thêm `SeatsRoute` — **Chốt**
+- **Vấn đề:** DOC-82 §3 là bản tạm; DOC-44 và DOC-52 đã chốt E2 không phải trang riêng.
+- **Quyết định:** theo bảng §3: bỏ `SessionExpired`, tách hai dòng `Login` và `AuthCallback`, thêm `SeatsRoute`. Người quyết định: Claude (Owner ủy quyền).
+- **Hệ quả:** DOC-82 §2 (cột Màn hình của FL-03) và §3 sửa khi hợp nhất; các spec DOC-42…60 dùng tên ở §1.
+- **Nguồn:** `08-ux-ui/screens/README.md`
+
+#### DR-142 · Tên component màn hình ở DOC-82 §3 là bản tạm, DOC-41 chốt — **Chốt**
+- **Vấn đề:** DOC-82 phải đặt tên component màn hình trước khi DOC-41 tồn tại.
+- **Quyết định (Claude, Owner ủy quyền):** Tên ở DOC-82 §3 là bản tạm; khi lệch, DOC-41 thắng.
+- **Hệ quả:** Đã áp dụng: DR-141 sửa DOC-82 theo DOC-41.
+- **Nguồn:** ``
+
+### Danh mục endpoint, cấu hình và kiểm thử
+
+#### DR-143 · Khóa `saleStartsAt` sau giờ mở bán — **Chốt** (Claude, Owner ủy quyền) — **Chốt**
+- *
+- **Vấn đề:** * DR-37 khóa sơ đồ theo `now() >= sale_starts_at`. DR-25 và DR-30 không cấm dời `saleStartsAt` sang tương lai sau khi đã qua; làm vậy sẽ mở khóa sơ đồ và cho dựng lại kho vé sau khi đã có đơn.
+- *
+- **Quyết định:** * Khi `now() >= saleStartsAt` lưu, `PATCH` không được đổi `saleStartsAtLocal` (422 `locked_after_sale_start`). Trước giờ mở bán đổi tự do.
+- *
+- **Hệ quả:** * Giờ mở bán không đảo ngược được sau khi mở. Ghi vào DOC-20, DOC-55, DOC-35 (`rule` mới), DOC-40 (`validation.locked_after_sale_start`).
+- **Nguồn:** `07-api/api-endpoints.md`
+
+#### DR-144 · Loại vé chỉ thêm khi sự kiện còn nháp — **Chốt** (Claude, Owner ủy quyền) — **Chốt**
+- *
+- **Vấn đề:** * DR-26 và DR-30 nói đổi giá, sức chứa, xóa loại vé khi đang bán, nhưng không nói thêm loại vé mới sau xuất bản; loại vé `SEAT`/`ZONE` mới cần sửa sơ đồ (khóa từ giờ mở bán), loại GA mới cần dựng pool.
+- *
+- **Quyết định:** * `POST …/ticket-types` chỉ khi `DRAFT`; sau đó 409 `EVENT_STATE_CONFLICT`. Sau xuất bản chỉ sửa (E-35) và xóa (E-36).
+- *
+- **Hệ quả:** * Muốn thêm hạng vé khi đang bán phải tạo sự kiện mới. Ghi vào DOC-20, DOC-56.
+- **Nguồn:** `07-api/api-endpoints.md`
+
+#### DR-145 · `PUT draft` chỉ kiểm tra schema, không validate nghiệp vụ — **Chốt** (Claude, Owner ủy quyền) — **Chốt**
+- *
+- **Vấn đề:** * DR-35 validate ở client liên tục và server khi xuất bản; DR-36 tự lưu mỗi 2 giây. Nếu `PUT draft` từ chối bản có lỗi nghiệp vụ, người dùng không lưu được bản dở.
+- *
+- **Quyết định:** * E-44 kiểm tra JSON Schema và giới hạn cứng (5 MB, 20.000 ghế, 1.000 hàng, 200 zone, 200 trang trí); mọi mã DR-35 chỉ chạy ở E-45 và E-46.
+- *
+- **Hệ quả:** * Bản nháp có thể chứa ghế chồng nhau; `publish-checks` (E-28) và E-46 chặn xuất bản. Ghi vào DOC-21, DOC-22.
+- **Nguồn:** `07-api/api-endpoints.md`
+
+#### DR-146 · Một quy ước đặt tên và định dạng cấu hình — **Chốt**
+- **Vấn đề:** các tài liệu trộn `15s`/`PT15S`, biến môi trường tự đặt và biến Spring lỏng lẻo.
+- **Quyết định:** duration luôn ISO-8601; khóa tự định nghĩa dùng `kebab-case`, biến môi trường chỉ có khi đã ghi ở bảng (§1); mỗi nhóm khóa một `@ConfigurationProperties` có `@Validated`.
+- **Hệ quả:** DOC-33 đổi `15s` thành `PT15S`; dễ kiểm tự động (CFG-01).
+- **Nguồn:** `06-design/configuration-reference.md`
+
+#### DR-147 · Kiểm tra cấu hình lúc khởi động (§6) — **Chốt**
+- **Vấn đề:** nhiều ràng buộc giữa các khóa (bulkhead < pool, lease > ngân sách gửi) chỉ nằm trong văn bản.
+- **Quyết định:** một bean `ConfigurationGuard` kiểm tra mười điều kiện ở §6 và thoát khi sai.
+- **Hệ quả:** lỗi cấu hình hiện ở lúc khởi động thay vì ở EXP.
+- **Nguồn:** `06-design/configuration-reference.md`
+
+#### DR-148 · Khóa mới do tài liệu này đặt — **Chốt**
+- **Vấn đề:** DR-56, 57, 59, 62, 74 nêu con số nhưng không đặt tên khóa.
+- **Quyết định:** đặt `ratelimit.*`, `admission.ticker-interval|lock-ttl|evict-limit|shuffle-batch-size`, `availability.cache-ttl`, `sales.cache-ttl`, `retention.*`, `event.lifecycle.interval`, `invariant.*`, `payment.reconcile.*`, `payment.stripe.connect-timeout|read-timeout|max-network-retries|webhook-tolerance`, `media.*`, `storage.s3.path-style` với đúng giá trị mặc định của DR gốc.
+- **Hệ quả:** EXP có thể đổi nhịp mà không sửa code; DOC-24, 26, 28, 29, 30, 18 dùng đúng các tên này.
+- **Nguồn:** `06-design/configuration-reference.md`
+
+#### DR-149 · Mã mức test và ngoại lệ tiền tố dùng chung — **Chốt**
+- (**Chốt**)
+- **Nguồn:** `10-testing/test-strategy.md`
+
+#### DR-150 · ID test nằm trong `@DisplayName`, có script kiểm tra hai chiều — **Chốt**
+- (**Chốt**)
+- **Nguồn:** `10-testing/test-strategy.md`
+
+#### DR-151 · Ngưỡng nhánh 75% cho năm module lõi — **Chốt**
+- (**Chốt**)
+- **Nguồn:** `10-testing/test-strategy.md`
+
+---
+
 ## Tổng hợp theo mức ảnh hưởng
 
 Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu vào của task P0-01 trong master plan.
@@ -1320,9 +1762,10 @@ Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu
 | Chặn P4 | DR-31–36, DR-39 | Schema tài liệu sơ đồ, thuật toán hình học, validate dùng chung, tự lưu, kiến trúc editor |
 | Chặn P5 | DR-37, DR-62, DR-69, DR-71 | Khóa sơ đồ từ giờ mở bán và dựng lại kho vé trước đó, định dạng tình trạng chỗ, chọn ghế, số liệu bán vé |
 | Chặn P6 | DR-46, DR-55–60 | Tham số rate limit, phòng chờ, kiểm tra lượt vào, nhịp vào |
+| Phát sinh khi viết gate P1 | DR-82–151 | Tóm tắt ở mục N; chi tiết ở tài liệu nguồn của từng mục |
 | Chặn P7 | DR-78 | Dữ liệu và kịch bản demo |
 
 Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-37, DR-41, DR-43, DR-44, DR-53, DR-56, DR-57, DR-58, DR-60, DR-73.
 Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06).
 
-Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-06). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.
+Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-06), trừ DR-123–130 (ops) đang Đề xuất chờ Owner. Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.
