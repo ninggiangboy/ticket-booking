@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 (mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 10, 28, 31, 38, 41, 44; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Review** · Cập nhật: 2026-10-06 (mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -34,7 +34,12 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Owner | Chốt theo đề xuất các mục mức kiến trúc: Java 25 + Spring Boot 4, package và luật phụ thuộc, cache session trong tiến trình, JSON Schema sơ đồ, kiến trúc editor, hủy giữ đường nhanh, outbox chỉ email, cổng thanh toán giả | DR-02, DR-06, DR-22, DR-32, DR-39, DR-43, DR-51, DR-53 |
 | 2026-10-06 | Owner | Đổi: ảnh lưu ở object storage tương thích S3 (SeaweedFS trong compose), bảng `media` chỉ giữ metadata | DR-38, DR-04, DR-72, DR-74, ADR-0015, DOC-07, DOC-15, DOC-18, DOC-62 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Chốt theo đề xuất các mục còn lại: DR-01, 03, 04, 07–09, 11, 12, 20, 23–27, 29, 30, 33–37, 40, 42, 45, 46, 48–50, 52, 54–56, 58–61, 63–78 (DR-11, 12, 20 đã nằm sẵn trong DDL của DR-14–19) | Như từng DR |
+| 2026-10-06 | Owner | Đổi: mở ô chọn múi giờ IANA ở form studio (mặc định `Asia/Ho_Chi_Minh`, khóa sau khi xuất bản); tiền tệ giữ chỉ VND | DR-12, DR-25, DOC-20, DOC-31, DOC-40, DOC-55 |
+| 2026-10-06 | Owner | Đổi: chỉ VND, gán cứng; bỏ `PLATFORM_CURRENCY`, bảng `minorUnitDigits` và kiểm tra tiền tệ khi khởi động; `orders.currency` CHECK `= 'VND'`; phương án dự phòng của S-02 là nâng `payment.min-amount`, không đổi tiền tệ | DR-13, DR-18, DOC-14, DOC-26, DOC-34 |
 | 2026-10-06 | Owner | Cập nhật master plan theo template mới của skill: thêm nhóm luồng chi tiết `06-design/flows/` (DOC-82…90, FL-01…35, mẫu A.8), gate và task tương ứng; không đổi DR nào | Master plan §0.4, §1.3, §3, §5, §6, Phụ lục A; README |
+| 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
+| 2026-10-06 | Owner | Đổi theo đề xuất đơn giản hóa của Claude (dự án để học): magic link gửi trực tiếp sau commit, bỏ mã hóa token trong outbox; bỏ token vào cửa, kiểm tra `ZSCORE admitted` theo session; `admit_rate` cố định, bỏ AIMD; bỏ rate limiter dự phòng khi mất Redis; cache tình trạng chỗ bằng Caffeine trong tiến trình; idempotency băm body thô; tiền tố mã vé do người tổ chức nhập; bỏ quét bucket | DR-21, DR-19, DR-38, DR-45, DR-52, DR-56, DR-57, DR-58, DR-60, DR-62, DR-64, DR-74, ADR-0007, ADR-0013, DOC-17, DOC-18, DOC-19, DOC-28, DOC-29, DOC-32, DOC-36, DOC-83, DOC-90, P1-07, P5-03, P6-02, P6-05, P6-06 |
+| 2026-10-06 | Owner | Đổi: sơ đồ khóa toàn bộ từ giờ mở bán, kể cả khi chưa ai mua; trước giờ mở bán xuất bản phiên bản mới thì dựng lại kho vé; bỏ diff và `MAP_VERSION_CONFLICT`. Thêm đóng bán sớm (`close-sale`). DR-36 (tự lưu, IndexedDB) giữ nguyên | DR-37, DR-24, DR-40, DR-64, FR-15, UC-09, UC-14, DOC-20, DOC-22, DOC-23, DOC-57, DOC-59, DOC-84, DOC-89, P2-05.1, P5-05.1 |
 
 ---
 
@@ -111,28 +116,49 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
   - Câu lệnh mà `@Query` không diễn đạt gọn (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment (`InventoryUnitClaims` + `…Impl`) dùng `JdbcClient`. Vẫn là SQL viết tay, ở trong module sở hữu bảng.
   - Cột `jsonb` (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
-  - Transaction mở ở application service của module điều phối (`reservation.HoldService`), các module khác tham gia qua interface công khai chạy trong cùng transaction (propagation `MANDATORY` cho method chỉ được gọi trong transaction).
+  - Transaction mở ở service của module điều phối (`reservation.service.HoldService`), module khác tham gia qua interface `…Api` của mình, chạy trong cùng transaction (DR-06) (propagation `MANDATORY` cho method chỉ được gọi trong transaction).
   - Ranh giới module kiểm tra bằng Spring Modulith (`ApplicationModules.of(Application.class).verify()` trong một unit test) cộng ArchUnit: entity và repository của module X chỉ được dùng trong X; chuỗi SQL chỉ nhắc bảng mà X sở hữu (danh sách ở DOC-07).
 - **Hệ quả:** Bớt mã lặp cho CRUD của studio và các bảng vận hành; giữ được SQL viết tay cho đường nóng. Spring Data JDBC không có lazy loading nên không có N+1 ẩn, nhưng aggregate có `@MappedCollection` bị xóa-chèn lại toàn bộ con khi `save()`: `Reservation` chỉ `save()` một lần lúc chèn. Thêm test kiến trúc: không method nào ngoài lớp chèn gọi `save()` trên aggregate có cột `status`. Checklist review ở DOC-12 thêm mục này.
 - *Đổi 2026-10-06:* đề xuất cũ là `JdbcClient` cho mọi truy vấn, không dùng Spring Data.
 - **Ghi vào:** ADR-0012, DOC-11, DOC-12, DOC-07.
 
-### DR-06 · Cấu trúc package trong mỗi module và luật phụ thuộc — **Chốt**
-- **Vấn đề:** SDD gốc liệt kê module nhưng không nói bên trong mỗi module chia thế nào.
-- **Quyết định (Owner chốt):** Gói gốc `io.ticket`. Mỗi module `io.ticket.<module>`:
+### DR-06 · Cấu trúc package trong mỗi module và luật phụ thuộc — **Đổi: kiến trúc n-layer bên trong, luật modular monolith bên ngoài**
+- **Vấn đề:** SDD gốc liệt kê module nhưng không nói bên trong mỗi module chia thế nào. Dự án dùng để học và người viết code là dev backend chưa nhiều kinh nghiệm: cấu trúc phải là thứ họ đã quen từ tài liệu Spring phổ biến, nhìn tên package là biết đặt class ở đâu. Đồng thời vẫn phải giữ ranh giới module của SDD gốc mục 4.1 (DR-05).
+- **Quyết định (Owner chốt):** Gói gốc `io.ticket`. Mỗi module nghiệp vụ `io.ticket.<module>` là một module của Spring Modulith; bên trong chia theo layer, mỗi layer một package:
 
-  | Package | Nội dung | Ai được dùng |
-  | --- | --- | --- |
-  | `<module>` (gốc) | Interface công khai (`InventoryApi`), DTO dạng `record`, event nội bộ | Mọi module |
-  | `<module>.web` | Controller, request/response DTO, mapper | Chỉ module đó |
-  | `<module>.internal` | Service, repository, entity dạng `record`, job | Chỉ module đó |
+  | Package | Layer | Nội dung | Được gọi bởi |
+  | --- | --- | --- | --- |
+  | `<module>` (gốc) | API công khai của module | Interface `…Api` (ví dụ `InventoryApi`), `record` DTO trao đổi giữa module, event của module (`OrderPaid`) | Module khác |
+  | `<module>.controller` | Điểm vào | `@RestController`, webhook endpoint: nhận request, validate hình thức (`@Valid`), gọi service, trả response | Không ai (HTTP) |
+  | `<module>.job` | Điểm vào | `@Scheduled` (`…Job`): đọc lịch/cấu hình, gọi service | Không ai (lịch) |
+  | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Không ai (event) |
+  | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay entity ↔ DTO (`…Mapper`) | Điểm vào cùng module |
+  | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `JdbcClient` (DR-05), truy cập Redis (`…RedisRepository`) | Service cùng module |
+  | `<module>.client` | Truy cập hệ thống ngoài | Stripe (`PaymentGateway` và hai bản cài đặt, DR-51), S3 (DR-38), SMTP; chỉ module nào cần mới có | Service cùng module |
+  | `<module>.entity` | (dữ liệu) | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module |
+  | `<module>.dto` | (dữ liệu) | `record` request/response của REST API | Controller, service cùng module |
 
-  Luật: không module nào import `*.internal` hay `*.web` của module khác; `common` không phụ thuộc module nghiệp vụ; controller không gọi repository trực tiếp. Module bổ sung so với SDD gốc: `media` (DR-38), `i18n` không phải module (chỉ là cấu hình trong `common`).
-- **Ghi vào:** DOC-12, ADR-0002.
+  Không phải module nào cũng có đủ package; tạo package khi có class đầu tiên. Ví dụ module `inventory`: `InventoryApi`, `ClaimResult` (gốc); `controller/AvailabilityController`; `job/ReleaseExpiredHoldsJob`; `listener/EventPublishedListener`; `service/InventoryService implements InventoryApi`, `service/InventoryMapper`; `repository/InventoryUnitRepository` + `InventoryUnitClaims` + `InventoryUnitClaimsImpl`; `entity/InventoryUnit`; `dto/AvailabilityResponse`.
+
+  **Luật layer (trong một module):**
+  - Chiều gọi chỉ đi xuống: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`. Điểm vào không gọi repository hay client và không gọi lẫn nhau; repository và client không gọi service.
+  - `@Transactional` chỉ ở `service`; điểm vào không tự mở transaction.
+  - Entity không ra khỏi layer service: controller nhận và trả DTO, service đổi entity ↔ DTO bằng mapper.
+
+  **Luật modular monolith (giữa các module), giữ như SDD gốc 4.1 và DR-05:**
+  - Mỗi bảng PostgreSQL và họ key Redis có đúng một module sở hữu (DOC-07); chỉ repository của module đó được đọc/ghi. Không module nào truy vấn bảng của module khác, kể cả bằng SQL thuần hay join.
+  - Module khác chỉ được dùng package gốc (`…Api`, DTO, event); mọi package con (`controller`, `job`, `listener`, `service`, `repository`, `client`, `entity`, `dto`) là nội bộ. Đây là mặc định của Spring Modulith, không cần `@NamedInterface`.
+  - Gọi đồng bộ: service của module A gọi `BApi` của module B (inject interface, không inject class cài đặt). Báo ngược chiều hoặc báo cho nhiều module: publish event của module, module nhận xử lý ở `listener`. Không có vòng phụ thuộc giữa các module.
+  - `common` (cấu hình, xử lý lỗi `@RestControllerAdvice`, i18n, bảo mật, tiện ích) là module dùng chung, không phụ thuộc module nghiệp vụ. Module bổ sung so với SDD gốc: `media` (DR-38); `i18n` không phải module (chỉ là cấu hình trong `common`).
+
+  **Kiểm tra tự động:** Spring Modulith `ApplicationModules.verify()` (chỉ dùng package gốc của module khác, không vòng phụ thuộc); ArchUnit `layeredArchitecture()` cho chiều gọi trong module, "`@Transactional` chỉ trong `..service..`", "`..controller..` không dùng `..entity..`", và luật sở hữu bảng của DR-05.
+- **Hệ quả:** Người mới chỉ cần nhớ một khuôn package cho mọi module; ranh giới module vẫn được ép bằng test, không dựa vào review. Mỗi module có thêm một interface `…Api` cho phần dùng chung; method chỉ module đó dùng không đưa lên interface. Cổng thanh toán (DR-51) vẫn là interface với hai bản cài đặt, đặt ở `payment.client`.
+- *Đổi 2026-10-06:* đề xuất cũ chia mỗi module thành gốc (interface `…Api`), `web` (controller, DTO) và `internal` (service, repository, entity, job); Owner đổi sang chia theo layer vì dự án để học và người làm là dev backend thiếu kinh nghiệm, giữ nguyên luật ranh giới module.
+- **Ghi vào:** DOC-12, DOC-07, ADR-0002.
 
 ### DR-07 · Quy trình Git, commit và ngôn ngữ — **Chốt**
 - **Vấn đề:** SDD gốc không nói nhánh, quy ước commit, ngôn ngữ code.
-- **Quyết định (Claude chốt, Owner ủy quyền):** `main` luôn chạy được; làm việc trên `dev` và nhánh `feat/<task-id>-<slug>`, merge vào `dev` qua PR, `dev` → `main` ở mỗi milestone. Conventional Commits tiếng Anh, scope là module (`feat(inventory): claim pool units with skip locked`), footer `Refs: P2-03`. Code, log, mã lỗi, tên bảng, commit, tiêu đề PR bằng tiếng Anh; chuỗi giao diện qua i18n (DR-10); tài liệu `docs/` bằng tiếng Việt. Migration Flyway đặt tên `V<yyyymmddHHmm>__<snake_case>.sql`.
+- **Quyết định (Claude chốt, Owner ủy quyền):** `main` luôn chạy được; làm việc trên `dev` và nhánh `feat/<task-id>-<slug>`, merge vào `dev` qua PR, `dev` → `main` ở mỗi milestone. Conventional Commits tiếng Anh, scope là module (`feat(inventory): claim pool units with skip locked`), footer `Refs: P2-06`. Code, log, mã lỗi, tên bảng, commit, tiêu đề PR bằng tiếng Anh; chuỗi giao diện qua i18n (DR-10); tài liệu `docs/` bằng tiếng Việt. Migration Flyway đặt tên `V<yyyymmddHHmm>__<snake_case>.sql`.
 - **Ghi vào:** master plan §7.3, DOC-63.
 
 ### DR-08 · CI tối thiểu ngay từ P1 — ⚠ lệch SDD gốc — **Chốt**
@@ -171,23 +197,29 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Quyết định (Claude chốt, Owner ủy quyền):** Phương án 3. Mọi bảng nghiệp vụ có khóa chính `uuid` tên `<bảng>_id`, mặc định `uuidv7()` của PostgreSQL 18; code Java sinh trước UUIDv7 khi cần biết ID trước khi chèn (`reservation_id` được sinh trước khi claim unit, DR-41). Ngoại lệ: ID ghế, khu vực, hàng trong tài liệu sơ đồ do client sinh (`crypto.randomUUID()`, UUIDv4 cho ghế; chuỗi `zone-<8 ký tự>`/`row-<8 ký tự>` cho đối tượng khác, DR-32). ID của Stripe (`pi_…`, `evt_…`) lưu kiểu `text`.
 - **Ghi vào:** DOC-14, ADR-0018.
 
-### DR-12 · Thời gian và múi giờ — **Chốt**
+### DR-12 · Thời gian và múi giờ — **Đổi: người tổ chức chọn múi giờ của sự kiện**
 - **Vấn đề:** SDD gốc mục 12.3 nói thời gian là ISO 8601 theo UTC và mục 17 nói mọi so sánh dùng `now()` của database, nhưng không nói sự kiện hiển thị theo múi giờ nào. Canvas hiện "Thứ Bảy 14.11.2026 · 20:00" không kèm múi giờ; người tổ chức nhập giờ địa phương ở form `datetime-local`.
-- **Quyết định (Claude chốt, Owner ủy quyền):**
+- **Quyết định (Claude chốt, Owner ủy quyền; Owner đổi phần múi giờ):**
   - Mọi cột thời điểm là `timestamptz`; API trả chuỗi UTC dạng `2026-11-14T13:00:00Z`.
-  - Mỗi event có cột `timezone` (tên IANA), mặc định cấu hình `PLATFORM_TIMEZONE=Asia/Ho_Chi_Minh`; giai đoạn này form không cho đổi (một quốc gia), cột có sẵn để mở rộng.
+  - Mỗi event có cột `timezone` (tên IANA), mặc định cấu hình `PLATFORM_TIMEZONE=Asia/Ho_Chi_Minh`. Bước Thông tin ở studio có ô chọn múi giờ (combobox tìm được, danh sách lấy từ `Intl.supportedValuesOf('timeZone')`, mặc định `PLATFORM_TIMEZONE`). Server chỉ nhận tên có trong `ZoneId.getAvailableZoneIds()`, không nhận offset dạng `+07:00`; tên lạ → 422 `invalid_timezone` (DR-25).
+  - Múi giờ đổi tự do khi event còn `DRAFT`, khóa sau khi xuất bản (422 `locked_after_publish`). Lý do: đổi múi giờ là dịch mọi mốc `starts_at`, `ends_at`, `sale_*` cùng lúc, kéo theo email đổi lịch (DR-29) và có thể mở hoặc đóng bán ngay; muốn sửa thì sửa giờ, như mọi lần đổi lịch.
+  - Đổi múi giờ trong bản nháp giữ nguyên giờ trên form (giờ địa phương), mốc UTC được tính lại ở lần lưu kế tiếp.
+  - Giờ hiển thị có thêm hậu tố offset (`timeZoneName: 'shortOffset'`, ví dụ `20:00 GMT+9`) khi múi giờ của event khác `PLATFORM_TIMEZONE`, ở cả giao diện và email; event theo múi giờ mặc định hiển thị như canvas, không hậu tố.
   - Form studio gửi giờ địa phương kèm `timezone` của event; server chuyển sang UTC. Giao diện hiển thị theo `timezone` của event bằng `Intl.DateTimeFormat(locale, { timeZone })`, không theo máy người xem.
   - So sánh hạn (giữ vé, token, khung mở bán) luôn trong SQL bằng `now()`; Java không gọi `Instant.now()` cho các quyết định đó.
-- **Ghi vào:** DOC-14, DOC-36, DOC-31.
+- *Đổi 2026-10-06:* đề xuất cũ khóa ô múi giờ ở `PLATFORM_TIMEZONE` (một quốc gia). Tiền tệ vẫn chỉ VND (DR-13).
+- **Ghi vào:** DOC-14, DOC-36, DOC-31, DOC-20, DOC-55, DOC-40.
 
-### DR-13 · Tiền, tiền tệ và giới hạn của Stripe — 🔬 spike — **Chốt**
+### DR-13 · Tiền, tiền tệ và giới hạn của Stripe — 🔬 spike — **Đổi: chỉ VND, không cấu hình tiền tệ**
 - **Vấn đề:** SDD gốc mục 6.2 chọn một tiền tệ cấu hình `PLATFORM_CURRENCY` (mặc định VND), lưu số nguyên đơn vị nhỏ nhất; mục 17 để ngỏ quốc gia của tài khoản Stripe. VND là tiền tệ không có phần lẻ ở Stripe (số tiền gửi lên là số đồng), Stripe có mức thu tối thiểu theo tiền tệ thanh toán, và tài khoản Stripe không mở được ở Việt Nam nên phải dùng tài khoản nước khác nhận tiền VND (presentment currency).
 - **Quyết định (Owner chốt):**
-  - Cột tiền là `bigint` theo đơn vị nhỏ nhất của `PLATFORM_CURRENCY`; với VND, 1 đơn vị = 1 đồng. Bảng hệ số `minorUnitDigits` (VND 0, USD 2) nằm trong module `common`, dùng khi gọi Stripe và khi định dạng.
+  - Hệ thống chỉ dùng VND, gán cứng: không có biến cấu hình `PLATFORM_CURRENCY`, không có bảng hệ số đơn vị lẻ. Cột tiền là `bigint` tính bằng đồng; VND không có phần lẻ ở Stripe nên `amount` gửi Stripe chính là số đồng, `currency = "vnd"`.
+  - `orders.currency` vẫn giữ với `CHECK (currency = 'VND')` để đối chiếu với PaymentIntent khi nhận webhook (DR-44); muốn thêm tiền tệ sau này chỉ cần một migration nới CHECK.
+  - Frontend định dạng bằng `Intl.NumberFormat(locale, { style: 'currency', currency: 'VND' })` (DR-10).
   - Giá loại vé: `0` (miễn phí) hoặc trong khoảng `[payment.min-amount, payment.max-amount]`, mặc định VND `[20000, 100000000]`. Tổng đơn khác 0 luôn ≥ `payment.min-amount` vì mỗi vé có giá đã ≥ mức đó.
-  - Đổi `PLATFORM_CURRENCY` sau khi đã có đơn là không hợp lệ: khi khởi động, nếu `orders` có `currency` khác cấu hình thì API dừng với lỗi rõ ràng.
   - Tài khoản: Stripe test mode trên một tài khoản đăng ký ở nước Stripe hỗ trợ (chưa cần kích hoạt hay xác minh doanh nghiệp vì chỉ dùng khóa `sk_test_…`); VND là tiền tệ thanh toán (presentment currency) được hỗ trợ và là tiền tệ không có phần lẻ. Mức tối thiểu thật phụ thuộc tiền tệ quyết toán của tài khoản, nên S-02 đo trên chính tài khoản đó.
   - Spike **S-02** trên Stripe test mode: tạo PaymentIntent VND chỉ thẻ, đo mức tối thiểu thật, thử hủy ở các trạng thái `requires_payment_method`, `requires_action`, `processing`, `succeeded`, ghi lại mã lỗi trả về; xác nhận stripe-cli forward webhook trong compose. Kết quả chỉnh `payment.min-amount` và DR-47.
+- *Đổi 2026-10-06:* đề xuất cũ cho cấu hình một tiền tệ `PLATFORM_CURRENCY` kèm bảng `minorUnitDigits` (VND 0, USD 2) và kiểm tra khi khởi động; Owner chỉ cần VND nên bỏ.
 - **Ghi vào:** DOC-14, DOC-26, DOC-34.
 
 ---
@@ -430,7 +462,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
     user_id            uuid NOT NULL REFERENCES app_user,
     status             text NOT NULL CHECK (status IN ('PENDING_PAYMENT','PAID','EXPIRED','CANCELLED','REFUND_PENDING','REFUNDED')),
     amount             bigint NOT NULL CHECK (amount >= 0),
-    currency           text NOT NULL CHECK (currency ~ '^[A-Z]{3}$'),
+    currency           text NOT NULL DEFAULT 'VND' CHECK (currency = 'VND'),   -- DR-13: chỉ VND
     payment_intent_id  text UNIQUE,
     last_payment_error text,                           -- mã decline_code gần nhất
     paid_at            timestamptz,
@@ -493,7 +525,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 
   CREATE TABLE outbox (
     outbox_id       uuid PRIMARY KEY DEFAULT uuidv7(),
-    kind            text NOT NULL CHECK (kind IN ('EMAIL_MAGIC_LINK','EMAIL_TICKETS','EMAIL_EVENT_CHANGED','EMAIL_REFUND_PENDING')),
+    kind            text NOT NULL CHECK (kind IN ('EMAIL_TICKETS','EMAIL_EVENT_CHANGED','EMAIL_REFUND_PENDING')),   -- magic link gửi trực tiếp, DR-21
     payload         jsonb NOT NULL,
     status          text NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','SENT','FAILED')),
     attempts        int  NOT NULL DEFAULT 0,
@@ -517,17 +549,18 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 
 ## D. Xác thực và phân quyền
 
-### DR-21 · Chi tiết magic link — ⚠ lệch SDD gốc — **Chốt**
+### DR-21 · Chi tiết magic link — ⚠ lệch SDD gốc — **Đổi: gửi email trực tiếp sau commit, không qua outbox**
 - **Vấn đề:** SDD gốc mục 5 chốt luồng, thời hạn, giới hạn gửi nhưng để ngỏ: chuẩn hóa email; cách vô hiệu link cũ; `return_to` lưu ở đâu khi người dùng mở link trên thiết bị khác; giới hạn gửi đếm ở đâu; và **email magic link đi qua outbox** (SDD gốc 4.1) **trong khi token chỉ được lưu dạng hash** (NFR-07): job outbox cần token thô để dựng link.
 - **Các phương án cho mâu thuẫn outbox:** (1) gửi email trực tiếp sau commit, không qua outbox: SMTP lỗi thì người dùng phải bấm "Gửi lại"; (2) outbox giữ token thô dạng mã hóa AES-256-GCM bằng khóa `OUTBOX_ENCRYPTION_KEY`, xóa trường đó ngay khi gửi xong; (3) outbox giữ token thô dạng rõ: vi phạm NFR-07.
-- **Quyết định (Owner chốt):**
+- **Quyết định (Owner chốt; Owner đổi cách gửi 2026-10-06):**
   1. Chuẩn hóa email: `trim`, chữ thường toàn bộ, kiểm tra theo regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` và dài ≤ 254. Không bỏ dấu chấm hay phần `+tag`.
   2. Token: 32 byte từ `SecureRandom`, base64url không padding (43 ký tự). Lưu `SHA-256`.
-  3. Một transaction cho `POST /auth/magic-link`: `UPDATE login_token SET superseded_at = now() WHERE email = :email AND used_at IS NULL AND superseded_at IS NULL`; chèn token mới (`expires_at = now() + 15 phút`, `return_to`, `locale`); chèn outbox `EMAIL_MAGIC_LINK` với payload `{"email","locale","returnTo","tokenCiphertext","nonce"}` theo phương án 2. Job outbox giải mã, gửi, rồi `UPDATE outbox SET payload = payload - 'tokenCiphertext' - 'nonce'`. Đây là ⚠ so với NFR-07 theo nghĩa đen; token chỉ tồn tại dạng mã hóa tối đa đến khi gửi xong hoặc hết hạn 15 phút (job dọn, DR-74).
-  4. Giới hạn gửi (3 mỗi email/15 phút, 10 mỗi IP/giờ, SDD gốc 5.2) đếm bằng truy vấn trên `login_token` trong cùng transaction (`count(*) WHERE email = :email AND created_at > now() - interval '15 minutes'`), không cần Redis; vượt ngưỡng vẫn trả **202** (không lộ thông tin) nhưng không chèn token; giao diện "Gửi quá nhiều lần" hiện khi response có header `X-Magic-Link-Throttled: 1`. Kiểm tra theo IP dùng Redis token bucket (DR-56) nếu có, bỏ qua khi Redis không khả dụng.
+  3. `POST /auth/magic-link` theo phương án 1: (a) một transaction: kiểm tra giới hạn gửi (mục 4), `UPDATE login_token SET superseded_at = now() WHERE email = :email AND used_at IS NULL AND superseded_at IS NULL`, chèn token mới (`expires_at = now() + 15 phút`, `return_to`, `locale`, `requested_ip`); commit. (b) Sau commit, gửi email `magic-link` qua SMTP ngay trong request (timeout 5 giây, không thử lại). Gửi được → **202**. SMTP lỗi → **503** `EMAIL_PROVIDER_UNAVAILABLE`; giao diện hiện "Chưa gửi được email, thử lại" và người dùng bấm "Gửi lại", lần xin mới thay token cũ như thường. Token thô chỉ nằm trong bộ nhớ của request, không bao giờ ghi xuống đâu (NFR-07 đúng theo nghĩa đen).
+  4. Giới hạn gửi (3 mỗi email/15 phút, 10 mỗi IP/giờ, SDD gốc 5.2) đếm bằng truy vấn trên `login_token` trong cùng transaction (`count(*) WHERE email = :email AND created_at > now() - interval '15 minutes'` và `count(*) WHERE requested_ip = :ip AND created_at > now() - interval '1 hour'`), không cần Redis; vượt ngưỡng vẫn trả **202** (không lộ thông tin) nhưng không chèn token và không gửi; giao diện "Gửi quá nhiều lần" hiện khi response có header `X-Magic-Link-Throttled: 1`. Lần gửi SMTP lỗi vẫn tính vào giới hạn.
   5. `POST /auth/verify` tiêu thụ token: `UPDATE login_token SET used_at = now() WHERE token_hash = :h AND used_at IS NULL AND superseded_at IS NULL AND expires_at > now() RETURNING email, return_to, locale`. Response chứa `returnTo`; trình duyệt nào mở link thì trình duyệt đó có session. Trình duyệt đã yêu cầu link không tự đăng nhập (không có "đăng nhập chéo thiết bị", tránh lừa đảo bằng link).
   6. `return_to` chỉ chấp nhận chuỗi bắt đầu bằng `/`, không bắt đầu bằng `//` hoặc `/\`, dài ≤ 512; sai thì dùng `/`.
-- **Hệ quả:** Cần khóa `OUTBOX_ENCRYPTION_KEY` (32 byte base64) trong `.env`; thêm test "payload outbox đã gửi không còn token".
+- **Hệ quả:** Không cần khóa mã hóa, không có loại outbox `EMAIL_MAGIC_LINK` (DR-19); outbox chỉ còn email phát sinh từ nghiệp vụ (vé, đổi lịch, chờ hoàn tiền). Thêm mã lỗi `EMAIL_PROVIDER_UNAVAILABLE` (DR-64). Đổi lại: SMTP chập chờn thì người dùng phải tự bấm gửi lại; chấp nhận vì đăng nhập là thao tác người dùng đang chờ trên màn hình.
+- *Đổi 2026-10-06:* đề xuất cũ (phương án 2) cho email magic link đi qua outbox, token thô mã hóa AES-256-GCM bằng `OUTBOX_ENCRYPTION_KEY` và xóa khỏi payload sau khi gửi; giới hạn theo IP đếm bằng Redis token bucket (DR-56). Owner đổi để bớt mã hóa và một loại outbox.
 - **Ghi vào:** DOC-19, DOC-27, DOC-32, DOC-44.
 
 ### DR-22 · Session và CSRF — **Chốt**
@@ -552,7 +585,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 
 ## E. Sự kiện và loại vé
 
-### DR-24 · Trạng thái hiển thị và các chuyển trạng thái tự động của event — **Chốt**
+### DR-24 · Trạng thái hiển thị và các chuyển trạng thái tự động của event — **Đổi: thêm đóng bán sớm**
 - **Vấn đề:** SDD gốc mục 6.1 có 5 trạng thái lưu. Canvas dùng thêm "Sắp mở bán", "Đang mở bán", "Hết vé", "Đã xuất bản" là trạng thái suy ra. SDD gốc không nói ai chuyển `PUBLISHED → ENDED`, reservation đang mở được thanh toán tiếp không khi event `PAUSED`, và danh sách công khai lọc những gì.
 - **Quyết định (Claude chốt, Owner ủy quyền):**
   - Trạng thái hiển thị (`displayStatus`) tính ở server, trả trong mọi response event:
@@ -566,6 +599,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
     | `SALE_CLOSED` ("Đã đóng bán") | `PUBLISHED`, `now() >= sale_ends_at`, chưa `ENDED` |
     | `PAUSED`, `ENDED`, `CANCELLED` | Như trạng thái lưu |
   - Job `EventLifecycleJob` chạy mỗi 60 giây: `UPDATE event SET status = 'ENDED', ended_at = now() WHERE status IN ('PUBLISHED','PAUSED') AND ends_at <= now()`.
+  - Đóng bán sớm (Owner thêm 2026-10-06): `POST /organizer/events/{id}/close-sale` chạy `UPDATE event SET sale_ends_at = now() WHERE event_id = :e AND organizer_id = :org AND status IN ('PUBLISHED','PAUSED') AND sale_starts_at <= now() AND sale_ends_at > now()`; 0 dòng → 409 `EVENT_STATE_CONFLICT`. Sự kiện chuyển `SALE_CLOSED`, không có trạng thái lưu mới, không mở lại được (muốn dừng tạm thì dùng `PAUSED`); `ENDED` vẫn do job đặt khi qua `ends_at`.
   - `PAUSED` và `SALE_CLOSED` chặn giữ vé mới (409 `EVENT_NOT_ON_SALE`); reservation đã `ACTIVE` vẫn tạo được PaymentIntent và thanh toán tới hết hạn. `ENDED` cũng vậy (thanh toán của reservation còn hạn vẫn được xác nhận).
   - `GET /events` trả event `PUBLISHED`/`PAUSED` có `ends_at > now()`, sắp theo `starts_at` tăng dần, phân trang cursor (DR-63). Event `ENDED`, `CANCELLED` vẫn mở được bằng URL trực tiếp (trang hiện trạng thái), không có trong danh sách.
 - **Ghi vào:** DOC-20, DOC-40, DOC-43.
@@ -579,6 +613,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   | `name` | 1–120 ký tự sau trim | `required`, `too_long` |
   | `venue` | 1–200 ký tự | `required` |
   | `description` | ≤ 5.000 ký tự, văn bản thuần, giữ xuống dòng | `too_long` |
+  | `timezone` | Tên IANA trong `ZoneId.getAvailableZoneIds()`; không đổi sau khi xuất bản (DR-12) | `invalid_timezone`, `locked_after_publish` |
   | `startsAt` | > `now()` lúc xuất bản | `must_be_future` |
   | `endsAt` | > `startsAt`, ≤ `startsAt` + 72 giờ | `must_be_after_start`, `too_long_event` |
   | `saleStartsAt` | < `saleEndsAt` | `required` |
@@ -742,18 +777,21 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   - Ngăn xếp undo không lưu server.
 - **Ghi vào:** DOC-22, DOC-57.
 
-### DR-37 · Xuất bản phiên bản mới khi event đang bán: thuật toán so sánh — **Chốt**
-- **Vấn đề:** SDD gốc mục 7.8 cho bảng quy tắc so sánh theo UUID và "áp dụng trong một transaction, tất cả hoặc không", nhưng không có các bước, không nói khóa unit thế nào khi người mua đang giữ cùng lúc, định dạng danh sách xung đột (canvas 04i: vị trí · thao tác · lý do).
-- **Quyết định (Claude chốt, Owner ủy quyền):** `POST /organizer/maps/{id}/publish` khi event đã `PUBLISHED`/`PAUSED`:
-  1. Validate server; lỗi → 422 `MAP_VALIDATION_FAILED` kèm `issues`.
-  2. Tính diff giữa `document` mới và phiên bản đang dùng theo ID: `seatsAdded`, `seatsRemoved`, `seatsRelabeled` (đổi section/hàng/số), `seatsRetyped`, `seatsBlocked`, `seatsUnblocked`, `zonesAdded`, `zonesRemoved`, `zoneCapacityChanged`, `zonesRetyped`.
-  3. Một transaction: `SELECT … FROM event … FOR UPDATE` (chặn hai lần xuất bản song song). Với mỗi nhóm thao tác chạm unit hiện có (`removed`, `relabeled`, `retyped`, `blocked`): `UPDATE inventory_unit SET … WHERE event_id = :e AND seat_id = ANY(:ids) AND status = 'AVAILABLE'`, so số dòng với số ID; mọi ID không cập nhật được được ghi vào danh sách xung đột (truy vấn `status` hiện tại để ghi lý do `HELD`/`SOLD`). Ghế thêm/bỏ blocked → chèn unit mới hoặc `REMOVED → AVAILABLE`. Zone: theo DR-30.
-  4. Danh sách xung đột khác rỗng → `ROLLBACK`, trả 409 `MAP_VERSION_CONFLICT` với `conflicts: [{ "objectId", "label": {"row":"C","seats":["5","7"]}, "action": "REMOVE_SEAT", "reason": "SOLD" }]`.
-  5. Rỗng → chèn `seat_map_version`, cập nhật `event.seat_map_version_id`, commit.
+### DR-37 · Sửa sơ đồ sau khi xuất bản sự kiện: khóa từ giờ mở bán — ⚠ lệch SDD gốc — **Đổi: khóa toàn bộ sơ đồ từ giờ mở bán**
+- **Vấn đề:** SDD gốc mục 7.8 cho sửa sơ đồ cả khi đang bán: so phiên bản theo UUID (thêm/bỏ ghế, đổi nhãn, đổi loại vé, zone), áp dụng trong một transaction, tất cả hoặc không. Đây là phần nặng nhất của P5 (diff nhiều nhóm, câu `UPDATE` có điều kiện cho từng nhóm, danh sách xung đột, chờ lock của lệnh giữ vé) và là mục thứ ba trong thứ tự cắt giảm của SDD gốc (mục 16).
+- **Quyết định (Owner chốt):** Sơ đồ **khóa toàn bộ từ `sale_starts_at`**, bất kể đã có ai mua hay chưa. Không có diff, không có chặn ghế lẻ khi đang bán.
+  - Trước giờ mở bán (event `DRAFT`, hoặc `PUBLISHED` với `now() < sale_starts_at`): sửa và xuất bản phiên bản sơ đồ tự do như ở P4.
+  - Xuất bản phiên bản mới khi event đã `PUBLISHED` nhưng chưa tới giờ mở bán: **dựng lại kho vé ghế và zone** trong một transaction, `SET LOCAL lock_timeout = '5s'`:
+    1. `SELECT … FROM event … FOR UPDATE`; trong SQL kiểm tra `now() < sale_starts_at`, sai → 409 `MAP_LOCKED_AFTER_SALE`.
+    2. `DELETE FROM inventory_unit WHERE event_id = :e AND ticket_type_id = ANY(:seatAndZoneTypes) AND status = 'AVAILABLE'`; số dòng phải bằng tổng unit của các loại vé đó, khác thì `ROLLBACK` và 409 `MAP_LOCKED_AFTER_SALE` (chỉ xảy ra khi đua đúng lúc mở bán). Xóa pool zone.
+    3. Chèn lại unit ghế và pool zone từ phiên bản mới như bước 3–4 của DR-27; cập nhật `event.seat_map_version_id`; commit. Hết `lock_timeout` → 409 `MAP_PUBLISH_BUSY`.
 
-  `UPDATE` có điều kiện (không `SKIP LOCKED`) chờ lock của transaction giữ vé đang mở (tối đa `statement_timeout` 2 giây của giữ vé); `SET LOCAL lock_timeout = '5s'` cho transaction xuất bản; hết thời gian → 409 `MAP_PUBLISH_BUSY`, người tổ chức thử lại.
-- **Hệ quả:** Đây là mục thứ ba trong thứ tự cắt giảm của SDD gốc (mục 16); nếu cắt, xuất bản phiên bản mới khi đã mở bán trả 409 `MAP_LOCKED_AFTER_SALE`.
-- **Ghi vào:** DOC-23.
+    Trước giờ mở bán không lệnh giữ vé nào thành công (DR-41 bước 2), nên mọi unit đều `AVAILABLE`; phép kiểm số dòng ở bước 2 chặn trường hợp duy nhất còn lại là đua với giây mở bán.
+  - Từ giờ mở bán (event `PUBLISHED`, `PAUSED`, `ENDED`, `CANCELLED` với `now() >= sale_starts_at`): `PUT /organizer/maps/{id}/draft` và `POST /organizer/maps/{id}/publish` đều trả 409 `MAP_LOCKED_AFTER_SALE`. Editor mở ở chế độ chỉ đọc với thông báo "Sơ đồ đã khóa vì sự kiện đã mở bán"; vẫn nhân bản được sang sự kiện khác (DR-31).
+  - Sau giờ mở bán, người tổ chức vẫn: sửa thông tin sự kiện (DR-25, email đổi lịch DR-29), đổi giá và sức chứa loại vé GA/zone (DR-30), tạm dừng/mở lại, đóng bán sớm (DR-24), hủy sự kiện (DR-28).
+- **Hệ quả:** Không có thuật toán diff, không có danh sách xung đột, không đổi nhãn hay loại vé trên unit đang tồn tại; `seat_index` luôn khớp phiên bản đang dùng vì kho vé được dựng lại cùng phiên bản. Bỏ mã `MAP_VERSION_CONFLICT` (DR-64). Muốn đổi bố cục sau giờ mở bán thì hủy sự kiện và tạo sự kiện mới bằng nhân bản sơ đồ.
+- *Đổi 2026-10-06:* đề xuất cũ cho mọi loại thay đổi khi đang bán, so theo 10 nhóm thao tác với câu `UPDATE` có điều kiện cho từng nhóm, trả `MAP_VERSION_CONFLICT` kèm danh sách xung đột và cập nhật lại `seat_index`.
+- **Ghi vào:** DOC-23, DOC-22, DOC-57, DOC-89.
 
 ### DR-38 · Lưu ảnh sự kiện và ảnh mặt bằng — **Đổi: ảnh lưu ở object storage tương thích S3**
 - **Vấn đề:** SDD gốc mục 6.3 và 7.3 có ảnh sự kiện và ảnh nền mặt bằng; mục 14.4 giới hạn loại và kích thước ảnh nền; nhưng kiến trúc không có kho file (chỉ PostgreSQL, Redis). Canvas Studio 02 có "Chọn ảnh … 1920 × 1080 · 420 KB", tỷ lệ 16:9.
@@ -778,10 +816,10 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
     );
     ```
 
-  - Tải lên `POST /organizer/media` (multipart; ảnh sự kiện ≤ 2 MB, mặt bằng ≤ 5 MB; kiểm tra magic bytes, đọc kích thước bằng `ImageIO`, từ chối > 8000 px mỗi cạnh): sinh `media_id`, `PutObject` **trước** (kèm `Content-Type`), rồi chèn dòng `media`. Chèn lỗi → xóa object (cố gắng một lần); object còn sót không có dòng được `RetentionJob` dọn (DR-74). Không có transaction nào giữ connection DB trong lúc gọi storage.
+  - Tải lên `POST /organizer/media` (multipart; ảnh sự kiện ≤ 2 MB, mặt bằng ≤ 5 MB; kiểm tra magic bytes, đọc kích thước bằng `ImageIO`, từ chối > 8000 px mỗi cạnh): sinh `media_id`, `PutObject` **trước** (kèm `Content-Type`), rồi chèn dòng `media`. Chèn lỗi → xóa object (cố gắng một lần); nếu xóa cũng lỗi thì object sót lại trong bucket, chấp nhận (hiếm, chỉ tốn dung lượng; `make reset` xóa sạch), không có job quét bucket (DR-74). Không có transaction nào giữ connection DB trong lúc gọi storage.
   - Phục vụ `GET /media/{id}` (công khai, không tiền tố `/api/v1`): API đọc dòng, stream object từ storage, `Cache-Control: public, max-age=31536000, immutable`, `ETag` = sha256; nginx `proxy_cache` 1 ngày nên storage chỉ bị gọi khi cache trượt. Storage không mở ra ngoài, không dùng presigned URL: URL ảnh ổn định, cache được, và không cần chính sách bucket công khai (mỗi kho S3 cài khác nhau).
   - Không resize ở server; client hiển thị `object-fit: cover`. Nhân bản sơ đồ (DR-31) tham chiếu cùng `media_id`.
-- **Hệ quả:** Thêm container `storage` và volume; `make reset` xóa cả volume này. Backup DB không chứa ảnh. Test tích hợp module `media` chạy Testcontainers với cùng image SeaweedFS. Spike S-01 kiểm tra thêm `PutObject`, `GetObject`, `DeleteObject`, `ListObjectsV2` của AWS SDK v2 với SeaweedFS.
+- **Hệ quả:** Thêm container `storage` và volume; `make reset` xóa cả volume này. Backup DB không chứa ảnh. Test tích hợp module `media` chạy Testcontainers với cùng image SeaweedFS. Spike S-01 kiểm tra thêm `PutObject`, `GetObject`, `DeleteObject` của AWS SDK v2 với SeaweedFS.
 - *Đổi 2026-10-06:* đề xuất cũ là phương án 1 (byte ảnh trong cột `bytea`).
 - **Ghi vào:** ADR-0015, DOC-07, DOC-15, DOC-18, DOC-37, DOC-62.
 
@@ -798,7 +836,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 ### DR-40 · Nhãn ghế lưu vào unit; ghế blocked không có unit — **Chốt**
 - **Vấn đề:** Vé và email cần "Khán đài A · Hàng C · Ghế 9", trình xem cần ánh xạ ghế sang thứ tự, nhưng SDD gốc không có bảng ghế. SDD gốc cũng không nói ghế `blocked` có unit hay không.
 - **Quyết định (Claude chốt, Owner ủy quyền):**
-  - Không có bảng ghế. Khi xuất bản event hoặc phiên bản mới, unit ghế nhận `seat_index` (thứ tự ghế trong tài liệu: duyệt `rows` rồi `seats`), `section_name`, `row_label`, `seat_number`. Phiên bản mới cập nhật `seat_index` cho mọi unit ghế ở mọi trạng thái, vì `seat_index` chỉ là vị trí trong bitmap tình trạng của phiên bản đang dùng; nhãn và loại vé thì chỉ đổi được khi unit `AVAILABLE` (DR-37).
+  - Không có bảng ghế. Khi xuất bản event hoặc phiên bản mới, unit ghế nhận `seat_index` (thứ tự ghế trong tài liệu: duyệt `rows` rồi `seats`), `section_name`, `row_label`, `seat_number`. Phiên bản mới chỉ xuất bản được trước giờ mở bán và dựng lại toàn bộ unit ghế (DR-37), nên `seat_index` và nhãn luôn khớp phiên bản đang dùng.
   - Ghế `blocked` không có unit (hoặc unit `REMOVED` nếu bị chặn sau khi đã có). Sức chứa SEAT = số ghế không blocked gán loại vé đó.
 - **Ghi vào:** DOC-14, DOC-23.
 
@@ -874,15 +912,16 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 - *Đổi 2026-10-05:* đề xuất cũ là thêm chuyển `EXPIRED/CANCELLED → CONFIRMED` cho reservation, claim lại đúng ghế và số lượng, phát hành vé nếu claim đủ, ngược lại `NEEDS_REVIEW`; cột `review_reason`, `review_resolved_at`, email `EMAIL_PAYMENT_REVIEW`.
 - **Ghi vào:** DOC-14, DOC-26, DOC-27, ADR-0004, DOC-49, DOC-50, DOC-51, DOC-65.
 
-### DR-45 · Chi tiết idempotency — **Chốt**
+### DR-45 · Chi tiết idempotency — **Đổi: băm body thô**
 - **Vấn đề:** SDD gốc mục 8.6 chốt cơ chế nhưng không nói hash request tính trên gì, request lỗi có được lưu không, áp cho endpoint nào, thiếu header thì sao, và tạo PaymentIntent (gọi Stripe ngoài transaction) dùng bảng key thế nào.
 - **Quyết định (Claude chốt, Owner ủy quyền):**
   - Header `Idempotency-Key` (UUID) bắt buộc ở `POST /events/{id}/reservations`, `DELETE /reservations/{id}`, `POST /orders/{id}/confirm-free`, `POST /orders/{id}/payment-intent`; thiếu → 400 `IDEMPOTENCY_KEY_REQUIRED`.
-  - `request_hash = SHA-256(operation + "\n" + path + "\n" + JCS(body))`.
+  - `request_hash = SHA-256(operation + "\n" + path + "\n" + body thô)`, băm đúng các byte nhận được, không chuẩn hóa JSON. Client gửi lại với cùng key thì gửi lại đúng chuỗi body đã gửi lần đầu (frontend giữ chuỗi đã serialize cùng với key).
   - Câu đầu tiên của transaction: `INSERT … ON CONFLICT (user_id, idem_key) DO NOTHING`. 0 dòng nghĩa là transaction kia đã commit: đọc dòng đã lưu; khác hash → 422 `IDEMPOTENCY_KEY_REUSED`; cùng hash → trả lại `response_status` và `response_body`, header `Idempotent-Replayed: true`.
   - Chỉ kết quả thành công (2xx) được lưu, vì lỗi làm rollback cả dòng key. Gửi lại sau một 409 sẽ chạy lại thật; đúng ý nghĩa vì 409 không để lại tác dụng phụ.
   - `payment-intent` idempotent tự nhiên theo `order_id` (DR-47); header được nhận để client thống nhất nhưng không ghi vào bảng (không lưu `client_secret` vào database).
   - Dọn key cũ hơn 24 giờ (DR-74).
+- *Đổi 2026-10-06:* đề xuất cũ băm `JCS(body)` (chuẩn hóa JSON theo RFC 8785); bỏ để không cần thư viện chuẩn hóa ở đường giữ vé. Checksum tài liệu sơ đồ (DR-32) vẫn dùng JCS.
 - **Ghi vào:** DOC-25.
 
 ### DR-46 · Cờ hết vé — **Chốt**
@@ -949,9 +988,10 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
 
 ## I. Vé và thông báo
 
-### DR-52 · Định dạng mã vé — **Chốt**
+### DR-52 · Định dạng mã vé — **Đổi: tiền tố do người tổ chức nhập**
 - **Vấn đề:** SDD gốc mục 9.4 nói "mã vé ngẫu nhiên, duy nhất"; canvas dùng `GM-4K7P-92XD`.
-- **Quyết định (Claude chốt, Owner ủy quyền):** `PP-XXXX-XXXX`: `PP` là `event.ticket_code_prefix`, `XXXX-XXXX` là 8 ký tự Crockford Base32 (40 bit từ `SecureRandom`). Tiền tố mặc định là chữ cái đầu của hai từ cuối trong tên sự kiện sau khi bỏ dấu, viết hoa ("Hòa nhạc Giao Mùa" → `GM`); không đủ chữ thì `TK`; người tổ chức sửa được ở Studio 02 khi event còn `DRAFT`. Trùng `code` (xác suất không đáng kể) → sinh lại trong cùng transaction tối đa 3 lần.
+- **Quyết định (Claude chốt, Owner ủy quyền):** `PP-XXXX-XXXX`: `PP` là `event.ticket_code_prefix`, `XXXX-XXXX` là 8 ký tự Crockford Base32 (40 bit từ `SecureRandom`). Tiền tố mặc định `TK`; người tổ chức nhập 2 chữ cái in hoa ở Studio 02 khi event còn `DRAFT` (dữ liệu mẫu đặt `GM` cho "Hòa nhạc Giao Mùa" như canvas, DR-78). Trùng `code` (xác suất không đáng kể) → sinh lại trong cùng transaction tối đa 3 lần.
+- *Đổi 2026-10-06:* đề xuất cũ tự suy tiền tố từ chữ cái đầu của hai từ cuối trong tên sự kiện sau khi bỏ dấu; bỏ vì cần xử lý bỏ dấu tiếng Việt mà giá trị thấp.
 - **Ghi vào:** DOC-27, DOC-14.
 
 ### DR-53 · Outbox: nhịp, lease, backoff; hủy PaymentIntent không qua outbox — ⚠ lệch SDD gốc — **Chốt**
@@ -984,18 +1024,21 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   `limit_req_status 429`; trang lỗi JSON dạng Problem Details `RATE_LIMITED`. IP trong biến `RATE_LIMIT_ALLOWLIST` (map `geo`) được miễn: dùng cho máy sinh tải trong thực nghiệm. Cache: `GET /api/v1/events/{id}/map?version=n` cache 1 ngày ở nginx (`proxy_cache`), `GET /api/v1/events/{id}` cache 5 giây, `/media/` cache 1 ngày. `client_max_body_size 6m`.
 - **Ghi vào:** DOC-28, DOC-62.
 
-### DR-56 · Token bucket theo người dùng và dự phòng khi mất Redis — **Chốt**
+### DR-56 · Token bucket theo người dùng; mất Redis thì không có dự phòng trong bộ nhớ — ⚠ lệch SDD gốc — **Đổi: bỏ rate limiter dự phòng**
 - **Vấn đề:** SDD gốc mục 10.1 có token bucket bằng Lua theo người dùng và mục 10.2 có "rate limiter trong bộ nhớ với ngưỡng thấp" khi mất Redis, không có tham số.
-- **Quyết định (Claude chốt, Owner ủy quyền):** Một script `token_bucket.lua` (key, capacity, refill/giây, now_ms, cost) trả `allowed`, `retryAfterMs`.
+- **Quyết định (Owner chốt):** Một script `token_bucket.lua` (key, capacity, refill/giây, now_ms, cost) trả `allowed`, `retryAfterMs`.
 
   | Bucket | Key | Sức chứa | Nạp lại |
   | --- | --- | --- | --- |
   | Giữ vé, hủy giữ | `rl:hold:{userId}` | 5 | 1 mỗi 2 giây |
   | Tạo PaymentIntent | `rl:pi:{userId}` | 5 | 1 mỗi 5 giây |
   | Hỏi vị trí hàng đợi | `rl:queue:{userId}` | 10 | 1 mỗi giây |
-  | Magic link theo IP | `rl:magic:{ip}` | 10 | 10 mỗi giờ |
 
-  Mất Redis: Bucket4j trong bộ nhớ với cùng tham số chia đôi, cộng một giới hạn toàn cục 200 lệnh giữ vé/giây cho sự kiện `high_demand`; vượt → 503 `OVERLOADED` kèm `Retry-After: 5`. Phát hiện Redis hỏng bằng circuit breaker (3 lỗi liên tiếp → mở 10 giây).
+  Giới hạn magic link theo IP đếm trong database (DR-21), không dùng Redis.
+
+  Mất Redis (lệnh Redis lỗi hoặc quá `spring.data.redis.timeout` = 200 ms): bỏ qua bucket theo người dùng, không có limiter dự phòng. Lớp bảo vệ còn lại: rate limit theo IP ở nginx (DR-55) và bulkhead của lệnh giữ vé (DR-61) trả 503 `OVERLOADED` khi database đầy. Lệnh giữ vé của sự kiện `high_demand` trả 503 `OVERLOADED` kèm `Retry-After: 5` trong lúc mất Redis (không có phòng chờ thì không mở cửa cho cả đám đông). Không có circuit breaker: mỗi request tự thử Redis, timeout ngắn giữ độ trễ trong giới hạn.
+- **Hệ quả:** Không có Bucket4j, không có circuit breaker. Đổi lại: khi mất Redis, sự kiện thường không còn giới hạn theo người dùng, chỉ còn theo IP; tính đúng đắn không đổi vì database vẫn quyết định (SDD gốc 4.2). EXP-08 kiểm tra kịch bản này.
+- *Đổi 2026-10-06:* đề xuất cũ: khi mất Redis dùng Bucket4j trong bộ nhớ với tham số chia đôi, giới hạn toàn cục 200 lệnh giữ vé/giây cho sự kiện `high_demand`, phát hiện Redis hỏng bằng circuit breaker; bucket `rl:magic:{ip}` cho magic link.
 - **Ghi vào:** DOC-28, DOC-17.
 
 ### DR-57 · Mô hình phòng chờ, lượt vào và rời hàng — ⚠ lệch SDD gốc — **Chốt**
@@ -1006,12 +1049,14 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   - `DELETE /events/{id}/queue` xóa người dùng khỏi `prequeue`, `queue`, `admitted`, `seen`; chỗ được cấp cho người kế tiếp ở vòng job sau.
   - Trạng thái trả về: `PRE_QUEUE`, `WAITING`, `ADMITTED`, `PAUSED` ("Tạm hết vé": mọi vé còn lại đang được giữ), `SOLD_OUT`, `NOT_IN_QUEUE`. "Mất kết nối" là trạng thái chỉ của client.
   - Tham số theo sự kiện lấy mặc định cấu hình (SDD gốc 10.2) và không sửa từ giao diện ở giai đoạn này: `max_active` 500, `admit_rate` 50/giây, `pass_ttl` 5 phút, `prequeue_opens` 30 phút, `idle_timeout` 2 phút.
-  - Redis không khả dụng: sự kiện thường giữ vé không cần token; sự kiện `high_demand` dùng giới hạn toàn cục của DR-56.
+  - Redis không khả dụng: sự kiện thường giữ vé không cần lượt vào; sự kiện `high_demand` trả 503 `OVERLOADED` (DR-56).
 - **Ghi vào:** DOC-28, ADR-0008, DOC-45.
 
-### DR-58 · Định dạng token vào cửa — **Chốt**
-- **Vấn đề:** SDD gốc mục 10.2 nói "token vào cửa có chữ ký, gắn với `user_id` và sự kiện", không nói định dạng, khóa, header.
-- **Quyết định (Claude chốt, Owner ủy quyền):** `v1.<base64url(payload)>.<base64url(HMAC-SHA256(secret, "v1." + payload))>`, payload `{"u":"<userId>","e":"<eventId>","iat":1791183600,"exp":1791184500}`; `exp = iat + 15 phút` là trần cứng. Khóa `ADMISSION_TOKEN_SECRET` (32 byte base64). Client gửi header `X-Admission-Token`. Endpoint giữ vé kiểm tra: chữ ký; `u` khớp session; `e` khớp đường dẫn; `exp > now`; và `ZSCORE admitted:{e} u > now_ms` (hạn thật nằm trong Redis, được kéo dài khi giữ vé). Thiếu một điều → 429 `QUEUE_REQUIRED`.
+### DR-58 · Kiểm tra lượt vào ở lệnh giữ vé — ⚠ lệch SDD gốc — **Đổi: không có token vào cửa, kiểm tra thẳng trong Redis**
+- **Vấn đề:** SDD gốc mục 10.2 nói "token vào cửa có chữ ký, gắn với `user_id` và sự kiện", không nói định dạng, khóa, header. Nhưng hạn thật của lượt vào nằm trong Redis (`admitted:{e}`, được kéo dài khi giữ vé), nên endpoint giữ vé đằng nào cũng phải tra Redis; người dùng thì đã có từ session.
+- **Quyết định (Owner chốt):** Không có token vào cửa. Endpoint giữ vé, khi sự kiện đang trong khung có kiểm soát tiếp nhận (DR-57), kiểm tra `ZSCORE admitted:{eventId} <userId> > now_ms` với `userId` lấy từ session. Không có điểm hoặc đã hết hạn → 429 `QUEUE_REQUIRED`; giao diện đưa người mua về Phòng chờ. Redis không khả dụng → theo DR-56, DR-57.
+- **Hệ quả:** Không có secret `ADMISSION_TOKEN_SECRET`, không có header `X-Admission-Token`, không có định dạng token phải ký và kiểm. Lượt vào không chuyển được cho người khác vì gắn với session. Đổi lại, mỗi lệnh giữ vé tốn một lệnh `ZSCORE` (đã tốn sẵn ở thiết kế cũ).
+- *Đổi 2026-10-06:* đề xuất cũ: token `v1.<payload>.<HMAC-SHA256>` chứa `userId`, `eventId`, `exp`, gửi qua header `X-Admission-Token`, kiểm tra chữ ký rồi mới tra `ZSCORE`.
 - **Ghi vào:** DOC-28, DOC-32.
 
 ### DR-59 · Job cấp lượt, script Lua và nhịp hỏi vị trí — **Chốt**
@@ -1024,9 +1069,11 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   - `estimatedWaitSeconds = position / (Σ admit-hist / 60)`; chưa có dữ liệu → `null`, giao diện hiện "Đang ước tính".
 - **Ghi vào:** DOC-28, DOC-17.
 
-### DR-60 · Backpressure cho nhịp vào — **Chốt**
+### DR-60 · Nhịp vào cố định, không tự điều chỉnh — ⚠ lệch SDD gốc — **Đổi: bỏ backpressure tự động**
 - **Vấn đề:** SDD gốc mục 10.2 nói "`admit_rate` giảm khi p95 của lệnh giữ vé vượt ngưỡng và tăng lại khi database rảnh", không có ngưỡng hay thuật toán.
-- **Quyết định (Claude chốt, Owner ủy quyền):** AIMD toàn cục (database dùng chung cho mọi sự kiện): mỗi 5 giây đọc p95 của `ticket_hold_duration_seconds` trong 30 giây gần nhất và `hikaricp_connections_pending`. p95 > 300 ms hoặc có connection đang chờ → `rateFactor = max(0,1; rateFactor × 0,7)`; p95 < 150 ms và không chờ → `rateFactor = min(1; rateFactor + 0,1)`. `admit_rate` hiệu lực = `round(admit_rate × rateFactor)`, tối thiểu 5. `rateFactor` lưu trong Redis `admission:rate-factor`. Ngưỡng là cấu hình, hiệu chỉnh ở EXP-05.
+- **Quyết định (Owner chốt):** Không tự điều chỉnh. `admit_rate` lấy thẳng từ cấu hình `admission.admit-rate` (mặc định 50/giây, DR-57). EXP-05 tăng dần nhịp vào để tìm điểm gãy; giá trị an toàn tìm được ghi thành mặc định mới bằng một dòng trong nhật ký chốt. Database quá tải giữa chừng vẫn được bulkhead (DR-61) chặn bằng 503.
+- **Hệ quả:** Không có vòng điều khiển đọc metric, không có key `admission:rate-factor`. Đổi lại, nhịp vào không tự thích nghi khi máy chậm hơn lúc đo; chấp nhận vì môi trường chạy là một máy cố định.
+- *Đổi 2026-10-06:* đề xuất cũ: AIMD toàn cục mỗi 5 giây theo p95 của `ticket_hold_duration_seconds` và `hikaricp_connections_pending` (nhân 0,7 khi quá tải, cộng 0,1 khi rảnh), lưu `admission:rate-factor` trong Redis.
 - **Ghi vào:** DOC-28, DOC-34.
 
 ### DR-61 · Connection pool, bulkhead và timeout — **Chốt**
@@ -1045,7 +1092,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   16 connection còn lại cho webhook, job, studio, đọc. Hết permit → 503 `OVERLOADED`, `Retry-After` 1–3 giây ngẫu nhiên. Tham số PostgreSQL cho máy thực nghiệm (`shared_buffers`, `work_mem`, `synchronous_commit` giữ `on`) ghi ở DOC-62.
 - **Ghi vào:** DOC-28, DOC-24, DOC-34.
 
-### DR-62 · Định dạng và cache của tình trạng chỗ — **Chốt**
+### DR-62 · Định dạng và cache của tình trạng chỗ — **Đổi: cache trong tiến trình**
 - **Vấn đề:** SDD gốc mục 7.10 nói `GET /events/{id}/availability` trả "danh sách ghế không còn trống" và cache 1–2 giây. Với 20.000 ghế, danh sách UUID có thể tới ~750 KB mỗi lần, client hỏi mỗi 3–5 giây. Canvas phân biệt "Có người giữ" và "Đã bán", SDD gốc không tách.
 - **Quyết định (Owner chốt):**
 
@@ -1060,7 +1107,8 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   }
   ```
 
-  `held`/`sold` là bitset base64, bit `i` (LSB trước trong mỗi byte) ứng với `seat_index = i` (DR-40); 20.000 ghế ≈ 2,5 KB mỗi bitset. Dựng bằng hai truy vấn (ghế `HELD`/`SOLD` theo index `unit_seat_taken_idx`; đếm `AVAILABLE` theo pool và loại vé). Cache Redis `avail:{e}` PX 2000 với single-flight `SET avail-lock:{e} NX PX 2000`; người thua dùng bản cũ `avail-stale:{e}` (TTL 60 giây). Mất Redis → Caffeine 2 giây trong tiến trình. Client hỏi mỗi 4 giây ± 0,5 giây, dừng khi tab ẩn; response `mapVersion` khác bản đang có → tải lại sơ đồ.
+  `held`/`sold` là bitset base64, bit `i` (LSB trước trong mỗi byte) ứng với `seat_index = i` (DR-40); 20.000 ghế ≈ 2,5 KB mỗi bitset. Dựng bằng hai truy vấn (ghế `HELD`/`SOLD` theo index `unit_seat_taken_idx`; đếm `AVAILABLE` theo pool và loại vé). Cache Caffeine trong tiến trình theo `eventId`, hết hạn 2 giây sau khi ghi; lấy bằng `cache.get(eventId, loader)` nên nhiều request cùng lúc cho một sự kiện chỉ dựng một lần (Caffeine tự gộp). Hệ thống chạy một instance API (SDD gốc 14.1) nên không cần cache chung; không phụ thuộc Redis. Client hỏi mỗi 4 giây ± 0,5 giây, dừng khi tab ẩn; response `mapVersion` khác bản đang có → tải lại sơ đồ.
+- *Đổi 2026-10-06:* đề xuất cũ cache trong Redis `avail:{e}` với khóa single-flight `avail-lock:{e}`, bản cũ `avail-stale:{e}` cho người thua và Caffeine dự phòng khi mất Redis. Định dạng bitmap giữ nguyên.
 - **Ghi vào:** ADR-0013, DOC-29, DOC-37.
 
 ---
@@ -1096,7 +1144,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   | 409 | `STALE_EVENT_VERSION` | `PATCH` với `rowVersion` cũ |
   | 409 | `ORGANIZER_EXISTS` | Lập hồ sơ lần hai |
   | 409 | `TICKET_TYPE_IN_USE`, `CAPACITY_BELOW_USED` | DR-26, DR-30 |
-  | 409 | `MAP_VERSION_CONFLICT`, `MAP_PUBLISH_BUSY`, `MAP_LOCKED_AFTER_SALE` | DR-37 |
+  | 409 | `MAP_LOCKED_AFTER_SALE` (sửa hoặc xuất bản sơ đồ từ giờ mở bán), `MAP_PUBLISH_BUSY` | DR-37 |
   | 409 | `MAP_ALREADY_EXISTS` | Nhân bản sơ đồ vào event đã có sơ đồ (DR-31) |
   | 413 | `PAYLOAD_TOO_LARGE` | Tài liệu sơ đồ > 5 MB, ảnh vượt giới hạn |
   | 422 | `PUBLISH_PRECONDITIONS_FAILED` | Kèm danh sách điều kiện chưa đạt |
@@ -1104,6 +1152,7 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   | 422 | `TICKET_TYPE_LIMIT_REACHED`, `MEDIA_INVALID` | DR-26, DR-38 |
   | 500 | `INTERNAL_ERROR` | Kèm `requestId` (màn E5) |
   | 503 | `PAYMENT_PROVIDER_UNAVAILABLE` | Stripe lỗi khi tạo PaymentIntent |
+  | 503 | `EMAIL_PROVIDER_UNAVAILABLE` | SMTP lỗi khi gửi magic link (DR-21) |
 - **Ghi vào:** DOC-35, DOC-36, DOC-40.
 
 ### DR-65 · Endpoint còn thiếu cho các màn hình — **Chốt**
@@ -1210,22 +1259,22 @@ SDD gốc mục 11 cố ý chỉ nêu mô hình khái niệm. DDL dưới đây 
   - Kết quả: `{ "checkedAt", "durationMs", "violations": [{ "check": "POOL_UNIT_COUNT", "count": 1, "sample": ["<poolId>"] }] }`, tối đa 10 ID mỗi mục; có sai lệch thì log ERROR.
 - **Ghi vào:** DOC-30, DOC-66.
 
-### DR-74 · Lưu giữ dữ liệu và job dọn — **Chốt**
+### DR-74 · Lưu giữ dữ liệu và job dọn — **Đổi: bỏ quét bucket**
 - **Vấn đề:** SDD gốc mục 8.6 dọn key idempotency sau 24 giờ; các bảng khác (token, session, webhook, outbox, ảnh không dùng) không có chính sách.
 - **Quyết định (Claude chốt, Owner ủy quyền):** `RetentionJob` chạy 03:00 theo `PLATFORM_TIMEZONE`, xóa theo lô 5.000 dòng:
 
   | Dữ liệu | Giữ |
   | --- | --- |
-  | `login_token` | Xóa 24 giờ sau `expires_at`; outbox magic link chưa gửi mà token đã hết hạn → xóa trường token |
+  | `login_token` | Xóa 24 giờ sau `expires_at` |
   | `session` | Xóa 7 ngày sau khi hết hạn hoặc thu hồi |
   | `idempotency_key` | 24 giờ |
   | `stripe_event` | 30 ngày |
   | `outbox` | `SENT` 7 ngày, `FAILED` 30 ngày |
   | `media` không được tham chiếu | 24 giờ sau khi tạo: `DeleteObject` rồi xóa dòng |
-  | Object trong bucket không có dòng `media` (tải lên dở) | Quét `ListObjectsV2` mỗi ngày, xóa object cũ hơn 24 giờ |
   | reservation, order, ticket, unit | Giữ nguyên (đối soát về sau) |
 
   Dữ liệu cá nhân: email chỉ ở `app_user`, `login_token`, `organizer.contact_email`, payload outbox; không vào log.
+- *Đổi 2026-10-06:* đề xuất cũ quét bucket bằng `ListObjectsV2` mỗi ngày để xóa object không có dòng `media`, và xóa token mã hóa trong outbox magic link; cả hai bỏ theo DR-38, DR-21.
 - **Ghi vào:** DOC-18.
 
 ### DR-75 · Môi trường và mô hình tải của thực nghiệm — 🔬 spike — **Chốt**
@@ -1269,11 +1318,11 @@ Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu
 | Chặn P2 | DR-13, DR-15–18, DR-20, DR-24–28, DR-30, DR-38, DR-40–43, DR-45, DR-52, DR-61, DR-65, DR-66, DR-70, DR-73–76 | Schema kho vé và reservation, câu claim, job trả vé, idempotency, xuất bản và hủy sự kiện, kiểm tra bất biến, mô hình tải của EXP-02/03/04/10 |
 | Chặn P3 | DR-29, DR-44, DR-47–51 | Tranh chấp tạo PaymentIntent với job trả vé, webhook, thanh toán đến trễ, cổng thanh toán giả cho EXP-06/07 |
 | Chặn P4 | DR-31–36, DR-39 | Schema tài liệu sơ đồ, thuật toán hình học, validate dùng chung, tự lưu, kiến trúc editor |
-| Chặn P5 | DR-37, DR-62, DR-69, DR-71 | So sánh phiên bản khi đang bán, định dạng tình trạng chỗ, chọn ghế, số liệu bán vé |
-| Chặn P6 | DR-46, DR-55–60 | Tham số rate limit, phòng chờ, token vào cửa, backpressure |
+| Chặn P5 | DR-37, DR-62, DR-69, DR-71 | Khóa sơ đồ từ giờ mở bán và dựng lại kho vé trước đó, định dạng tình trạng chỗ, chọn ghế, số liệu bán vé |
+| Chặn P6 | DR-46, DR-55–60 | Tham số rate limit, phòng chờ, kiểm tra lượt vào, nhịp vào |
 | Chặn P7 | DR-78 | Dữ liệu và kịch bản demo |
 
-Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-41, DR-43, DR-44, DR-53, DR-57, DR-73.
+Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-37, DR-41, DR-43, DR-44, DR-53, DR-56, DR-57, DR-58, DR-60, DR-73.
 Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06).
 
 Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-06). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.
