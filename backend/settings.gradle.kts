@@ -1,3 +1,1 @@
-rootProject.name = "ticket-booking"
-
-include("api")
+rootProject.name = "api"

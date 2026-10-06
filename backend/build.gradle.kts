@@ -1,6 +1,7 @@
 plugins {
     java
     alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spotless)
 }
 
 group = "app.ticket"
@@ -47,4 +48,41 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test { useJUnitPlatform() }
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat(
+            libs.versions.google.java.format
+                .get(),
+        )
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint()
+    }
+}
+
+testing {
+    suites {
+        val integrationTest by registering(JvmTestSuite::class) {
+            useJUnitJupiter()
+            dependencies {
+                implementation(project())
+                implementation(platform(libs.testcontainers.bom))
+                implementation("org.springframework.boot:spring-boot-starter-test")
+                implementation("org.springframework.boot:spring-boot-testcontainers")
+                implementation("org.testcontainers:testcontainers-junit-jupiter")
+                implementation("org.testcontainers:testcontainers-postgresql")
+                implementation(libs.awaitility)
+            }
+            targets.all {
+                testTask.configure {
+                    shouldRunAfter(tasks.test)
+                    systemProperty("spring.profiles.active", "test")
+                }
+            }
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(tasks.named("integrationTest")) }
