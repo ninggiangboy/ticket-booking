@@ -549,17 +549,17 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 | P0-05 | Chạy S-04 | Số đo fps; DR-39 chốt | P0-01 | DOC-22 |
 | P0-06 | Chạy S-05 | Số đo; DR-35 chốt | P0-01 | DOC-21 |
 | P0-07 | Chạy S-06 | Trần người dùng ảo; DR-75 chốt (và DR hiệu chỉnh NFR-02 nếu cần) | P0-01 | DOC-70 |
-| P0-08 | Viết DOC-06 Thuật ngữ — **Review 2026-10-06** | Có đủ danh sách tối thiểu ở §3.2; Approved | P0-01 | DOC-06 |
-| P0-09 | Viết DOC-01, DOC-02 — **Review 2026-10-06** | Approved | P0-08 | DOC-01, DOC-02 |
-| P0-10 | Viết DOC-03 Yêu cầu — **Review 2026-10-06** | FR-01…21, NFR-01…08 có G/W/T với số; Approved | P0-09 | DOC-03 |
-| P0-11 | Viết DOC-04 Use case và DOC-05 Danh mục tính năng — **Review 2026-10-06** | UC-01…22 theo mẫu A.2; Approved | P0-10 | DOC-04, DOC-05 |
-| P0-12 | Viết DOC-07, DOC-11, DOC-12, DOC-13 và ADR-0001, 0002, 0006, 0007, 0011, 0012, 0016, 0018 — **Review 2026-10-06** | Bảng sở hữu dữ liệu đủ mọi bảng; ADR `Accepted`; Approved | P0-02, P0-11 | DOC-07, DOC-11, DOC-12, DOC-13 |
-| P0-13 | Viết DOC-14, DOC-15 — **Review 2026-10-06** | **DDL chạy sạch trên `postgres:18-alpine`** bằng `psql -f` (script lưu ở `deploy/compose/scratch/ddl-check.sql`); Approved | P0-12 | DOC-14, DOC-15 |
-| P0-14 | Viết DOC-61, DOC-62, DOC-63, DOC-69 — **Review 2026-10-06** | Approved (DOC-63 phần khung) | P0-13 | DOC-61, DOC-62, DOC-63, DOC-69 |
-| P0-15 | Viết DOC-19, DOC-27, DOC-31, DOC-32, DOC-33, DOC-34 (khung), DOC-35 — **Review 2026-10-06** | Approved | P0-13 | DOC-19, DOC-27, DOC-31, DOC-32, DOC-33, DOC-34, DOC-35 |
-| P0-16 | Viết DOC-36, DOC-37 (khung: nhóm xác thực, `/me`) — **Review 2026-10-06** | Approved | P0-15 | DOC-36, DOC-37 |
-| P0-17 | Viết DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 — **Review 2026-10-06** | Microcopy có đủ `en` và `vi` cho các màn gate P1; Approved | P0-15 | DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 |
-| P0-19 | Viết DOC-82 Mục lục luồng chi tiết và DOC-83 Luồng đăng nhập và tài khoản — **Review 2026-10-06** | FL-01…04 có sơ đồ tuần tự với mọi nhánh lỗi của UC-01, UC-20; thành phần tham gia khớp DOC-07, DOC-37, DOC-44; Approved | P0-16, P0-17 | DOC-82, DOC-83 |
+| P0-08 | Viết DOC-06 Thuật ngữ — **Approved 2026-10-07** | Có đủ danh sách tối thiểu ở §3.2; Approved | P0-01 | DOC-06 |
+| P0-09 | Viết DOC-01, DOC-02 — **Approved 2026-10-07** | Approved | P0-08 | DOC-01, DOC-02 |
+| P0-10 | Viết DOC-03 Yêu cầu — **Approved 2026-10-07** | FR-01…21, NFR-01…08 có G/W/T với số; Approved | P0-09 | DOC-03 |
+| P0-11 | Viết DOC-04 Use case và DOC-05 Danh mục tính năng — **Approved 2026-10-07** | UC-01…22 theo mẫu A.2; Approved | P0-10 | DOC-04, DOC-05 |
+| P0-12 | Viết DOC-07, DOC-11, DOC-12, DOC-13 và ADR-0001, 0002, 0006, 0007, 0011, 0012, 0016, 0018 — **Approved 2026-10-07** | Bảng sở hữu dữ liệu đủ mọi bảng; ADR `Accepted`; Approved | P0-02, P0-11 | DOC-07, DOC-11, DOC-12, DOC-13 |
+| P0-13 | Viết DOC-14, DOC-15 — **Approved 2026-10-07** | **DDL chạy sạch trên `postgres:18-alpine`** bằng `psql -f` (script lưu ở `deploy/compose/scratch/ddl-check.sql`); Approved | P0-12 | DOC-14, DOC-15 |
+| P0-14 | Viết DOC-61, DOC-62, DOC-63, DOC-69 — **Approved 2026-10-07** | Approved (DOC-63 phần khung) | P0-13 | DOC-61, DOC-62, DOC-63, DOC-69 |
+| P0-15 | Viết DOC-19, DOC-27, DOC-31, DOC-32, DOC-33, DOC-34 (khung), DOC-35 — **Approved 2026-10-07** | Approved | P0-13 | DOC-19, DOC-27, DOC-31, DOC-32, DOC-33, DOC-34, DOC-35 |
+| P0-16 | Viết DOC-36, DOC-37 (khung: nhóm xác thực, `/me`) — **Approved 2026-10-07** | Approved | P0-15 | DOC-36, DOC-37 |
+| P0-17 | Viết DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 — **Approved 2026-10-07** | Microcopy có đủ `en` và `vi` cho các màn gate P1; Approved | P0-15 | DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 |
+| P0-19 | Viết DOC-82 Mục lục luồng chi tiết và DOC-83 Luồng đăng nhập và tài khoản — **Approved 2026-10-07** | FL-01…04 có sơ đồ tuần tự với mọi nhánh lỗi của UC-01, UC-20; thành phần tham gia khớp DOC-07, DOC-37, DOC-44; Approved | P0-16, P0-17 | DOC-82, DOC-83 |
 | P0-18 | Duyệt M0 | Checklist M0 đạt; `check_docs.py` không còn E1/E2 cho ID đã định nghĩa | P0-02…17, P0-19 | — |
 
 **Tiêu chí thoát (M0):** mọi DR chặn P1 và P2 ở trạng thái Chốt/Đổi; 6 spike có ghi chú kết luận; 34 tài liệu và 8 ADR gate P1 Approved; DDL của DOC-14/15 chạy sạch trên PostgreSQL 18.
