@@ -76,7 +76,7 @@ sequenceDiagram
     M->>D: UPDATE login_token SET superseded_at = now() WHERE email, used_at IS NULL, superseded_at IS NULL
     M->>D: INSERT login_token (token_hash, email, return_to, locale, requested_ip, expires_at = now()+15 phút)
     Note over M,D: T1 commit
-    Note right of D: Nếu tiến trình chết ở đây: token đã lưu, chưa có email. Người dùng thấy lỗi mạng và bấm Gửi lại; token cũ bị thay
+    Note right of D: Nếu tiến trình chết ở đây: token đã lưu, chưa có email. Người dùng thấy lỗi mạng và bấm Gửi lại, token cũ bị thay
     M->>S: SMTP gửi email magic-link (timeout 5 giây, không thử lại)
     alt E3 SMTP lỗi hoặc quá 5 giây
       S-->>M: lỗi
@@ -289,7 +289,7 @@ sequenceDiagram
   else E1 không có session hợp lệ
     Note over SS: không ghi gì
   end
-  A-->>W: 204 + Set-Cookie tb_session=; Max-Age=0
+  A-->>W: 204 + xóa cookie tb_session (Max-Age=0)
   W->>W: authStore.clear(), queryClient.clear(), giữ tb_lang và tb.selection
   W-->>M: navigate /login, state signed_out
   M-->>B: Bạn đã đăng xuất khỏi trình duyệt này (auth.signedOut.notice)
@@ -316,7 +316,7 @@ sequenceDiagram
   end
   alt E2 không có dòng
     SS-->>A: UnauthenticatedException
-    A-->>W: 401 UNAUTHENTICATED + Set-Cookie tb_session=; Max-Age=0
+    A-->>W: 401 UNAUTHENTICATED + xóa cookie tb_session (Max-Age=0)
     W->>W: authStore.clear(), lưu returnTo = location.pathname + search
     W-->>X: navigate /login?returnTo=…, state session_expired
     X-->>B: Phiên đăng nhập đã hết hạn… (auth.sessionOver.notice)
@@ -410,7 +410,7 @@ sequenceDiagram
       Note over A,D: T1 begin
       A->>D: UPDATE app_user SET locale = 'en' WHERE user_id = :u
       Note over A,D: T1 commit
-      Note right of D: Nếu tiến trình chết ở đây: app_user.locale đã đổi, response chưa tới client. Giao diện đã đổi; lần tải sau đồng bộ lại từ GET /me
+      Note right of D: Nếu tiến trình chết ở đây: app_user.locale đã đổi, response chưa tới client. Giao diện đã đổi, lần tải sau đồng bộ lại từ GET /me
       A-->>W: 200 {userId, email, locale: en, …}
     end
     alt E2 PATCH lỗi mạng hoặc 5xx
