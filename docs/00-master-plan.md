@@ -541,8 +541,8 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
-| P0-00 | Gate: SDD gốc, canvas màn hình, sổ quyết định và master plan ở trạng thái Review | Owner đã đọc §1 và bảng "Tổng hợp theo mức ảnh hưởng" | — | — |
-| P0-01 | Owner duyệt sổ quyết định: trước hết các DR chặn P1, P2 | Mọi DR chặn P1/P2 ở trạng thái Chốt hoặc Đổi; nhật ký chốt có dòng tương ứng; master plan `Approved v1.0` | P0-00 | Sổ quyết định |
+| P0-00 | Gate: SDD gốc, canvas màn hình, sổ quyết định và master plan ở trạng thái Review — **Xong 2026-10-07** (`b87c24a`) | Owner đã đọc §1 và bảng "Tổng hợp theo mức ảnh hưởng" | — | — |
+| P0-01 | Owner duyệt sổ quyết định: trước hết các DR chặn P1, P2 — **Xong 2026-10-07** (`b87c24a`) | Mọi DR chặn P1/P2 ở trạng thái Chốt hoặc Đổi; nhật ký chốt có dòng tương ứng; master plan `Approved v1.0` | P0-00 | Sổ quyết định |
 | P0-02 | Chạy S-01 — **Xong 2026-10-06** (`c664945`) | Kết luận ghi vào DR-02; DOC-11 có bảng tương thích | P0-01 | DOC-11 |
 | P0-03 | Chạy S-02 | Ghi chú spike; DR-13, DR-47 cập nhật số | P0-01 | DOC-09 |
 | P0-04 | Chạy S-03 | Số đo ghi vào DR-27; quyết định `INSERT … SELECT` hay `COPY` | P0-01 | DOC-24 |
