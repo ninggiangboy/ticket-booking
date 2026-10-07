@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Approved v1.0** · Cập nhật: 2026-10-07 (mọi DR-01…151 đã Chốt hoặc Đổi; Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-07 (mọi DR-01…152 đã Chốt hoặc Đổi; Owner hoãn spike S-02…S-06 (DR-152); Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -50,6 +50,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-143–151: Khóa `saleStartsAt`, loại vé chỉ thêm khi DRAFT, `PUT draft` chỉ kiểm schema; quy ước cấu hình, `ConfigurationGuard`, tên khóa; mã mức test, ID test trong `@DisplayName`, ngưỡng nhánh 75% (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-143–151, DOC-37, DOC-34, DOC-69 |
 | 2026-10-06 | Claude (Owner yêu cầu chạy) | Chốt qua spike S-01: giữ Java 25 + Spring Boot 4.0.8, không lùi Java 21; 9 kịch bản tích hợp xanh trên PostgreSQL 18 và SeaweedFS 4.48. Phát hiện: Boot 4 dùng Jackson 3 nên networknt đổi từ 1.5.x sang 3.0.8; SeaweedFS cần `-s3.config` | DR-02, DR-81, ADR-0011, DOC-11 |
 | 2026-10-07 | Owner | Chốt theo đề xuất DR-123–130 (ops): profile `seed` và target `make` bổ sung, ba file compose, `PAYMENTS_MODE` khớp profile, khóa công khai Stripe bằng build arg, body 429 của nginx và CSP cho Stripe Elements, `e2e.yml` riêng, job `audit` và `breaking-ok`, branch protection `dev`/`main`. Sổ quyết định và master plan lên `Approved v1.0` (P0-01) | DR-123–130, DOC-61, DOC-62, DOC-63, master plan P0-00, P0-01 |
+| 2026-10-07 | Owner | Hoãn spike S-02…S-06 tới gate của phase cần kết quả; M0 chỉ cần S-01 | DR-152, master plan §4.1, §5, §9, P0-03…07, P0-18, P2-00, P3-00, P4-00 |
 
 ---
 
@@ -211,6 +212,12 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 ### DR-81 · Thư viện và package kỹ thuật bổ sung — **Chốt** (Claude, Owner ủy quyền)
 - **Quyết định:** Thêm ngoài DR-02…05: JCS `io.github.erdtman:java-json-canonicalization`, `com.networknt:json-schema-validator`, Spring Data Redis (Lettuce), Awaitility, Spotless + google-java-format, Immer, MSW, `oasdiff`, `@fontsource/*`. Package kỹ thuật `<module>.config` (`@Configuration`, `@ConfigurationProperties`) không phải layer. Ngưỡng JS ban đầu trang sự kiện ≤ 200 KB gzip kiểm bằng script kích thước.
 - **Ghi vào:** DOC-11, DOC-12.
+
+### DR-152 · Spike chạy ngay trước gate của phase cần kết quả — **Chốt** (Owner)
+- **Vấn đề:** M0 đòi S-01…S-06 có kết luận trước P1, nhưng chỉ S-01 ảnh hưởng tài liệu và code của P1. S-02…S-06 chỉ cập nhật số cho tài liệu của P2–P4 (DOC-09, DOC-21, DOC-22, DOC-24, DOC-70), và ba spike cần Stripe, máy chuẩn hoặc máy thực nghiệm.
+- **Quyết định:** Hoãn S-02…S-06; mỗi spike chạy trước gate của phase đầu tiên cần kết quả: S-03 (P0-04) và S-06 (P0-07) trước P2-00; S-02 (P0-03) trước P3-00; S-04 (P0-05) và S-05 (P0-06) trước P4-00. Giữ nguyên ID task; M0 chỉ cần S-01.
+- **Hệ quả:** P1 bắt đầu được ngay sau P0-18. DR-13, DR-27, DR-35, DR-39, DR-75 giữ phương án đã chốt tới khi spike tương ứng chạy; kết quả xấu ghi thành dòng mới trong nhật ký chốt như cũ.
+- **Ghi vào:** Master plan §4.1, §5 (Phase 0, gate P2-00, P3-00, P4-00), §9.
 
 ---
 
@@ -1769,6 +1776,6 @@ Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu
 | Chặn P7 | DR-78 | Dữ liệu và kịch bản demo |
 
 Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-37, DR-41, DR-43, DR-44, DR-53, DR-56, DR-57, DR-58, DR-60, DR-73.
-Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06).
+Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06); S-02…S-06 chạy trước gate của phase cần (DR-152).
 
 Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-07; DR-123–130 do Owner chốt theo đề xuất). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.

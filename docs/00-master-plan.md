@@ -1,6 +1,6 @@
 # Master Plan: xây dựng Hệ thống đặt vé sự kiện từ đầu đến cuối
 
-> Trạng thái: **Approved v1.0** · Cập nhật: 2026-10-07 (Owner duyệt P0-00, P0-01; mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 28, 31, 37, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; theo template mới của skill: thêm luồng chi tiết DOC-82…90, FL-01…35) · Đi kèm: [00-decision-register.md](00-decision-register.md) · Nguồn: `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé"
+> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-07 (Owner duyệt P0-00, P0-01; hoãn S-02…S-06 tới gate của phase cần (DR-152); mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 28, 31, 37, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; theo template mới của skill: thêm luồng chi tiết DOC-82…90, FL-01…35) · Đi kèm: [00-decision-register.md](00-decision-register.md) · Nguồn: `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé"
 
 Tài liệu này gồm bốn phần: (1) các khoảng trống của SDD gốc, đối chiếu với canvas màn hình, mỗi khoảng trống đã thành một mục trong [sổ quyết định](00-decision-register.md); (2) toàn bộ tài liệu cần viết, nội dung bắt buộc và gate của từng tài liệu; (3) toàn bộ công việc theo phase kèm tiêu chí nghiệm thu đo được; (4) ma trận truy vết từ yêu cầu tới công việc và cách kiểm chứng.
 
@@ -482,7 +482,7 @@ Số tuần là ước lượng để lập kế hoạch, hiệu chỉnh lại s
 
 | Phase | Tên | Ước lượng (1 người, toàn thời gian) | Milestone |
 | --- | --- | --- | --- |
-| P0 | Đặc tả, chốt DR, spike | 2,5 tuần | **M0**: mọi DR chặn P1/P2 đã Chốt; S-01…S-06 có kết luận; mọi tài liệu gate P1 Approved |
+| P0 | Đặc tả, chốt DR, spike | 2,5 tuần | **M0**: mọi DR chặn P1/P2 đã Chốt; S-01 có kết luận (S-02…S-06 hoãn tới gate của phase cần, DR-152); mọi tài liệu gate P1 Approved |
 | P1 | Nền tảng | 2 tuần | **M1**: `docker compose up` → mọi container healthy ≤ 3 phút; đăng nhập magic link qua Mailpit bằng `en` và `vi`; CI xanh |
 | P2 | Kho vé GA | 3,5 tuần | **M2**: tạo, xuất bản sự kiện GA từ studio; giữ vé, hết hạn, nhận vé 0 đồng đầu cuối kèm email vé; EXP-02, 03, 04, 10 có số liệu, `make invariants` sạch |
 | P3 | Thanh toán | 2 tuần | **M3**: mua vé GA bằng thẻ test Stripe, nhận vé qua email; thanh toán đến trễ ra `REFUND_PENDING` có email chờ hoàn tiền; EXP-06, 07 đạt 0 sai lệch |
@@ -544,11 +544,11 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 | P0-00 | Gate: SDD gốc, canvas màn hình, sổ quyết định và master plan ở trạng thái Review — **Xong 2026-10-07** (`b87c24a`) | Owner đã đọc §1 và bảng "Tổng hợp theo mức ảnh hưởng" | — | — |
 | P0-01 | Owner duyệt sổ quyết định: trước hết các DR chặn P1, P2 — **Xong 2026-10-07** (`b87c24a`) | Mọi DR chặn P1/P2 ở trạng thái Chốt hoặc Đổi; nhật ký chốt có dòng tương ứng; master plan `Approved v1.0` | P0-00 | Sổ quyết định |
 | P0-02 | Chạy S-01 — **Xong 2026-10-06** (`c664945`) | Kết luận ghi vào DR-02; DOC-11 có bảng tương thích | P0-01 | DOC-11 |
-| P0-03 | Chạy S-02 | Ghi chú spike; DR-13, DR-47 cập nhật số | P0-01 | DOC-09 |
-| P0-04 | Chạy S-03 | Số đo ghi vào DR-27; quyết định `INSERT … SELECT` hay `COPY` | P0-01 | DOC-24 |
-| P0-05 | Chạy S-04 | Số đo fps; DR-39 chốt | P0-01 | DOC-22 |
-| P0-06 | Chạy S-05 | Số đo; DR-35 chốt | P0-01 | DOC-21 |
-| P0-07 | Chạy S-06 | Trần người dùng ảo; DR-75 chốt (và DR hiệu chỉnh NFR-02 nếu cần) | P0-01 | DOC-70 |
+| P0-03 | Chạy S-02 — **Hoãn 2026-10-07**: chạy trước P3-00 (DR-152) | Ghi chú spike; DR-13, DR-47 cập nhật số | P0-01 | DOC-09 |
+| P0-04 | Chạy S-03 — **Hoãn 2026-10-07**: chạy trước P2-00 (DR-152) | Số đo ghi vào DR-27; quyết định `INSERT … SELECT` hay `COPY` | P0-01 | DOC-24 |
+| P0-05 | Chạy S-04 — **Hoãn 2026-10-07**: chạy trước P4-00 (DR-152) | Số đo fps; DR-39 chốt | P0-01 | DOC-22 |
+| P0-06 | Chạy S-05 — **Hoãn 2026-10-07**: chạy trước P4-00 (DR-152) | Số đo; DR-35 chốt | P0-01 | DOC-21 |
+| P0-07 | Chạy S-06 — **Hoãn 2026-10-07**: chạy trước P2-00 (DR-152) | Trần người dùng ảo; DR-75 chốt (và DR hiệu chỉnh NFR-02 nếu cần) | P0-01 | DOC-70 |
 | P0-08 | Viết DOC-06 Thuật ngữ — **Approved 2026-10-07** | Có đủ danh sách tối thiểu ở §3.2; Approved | P0-01 | DOC-06 |
 | P0-09 | Viết DOC-01, DOC-02 — **Approved 2026-10-07** | Approved | P0-08 | DOC-01, DOC-02 |
 | P0-10 | Viết DOC-03 Yêu cầu — **Approved 2026-10-07** | FR-01…21, NFR-01…08 có G/W/T với số; Approved | P0-09 | DOC-03 |
@@ -560,9 +560,9 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 | P0-16 | Viết DOC-36, DOC-37 (khung: nhóm xác thực, `/me`) — **Approved 2026-10-07** | Approved | P0-15 | DOC-36, DOC-37 |
 | P0-17 | Viết DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 — **Approved 2026-10-07** | Microcopy có đủ `en` và `vi` cho các màn gate P1; Approved | P0-15 | DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 |
 | P0-19 | Viết DOC-82 Mục lục luồng chi tiết và DOC-83 Luồng đăng nhập và tài khoản — **Approved 2026-10-07** | FL-01…04 có sơ đồ tuần tự với mọi nhánh lỗi của UC-01, UC-20; thành phần tham gia khớp DOC-07, DOC-37, DOC-44; Approved | P0-16, P0-17 | DOC-82, DOC-83 |
-| P0-18 | Duyệt M0 | Checklist M0 đạt; `check_docs.py` không còn E1/E2 cho ID đã định nghĩa | P0-02…17, P0-19 | — |
+| P0-18 | Duyệt M0 | Checklist M0 đạt; `check_docs.py` không còn E1/E2 cho ID đã định nghĩa | P0-02, P0-08…17, P0-19 | — |
 
-**Tiêu chí thoát (M0):** mọi DR chặn P1 và P2 ở trạng thái Chốt/Đổi; 6 spike có ghi chú kết luận; 34 tài liệu và 8 ADR gate P1 Approved; DDL của DOC-14/15 chạy sạch trên PostgreSQL 18.
+**Tiêu chí thoát (M0):** mọi DR chặn P1 và P2 ở trạng thái Chốt/Đổi; S-01 có ghi chú kết luận, S-02…S-06 hoãn tới gate của phase cần (DR-152); 34 tài liệu và 8 ADR gate P1 Approved; DDL của DOC-14/15 chạy sạch trên PostgreSQL 18.
 
 ### Phase 1: Nền tảng
 
@@ -590,7 +590,7 @@ Mục tiêu: lõi NEVER OVERSELL chạy đầu cuối trên mô hình đơn gi�
 
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
-| P2-00 | Gate: DOC-08, DOC-10, DOC-18, DOC-20, DOC-24, DOC-25, DOC-30, DOC-42, DOC-43, DOC-47…50, DOC-53…56, DOC-58, DOC-59, DOC-66, DOC-70, DOC-72, DOC-73, DOC-74, DOC-80, DOC-84…86; ADR-0003, 0004, 0015 | Approved | M1 | — |
+| P2-00 | Gate: DOC-08, DOC-10, DOC-18, DOC-20, DOC-24, DOC-25, DOC-30, DOC-42, DOC-43, DOC-47…50, DOC-53…56, DOC-58, DOC-59, DOC-66, DOC-70, DOC-72, DOC-73, DOC-74, DOC-80, DOC-84…86; ADR-0003, 0004, 0015 | Approved | M1, P0-04, P0-07 | — |
 | P2-01 | Migration: `media`, `event`, `ticket_type`, `seat_map`, `seat_map_version` + trigger, `inventory_pool`, `inventory_unit`, `reservation`, `reservation_item`, `orders`, `ticket` | Test: `UPDATE seat_map_version` bị từ chối; chèn unit `HELD` không có `reservation_id` bị CHECK từ chối; hai reservation `ACTIVE` cùng (user, event) bị unique index từ chối | P2-00 | DOC-14 |
 | P2-02.1 | **BE** `POST /organizer`, `GET /me` trả `organizer` | Test: lập hồ sơ lần hai → 409 `ORGANIZER_EXISTS`; `/organizer/**` khi chưa có hồ sơ → 403 `ORGANIZER_PROFILE_REQUIRED` | P2-01 | DOC-19, DOC-37, DOC-84 |
 | P2-02.2 | **FE** Màn Studio 00 (lập hồ sơ tổ chức, 3 biến thể) | Playwright với mock: gửi form → vào Studio; mock 409 `ORGANIZER_EXISTS` → hiện đúng biến thể; `en` và `vi`. Tích hợp thật khi P2-02.1 xong | P1-10, hợp đồng `E-xx` (mock tới khi P2-02.1 xong) | DOC-53, DOC-41, DOC-84 |
@@ -616,7 +616,7 @@ Mục tiêu: lõi NEVER OVERSELL chạy đầu cuối trên mô hình đơn gi�
 
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
-| P3-00 | Gate: DOC-09, DOC-26, DOC-64, DOC-65, DOC-67, DOC-76, DOC-77, DOC-87; ADR-0005, 0017 | Approved | M2 | — |
+| P3-00 | Gate: DOC-09, DOC-26, DOC-64, DOC-65, DOC-67, DOC-76, DOC-77, DOC-87; ADR-0005, 0017 | Approved | M2, P0-03 | — |
 | P3-01 | Port `PaymentGateway`, adapter Stripe và adapter giả với webhook ký HMAC | Test: adapter giả và Stripe test mode cho cùng chuỗi trạng thái trên 5 kịch bản của S-02 | P3-00 | DOC-26, DOC-09 |
 | P3-02 | `POST /orders/{id}/payment-intent` với giao thức `FOR SHARE` | Test PAY: chèn trễ giữa tạo và lưu PaymentIntent, cho hết hạn đúng lúc, 500 lần → 0 PaymentIntent thành công mà vé đã trả | P3-01 | DOC-26, DOC-87 |
 | P3-03 | Job trả vé và đường nhanh gọi hủy PaymentIntent; nhánh "đã succeeded" gọi handler xác nhận | Test: Stripe timeout → reservation giữ `EXPIRING`, unit vẫn `HELD`; lease 30 giây sau thử lại thành công | P3-02 | DOC-26, DOC-24, DOC-87 |
@@ -634,7 +634,7 @@ Mục tiêu: lõi NEVER OVERSELL chạy đầu cuối trên mô hình đơn gi�
 
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
-| P4-00 | Gate: DOC-16, DOC-21, DOC-22, DOC-23, DOC-57, DOC-79, DOC-88; ADR-0009, 0010, 0014 | Approved | M1 | — |
+| P4-00 | Gate: DOC-16, DOC-21, DOC-22, DOC-23, DOC-57, DOC-79, DOC-88; ADR-0009, 0010, 0014 | Approved | M1, P0-05, P0-06 | — |
 | P4-01 | `map-core`: kiểu TypeScript, JSON Schema v1, validate schema ở client và server, checksum JCS ở server | Test: tài liệu ví dụ của DOC-16 hợp lệ ở cả hai phía; checksum khớp vector mẫu | P4-00 | DOC-16 |
 | P4-02 | Thuật toán rải ghế 4 kiểu đường, đánh số, nhãn hàng, kéo dài, nhân bản song song, khối ghế | Property test fast-check (1.000 ca mỗi kiểu đường): N điểm, cách đều theo cung sai số ≤ 0,5, đầu/cuối trùng đầu mút; bảng ví dụ đánh số DOC-21 xanh | P4-01 | DOC-21 |
 | P4-03 | 12 quy tắc validate ở TypeScript và Java, fixture chung | Mọi fixture cho cùng danh sách mã ở Vitest và JUnit; 20.000 ghế validate server < 500 ms | P4-02 | DOC-21 |
@@ -794,8 +794,8 @@ Mục tiêu: lõi NEVER OVERSELL chạy đầu cuối trên mô hình đơn gi�
 ## 9. Bắt đầu ngay: 10 việc đầu tiên
 
 1. Owner duyệt các DR chặn P1 (DR-01–12, 14, 19, 21–23, 53, 54, 63, 64, 67, 68, 72, 77), rồi các DR chặn P2 (P0-01).
-2. Chạy song song S-01 (stack), S-02 (Stripe VND), S-03 (xuất bản 100.000 dòng) — P0-02…04.
-3. Chạy S-04, S-05, S-06 khi có máy thực nghiệm — P0-05…07.
+2. Chạy S-01 (stack) — P0-02.
+3. S-02…S-06 hoãn tới gate của phase cần (DR-152): S-03, S-06 trước P2-00; S-02 trước P3-00; S-04, S-05 trước P4-00 — P0-03…07.
 4. Viết DOC-06 Thuật ngữ (P0-08).
 5. Viết DOC-01…05: tầm nhìn, persona, yêu cầu FR-01…21 và NFR, use case UC-01…22, danh mục tính năng (P0-09…11).
 6. Viết kiến trúc DOC-07, 11, 12, 13 và 8 ADR gate P1 (P0-12).
