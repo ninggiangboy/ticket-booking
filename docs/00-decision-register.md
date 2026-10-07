@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 (DR-01…122 và DR-131…151 đã Chốt hoặc Đổi, DR-123…130 (ops) đang Đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Approved v1.0** · Cập nhật: 2026-10-07 (mọi DR-01…151 đã Chốt hoặc Đổi; Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -49,6 +49,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-131–142: Menu tài khoản, tự thử lại, token mở rộng, lint hex, namespace i18n, lỗi theo `code`, định dạng ngày; chi tiết màn Đăng nhập và trang lỗi; tên component do DOC-41 chốt (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-131–142, DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-52, DOC-82 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-143–151: Khóa `saleStartsAt`, loại vé chỉ thêm khi DRAFT, `PUT draft` chỉ kiểm schema; quy ước cấu hình, `ConfigurationGuard`, tên khóa; mã mức test, ID test trong `@DisplayName`, ngưỡng nhánh 75% (khi viết gate P1; nhóm `ops` ở trạng thái Đề xuất) | DR-143–151, DOC-37, DOC-34, DOC-69 |
 | 2026-10-06 | Claude (Owner yêu cầu chạy) | Chốt qua spike S-01: giữ Java 25 + Spring Boot 4.0.8, không lùi Java 21; 9 kịch bản tích hợp xanh trên PostgreSQL 18 và SeaweedFS 4.48. Phát hiện: Boot 4 dùng Jackson 3 nên networknt đổi từ 1.5.x sang 3.0.8; SeaweedFS cần `-s3.config` | DR-02, DR-81, ADR-0011, DOC-11 |
+| 2026-10-07 | Owner | Chốt theo đề xuất DR-123–130 (ops): profile `seed` và target `make` bổ sung, ba file compose, `PAYMENTS_MODE` khớp profile, khóa công khai Stripe bằng build arg, body 429 của nginx và CSP cho Stripe Elements, `e2e.yml` riêng, job `audit` và `breaking-ok`, branch protection `dev`/`main`. Sổ quyết định và master plan lên `Approved v1.0` (P0-01) | DR-123–130, DOC-61, DOC-62, DOC-63, master plan P0-00, P0-01 |
 
 ---
 
@@ -1584,42 +1585,42 @@ Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-1
 
 ### Vận hành, CI và môi trường dev
 
-#### DR-123 · Profile `seed` và các target `make` bổ sung — **Đề xuất**
+#### DR-123 · Profile `seed` và các target `make` bổ sung — **Chốt**
 - **Quyết định:** Thêm Spring profile `seed` (chạy một lần, idempotent, gọi service thật) cho `make seed`; thêm target `make login`, `logs`, `psql`, `fmt`, `up-obs`, `build`, `e2e-stripe`, `contract`; `make reset` không tự seed
 - **Hệ quả / lý do:** DR-01 chỉ liệt kê 10 target; seed qua service bảo đảm unit kho vé sinh đúng như xuất bản thật (DR-27)
 - **Nguồn:** `09-operations/local-dev.md`
 
-#### DR-124 · Ba file compose và giới hạn tài nguyên khởi điểm — **Đề xuất**
+#### DR-124 · Ba file compose và giới hạn tài nguyên khởi điểm — **Chốt**
 - **Quyết định:** Ba file compose (gốc, `.dev`, `.experiment`); giới hạn tài nguyên khởi điểm ở §4; `redis` `noeviction`
 - **Hệ quả / lý do:** Cho phép mở cổng khi `make dev`, cố định tài nguyên thực nghiệm mà không sửa file gốc
 - **Nguồn:** `09-operations/deploy-compose.md`
 
-#### DR-125 · `PAYMENTS_MODE` phải khớp profile Spring — **Đề xuất**
+#### DR-125 · `PAYMENTS_MODE` phải khớp profile Spring — **Chốt**
 - **Quyết định:** `PAYMENTS_MODE` (`fake`\|`stripe`) và profile `fake-payments`/`stripe` phải khớp; API từ chối khởi động nếu lệch
 - **Hệ quả / lý do:** `docker compose up` thuần phải chạy được (NFR-08) nên `.env.example` đặt cả hai; kiểm tra lúc khởi động chặn cấu hình nửa vời
 - **Nguồn:** `09-operations/local-dev.md`
 
-#### DR-126 · Khóa công khai Stripe vào frontend bằng build arg — **Đề xuất**
+#### DR-126 · Khóa công khai Stripe vào frontend bằng build arg — **Chốt**
 - **Quyết định:** Khóa công khai Stripe vào frontend bằng build arg `VITE_STRIPE_PUBLISHABLE_KEY` (biến `STRIPE_PUBLISHABLE_KEY`)
 - **Hệ quả / lý do:** DR-50 dùng Payment Element nhưng chưa nói khóa công khai tới trình duyệt bằng cách nào; build arg khớp `VITE_PAYMENTS` của DR-51
 - **Nguồn:** `09-operations/deploy-compose.md`
 
-#### DR-127 · Body 429 do nginx sinh, bỏ `Cookie` ở location cache, CSP cho Stripe Elements — **Đề xuất**
+#### DR-127 · Body 429 do nginx sinh, bỏ `Cookie` ở location cache, CSP cho Stripe Elements — **Chốt**
 - **Quyết định:** Body 429 do nginx sinh đủ trường Problem Details; `nginx` bỏ `Cookie` ở location cache; CSP có `style-src 'unsafe-inline'` cho Stripe Elements
 - **Hệ quả / lý do:** DR-55 chỉ nêu "Problem Details `RATE_LIMITED`"; cần chốt nội dung; CSP cần xác nhận với Payment Element ở P3-08
 - **Nguồn:** `09-operations/deploy-compose.md`
 
-#### DR-128 · E2E ở workflow `e2e.yml` riêng — **Đề xuất**
+#### DR-128 · E2E ở workflow `e2e.yml` riêng — **Chốt**
 - **Quyết định:** E2E ở workflow `e2e.yml` riêng, bắt buộc với PR `dev → main`, không bắt buộc với PR vào `dev`
 - **Hệ quả / lý do:** Hòa hợp DR-08 (E2E chạy tay) và DR-77 (E2E trong CI với `PAYMENTS_MODE=fake`)
 - **Nguồn:** `09-operations/ci-cd.md`
 
-#### DR-129 · Job `audit`, dependency locking, nhãn `breaking-ok`, kiểm tiêu đề PR — **Đề xuất**
+#### DR-129 · Job `audit`, dependency locking, nhãn `breaking-ok`, kiểm tiêu đề PR — **Chốt**
 - **Quyết định:** Job `audit` (OSV-Scanner, chạy hằng tuần) **không** bắt buộc; bật Gradle dependency locking; `oasdiff` có nhãn `breaking-ok`; tiêu đề PR kiểm bằng script
 - **Hệ quả / lý do:** DOC-32 yêu cầu quét phụ thuộc; DR-08 chưa chọn công cụ; tránh chặn PR vì CVE ngoài phạm vi PR
 - **Nguồn:** `09-operations/ci-cd.md`
 
-#### DR-130 · Branch protection cho `dev` và `main` — **Đề xuất**
+#### DR-130 · Branch protection cho `dev` và `main` — **Chốt**
 - **Quyết định:** Branch protection cho cả `dev` và `main` với danh sách check ở §10
 - **Hệ quả / lý do:** DR-08 nói "chặn merge khi đỏ" nhưng chưa nêu tên check
 - **Nguồn:** `09-operations/ci-cd.md`
@@ -1770,4 +1771,4 @@ Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu
 Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-37, DR-41, DR-43, DR-44, DR-53, DR-56, DR-57, DR-58, DR-60, DR-73.
 Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06).
 
-Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-06), trừ DR-123–130 (ops) đang Đề xuất chờ Owner. Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.
+Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-07; DR-123–130 do Owner chốt theo đề xuất). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.

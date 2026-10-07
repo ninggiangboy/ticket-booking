@@ -5,7 +5,7 @@ Tài liệu thiết kế gốc: [`../event-ticket-booking-sdd.md`](../event-tick
 ## Bắt đầu từ đây
 
 1. [00-master-plan.md](00-master-plan.md): master plan. Khoảng trống của SDD gốc, toàn bộ 90 tài liệu cần viết kèm nội dung bắt buộc và gate, công việc theo phase P0–P7, ma trận truy vết.
-2. [00-decision-register.md](00-decision-register.md): sổ quyết định mở. 151 quyết định (DR-01…151); DR-01…122 và DR-131…151 đã Chốt hoặc Đổi (2026-10-06), DR-123…130 (nhóm ops) đang Đề xuất chờ Owner; spike S-01…S-06 vẫn có thể mở lại mục tương ứng.
+2. [00-decision-register.md](00-decision-register.md): sổ quyết định mở. 151 quyết định (DR-01…151); mọi DR đã Chốt hoặc Đổi (DR-123…130 nhóm ops chốt 2026-10-07); spike S-01…S-06 vẫn có thể mở lại mục tương ứng.
 
 Thứ tự đọc cho người mới: master plan §1 → §4 → phase hiện tại ở §5 → các tài liệu phase đó tham chiếu.
 

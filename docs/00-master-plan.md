@@ -1,6 +1,6 @@
 # Master Plan: xây dựng Hệ thống đặt vé sự kiện từ đầu đến cuối
 
-> Trạng thái: **Review** · Cập nhật: 2026-10-06 (mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 28, 31, 37, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; theo template mới của skill: thêm luồng chi tiết DOC-82…90, FL-01…35) · Đi kèm: [00-decision-register.md](00-decision-register.md) · Nguồn: `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé"
+> Trạng thái: **Approved v1.0** · Cập nhật: 2026-10-07 (Owner duyệt P0-00, P0-01; mọi DR đã Chốt hoặc Đổi; Owner đổi DR-05, 06, 10, 12, 13, 21, 28, 31, 37, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; theo template mới của skill: thêm luồng chi tiết DOC-82…90, FL-01…35) · Đi kèm: [00-decision-register.md](00-decision-register.md) · Nguồn: `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé"
 
 Tài liệu này gồm bốn phần: (1) các khoảng trống của SDD gốc, đối chiếu với canvas màn hình, mỗi khoảng trống đã thành một mục trong [sổ quyết định](00-decision-register.md); (2) toàn bộ tài liệu cần viết, nội dung bắt buộc và gate của từng tài liệu; (3) toàn bộ công việc theo phase kèm tiêu chí nghiệm thu đo được; (4) ma trận truy vết từ yêu cầu tới công việc và cách kiểm chứng.
 
@@ -569,7 +569,7 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
 | P1-00 | Gate: DOC-01…07, DOC-11…15, DOC-19, DOC-27, DOC-31…41, DOC-44, DOC-51, DOC-52, DOC-61…63, DOC-69, DOC-82, DOC-83; ADR-0001, 0002, 0006, 0007, 0011, 0012, 0016, 0018 | Approved | M0 | — |
-| P1-01 | Khởi tạo monorepo: `backend/` Gradle Kotlin DSL + version catalog, `frontend/` Vite + pnpm, `Makefile`, `.github/workflows/ci.yml` | `make lint test` chạy được trên repo rỗng; CI xanh trên PR đầu tiên | P1-00 | DOC-11, DOC-12, DOC-63 |
+| P1-01 | Khởi tạo monorepo: `backend/` Gradle Kotlin DSL + version catalog, `frontend/` Vite + pnpm, `Makefile`, `.github/workflows/ci.yml` — **Xong 2026-10-07** (`f6bfa3a`) | `make lint test` chạy được trên repo rỗng; CI xanh trên PR đầu tiên | P1-00 | DOC-11, DOC-12, DOC-63 |
 | P1-02 | `deploy/compose/docker-compose.yml`: nginx, api, postgres, redis, storage (SeaweedFS), mailpit; healthcheck; `.env.example` với `PAYMENTS_MODE=fake` | `docker compose up` → mọi service healthy ≤ 3 phút trên máy dev | P1-01 | DOC-62, DOC-61 |
 | P1-03 | Migration Flyway: `app_user`, `organizer`, `login_token`, `session`, `outbox`, `idempotency_key`, `stripe_event`, hàm `forbid_update` | API khởi động chạy migration sạch; test Testcontainers kiểm tra mọi bảng và CHECK tồn tại | P1-02 | DOC-14, DOC-15 |
 | P1-04 | Module `common`: Problem Details theo DR-63/64, `X-Request-Id` vào MDC, log JSON ECS, header `X-Server-Time`, `MessageSource` `en`/`vi` | Test: lỗi validate trả `application/problem+json` có `code`, `requestId`; `Accept-Language: vi` đổi `title`; log có `trace_id` khớp header | P1-03 | DOC-35, DOC-36, DOC-33, DOC-31 |

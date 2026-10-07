@@ -482,9 +482,9 @@ Tiền tố `OPS-` (đăng ký ở DOC-69), tiếp nối [DOC-61](local-dev.md) 
 
 ## Quyết định phát sinh khi viết tài liệu này
 
-Mọi quyết định mới ở trạng thái đề xuất; số DR là DR-123…130. DR-123…125 xem [DOC-61](local-dev.md).
+Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-07; đã vào sổ quyết định là DR-124, DR-126, DR-127. DR-123…125 xem [DOC-61](local-dev.md).
 
-| ID tạm | Nội dung | Lý do |
+| DR | Nội dung | Lý do |
 | --- | --- | --- |
 | DR-124 | Ba file compose (gốc, `.dev`, `.experiment`); giới hạn tài nguyên khởi điểm ở §4; `redis` `noeviction` | Cho phép mở cổng khi `make dev`, cố định tài nguyên thực nghiệm mà không sửa file gốc |
 | DR-126 | Khóa công khai Stripe vào frontend bằng build arg `VITE_STRIPE_PUBLISHABLE_KEY` (biến `STRIPE_PUBLISHABLE_KEY`) | DR-50 dùng Payment Element nhưng chưa nói khóa công khai tới trình duyệt bằng cách nào; build arg khớp `VITE_PAYMENTS` của DR-51 |

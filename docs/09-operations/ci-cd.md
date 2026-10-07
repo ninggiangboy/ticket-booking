@@ -324,9 +324,9 @@ Tiền tố `OPS-` (đăng ký ở DOC-69), tiếp nối [DOC-62](deploy-compose
 
 ## Quyết định phát sinh khi viết tài liệu này
 
-Mọi quyết định mới ở trạng thái đề xuất; main agent gán số DR thật khi gộp.
+Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-07; đã vào sổ quyết định là DR-128…130.
 
-| ID tạm | Nội dung | Lý do |
+| DR | Nội dung | Lý do |
 | --- | --- | --- |
 | DR-128 | E2E ở workflow `e2e.yml` riêng, bắt buộc với PR `dev → main`, không bắt buộc với PR vào `dev` | Hòa hợp DR-08 (E2E chạy tay) và DR-77 (E2E trong CI với `PAYMENTS_MODE=fake`) |
 | DR-129 | Job `audit` (OSV-Scanner, chạy hằng tuần) **không** bắt buộc; bật Gradle dependency locking; `oasdiff` có nhãn `breaking-ok`; tiêu đề PR kiểm bằng script | DOC-32 yêu cầu quét phụ thuộc; DR-08 chưa chọn công cụ; tránh chặn PR vì CVE ngoài phạm vi PR |

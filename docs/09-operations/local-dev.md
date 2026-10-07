@@ -185,9 +185,9 @@ Test của tài liệu, tiền tố `OPS-` (dùng chung cho DOC-61, 62, 63; đă
 
 ## Quyết định phát sinh khi viết tài liệu này
 
-Mọi quyết định mới dưới đây ở trạng thái đề xuất; main agent gán số DR thật khi gộp.
+Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-07; đã vào sổ quyết định là DR-123…125.
 
-| ID tạm | Nội dung | Lý do |
+| DR | Nội dung | Lý do |
 | --- | --- | --- |
 | DR-123 | Thêm Spring profile `seed` (chạy một lần, idempotent, gọi service thật) cho `make seed`; thêm target `make login`, `logs`, `psql`, `fmt`, `up-obs`, `build`, `e2e-stripe`, `contract`; `make reset` không tự seed | DR-01 chỉ liệt kê 10 target; seed qua service bảo đảm unit kho vé sinh đúng như xuất bản thật (DR-27) |
 | DR-124 | Ba file compose ghi đè: `docker-compose.dev.yml` (mở cổng 8333, 9090 cho `make dev`), `docker-compose.experiment.yml` (giới hạn tài nguyên và tham số PostgreSQL của thực nghiệm), file gốc `docker-compose.yml` | DR-72 để `storage` và quản trị `api` không ra host; `make dev` cần chúng |
