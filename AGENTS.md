@@ -65,3 +65,4 @@ Run `make fmt lint test` before finishing; run `make it` when touching persisten
 - Never commit secrets; `scripts/check-secrets.sh` runs in lint. `.env` files stay local (use `.env.example`).
 - Pin versions (version catalog `backend/gradle/libs.versions.toml`, `pnpm-lock.yaml`). One dependency upgrade per PR.
 - Keep changes scoped to the task; match surrounding style and comment density. Do not commit or push unless asked.
+- **DeepSeek models:** if you are a DeepSeek model, you MUST work on a new branch (`feat/<task-id>-<slug>`) and open a pull request to merge into `dev`. Never commit or push directly to `dev`.
