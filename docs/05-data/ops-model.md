@@ -1,6 +1,6 @@
 # Mô hình vận hành
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-15
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-15
 > Phụ thuộc: SDD gốc §4.2, §5, §8.6, §9.3, §11, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-14](domain-model.md), [Sổ quyết định](../00-decision-register.md) (DR-14, 19, 21, 22, 45, 48, 51, 53, 54, 74, 76), [ADR-0006](../04-adr/0006-transactional-outbox-for-email.md), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-03 (migration), P1-07 (auth), P2-xx (idempotency, outbox), P3-xx (webhook, cổng giả), [DOC-19](../06-design/auth-and-sessions.md), [DOC-25](../06-design/idempotency.md), [DOC-27](../06-design/tickets-and-notifications.md), [DOC-70](../10-testing/experiments/README.md)
 
@@ -412,17 +412,20 @@ Tiền tố `OM-`; chạy ở `make it` (Testcontainers, DOC-69). Các test củ
 
 ## 12. Quyết định mới khi viết tài liệu này
 
-Mọi mục đề xuất bên dưới cần gán số DR thật khi gộp vào sổ quyết định; nội dung đầy đủ nằm trong báo cáo của bước viết.
+Các mục là DR-93…95 trong sổ quyết định, Claude chốt theo ủy quyền của Owner.
 
-| ID tạm | Nội dung | Trạng thái |
+| DR | Nội dung | Trạng thái |
 | --- | --- | --- |
-| `DR-93` | DDL của `fake_payment_intent` và `inventory_pool_counter`; `outbox.FAILED → PENDING` cho phép đặt lại tay; thêm `CHECK` cho `stripe_event.outcome` khi DOC-26 chốt | Đề xuất |
-| `DR-94` | Quy ước Flyway cho thư mục profile: `out-of-order=true`, `ignore-migration-patterns=*:missing` | Đề xuất |
-| `DR-95` | Index dọn dữ liệu (`login_token_expires_idx`, `session_last_seen_idx`, `session_revoked_idx`, `stripe_event_received_idx`, `outbox_done_idx`) và `login_token_ip_idx`, `stripe_event_pi_idx` | Đề xuất |
-| ⚠ plan §3.2 | "4 loại outbox" của master plan thành 3 loại, theo DR-19 và DR-21 | Ghi chú, cần sửa master plan |
+| DR-93 | DDL của `fake_payment_intent` và `inventory_pool_counter`; `outbox.FAILED → PENDING` cho phép đặt lại tay; thêm `CHECK` cho `stripe_event.outcome` khi DOC-26 chốt | Chốt |
+| DR-94 | Quy ước Flyway cho thư mục profile: `out-of-order=true`, `ignore-migration-patterns=*:missing` | Chốt |
+| DR-95 | Index dọn dữ liệu (`login_token_expires_idx`, `session_last_seen_idx`, `session_revoked_idx`, `stripe_event_received_idx`, `outbox_done_idx`) và `login_token_ip_idx`, `stripe_event_pi_idx` | Chốt |
+| ⚠ plan §3.2 | "4 loại outbox" của master plan thành 3 loại, theo DR-19 và DR-21 | Đã sửa ở master plan §3.2 |
+
+## Kiểm chứng ở task sau
+
+- Vị trí chèn `stripe_event` (đầu hay cuối transaction, §6) và tập `outcome` để thêm `CHECK` (DR-93): DOC-26 chốt ở gate P3 (P3-00).
+- Các test OM-02…15 chạy ở P1-03 bằng Testcontainers. DDL đã chạy sạch trên PostgreSQL 18.6 (lần đầu 2026-10-06, chạy lại 2026-10-07 khi duyệt M0) cùng [DOC-14](domain-model.md) §9.2.
 
 ## Câu hỏi còn mở
 
-1. Gán số cho `DR-93…6` (đều nhỏ, dễ đảo ngược, thuộc quyền Claude tự chốt).
-2. DOC-26 chọn chèn `stripe_event` đầu hay cuối transaction (§6) và chốt tập `outcome` để thêm `CHECK`.
-3. Các test OM-02…15 chưa chạy (cần Testcontainers ở P1-03). DDL đã chạy trên PostgreSQL 18.6 ngày 2026-10-06 cùng DOC-14 (xem [DOC-14](domain-model.md) §9.2).
+Không còn.

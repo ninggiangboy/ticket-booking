@@ -1,6 +1,6 @@
 # Kiến trúc code
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-12
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-12
 > Phụ thuộc: SDD gốc §4, §13.2, phụ lục, [DOC-07](system-context-and-containers.md), [DOC-11](tech-stack-and-versions.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 03, 05, 06, 10, 11, 39, 41, 67, 76, 79, 81), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P1-01, P1-05 (khung module và test kiến trúc); mọi task backend và frontend; người review PR
 
@@ -60,7 +60,7 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 3. Gọi đồng bộ: service A inject interface `BApi` (không inject class cài đặt). Báo ngược chiều hoặc báo cho nhiều module: publish event của module (`ApplicationEventPublisher`), module nhận xử lý ở `listener`. Event cùng transaction dùng `@EventListener` hoặc `@TransactionalEventListener(phase = BEFORE_COMMIT)`; event chỉ để thông báo (không dùng để lấy giá trị trả về).
 4. **Không có vòng phụ thuộc.** Đồ thị cho phép là bảng dưới; mỗi module khai báo trong `package-info.java` bằng `@ApplicationModule(allowedDependencies = {…})` nên `verify()` đỏ khi có phụ thuộc ngoài danh sách.
 5. Đảo chiều bằng SPI: `reservation` định nghĩa `PaymentIntentCanceller` ở package gốc, `payment` cài đặt (nên `payment → reservation`, không ngược lại); `common` định nghĩa `RetentionContributor`, mỗi module cài đặt.
-6. `common` (cấu hình, `@RestControllerAdvice`, i18n, principal, tiện ích, `RetentionJob`) không phụ thuộc module nghiệp vụ.
+6. `common` (cấu hình, `@RestControllerAdvice`, i18n, principal, tiện ích, `RetentionJob`, `common.mail` với `MailSender` và `EmailRenderer` theo DR-96) không phụ thuộc module nghiệp vụ.
 7. Ngoại lệ chỉ đọc: package `io.ticket.invariant` được `SELECT` bảng của mọi module; ArchUnit cấm `INSERT/UPDATE/DELETE` ở đó.
 
 | Module | `allowedDependencies` |

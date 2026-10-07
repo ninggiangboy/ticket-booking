@@ -1,6 +1,6 @@
 # Tham chiếu cấu hình
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-34
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-34
 > Phụ thuộc: SDD gốc §14, [Sổ quyết định](../00-decision-register.md) (DR-09, 12, 13, 21, 22, 38, 41, 42, 44, 47–49, 51, 53–63, 66, 72, 74–76, 80), [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md), [DOC-15](../05-data/ops-model.md) §9, [DOC-19](auth-and-sessions.md) §12, [DOC-27](tickets-and-notifications.md) §13, [DOC-33](observability.md) §6, [DOC-36](../07-api/api-guidelines.md) §10.4, [DOC-62](../09-operations/deploy-compose.md) §2, §6
 > Người dùng chính: P1-01 (`application.yml`, `*Properties`), P1-02 (`.env.example`, compose), mọi task thêm khóa cấu hình; mọi tài liệu thiết kế khi trích khóa
 
@@ -261,7 +261,7 @@ Giá trị đã chốt, đổi bằng sửa code và DR mới, không bằng kh�
 
 | Nhóm | Module `io.ticket.<module>` | Tài liệu thiết kế |
 | --- | --- | --- |
-| `auth.*`, `mail.*`, `app.*` | `identity`, `notification` | DOC-19, DOC-27 |
+| `auth.*`, `mail.*`, `app.*` | `auth`, `common.mail`, `notification` | DOC-19, DOC-27 |
 | `reservation.*`, `hold.*`, `inventory.*` | `reservation`, `inventory` | DOC-24 |
 | `payment.*` | `payment` | DOC-26 |
 | `admission.*`, `ratelimit.*`, `availability.*` | `admission`, `inventory` | DOC-28, DOC-29 |

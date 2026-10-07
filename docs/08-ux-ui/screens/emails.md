@@ -1,6 +1,6 @@
 # Email
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-51
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-51
 > Phụ thuộc: SDD gốc §9.4, [DOC-06](../../02-glossary.md), [DOC-15](../../05-data/ops-model.md) §3, §7 (payload outbox), [DOC-14](../../05-data/domain-model.md) (`ticket.label`, `event.ticket_code_prefix`), [DOC-31](../../06-design/i18n.md) §5, [DOC-39](../design-system.md), [DOC-40](../ui-states-and-copy.md) §2, [Sổ quyết định](../../00-decision-register.md) (DR-10, 12, 21, 28, 29, 44, 52, 53, 54, 78), canvas `EmailDangNhap` (03), `EmailVe` (07b), `EmailDoiLich` (07c)
 > Người dùng chính: P1-07 (email `magic-link`), P2-xx (email `tickets`), P3-xx (email `refund-pending`), [DOC-27](../../06-design/tickets-and-notifications.md) (relay và dựng email), [DOC-83](../../06-design/flows/auth-and-account.md) (FL-01), người dịch
 
@@ -361,5 +361,4 @@ Tiền tố `EML-` (đăng ký ở DOC-69). Test dựng email chạy ở mức t
 
 ## Câu hỏi còn mở
 
-- Nhãn vé GA (`ticket.label`) mang nội dung gì khi vé không có chỗ ngồi hay khu vực: `{}` hay `{ "ticketType": … }`? Mục 4 giả định không có khóa nào (DOC-14 không nói rõ; DOC-27 và DOC-85 chốt).
-- Bản dịch `en` do tài liệu này đề xuất; Owner xem lại khi duyệt.
+Không còn. Nhãn vé GA là `{}` theo DR-108, đúng giả định ở mục 4; bản dịch `en` đã được Owner duyệt cùng tài liệu.

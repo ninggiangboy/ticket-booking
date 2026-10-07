@@ -1,10 +1,10 @@
 # Luồng: Đăng nhập và tài khoản
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-83
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-83
 > Phụ thuộc: [DOC-82](README.md) (tên thành phần tham gia), [DOC-04](../../01-product/use-cases.md) UC-01, UC-20, [DOC-15](../../05-data/ops-model.md) §3, §4, [DOC-14](../../05-data/domain-model.md) (`app_user`), [DOC-35](../error-handling.md), [DOC-36](../../07-api/api-guidelines.md), [DOC-31](../i18n.md) §2, [DOC-40](../../08-ux-ui/ui-states-and-copy.md) §3.2, [DOC-51](../../08-ux-ui/screens/emails.md) §3, [DOC-38](../../08-ux-ui/ux-principles-and-ia.md), [Sổ quyết định](../../00-decision-register.md) (DR-10, 21, 22, 23, 55, 56, 64, 67), [ADR-0007](../../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth backend và frontend), P1-10 (i18n), DOC-19 (thuật toán), DOC-44 (màn Đăng nhập), DOC-52 (trang lỗi), mọi màn cần đăng nhập
 
-Tài liệu mô tả bốn luồng chi tiết `FL-01…04`, từng tầng, từng transaction và người dùng thấy gì nếu tiến trình chết sau mỗi commit. Thuật toán và tham số (chuẩn hóa email, giới hạn gửi, Caffeine) ở [DOC-19](../auth-and-sessions.md); DDL ở DOC-15; payload endpoint ở DOC-37; chuỗi giao diện ở DOC-40; email ở DOC-51. Tài liệu này không lặp các phần đó. Mã `E-xx` chưa có vì DOC-37 chưa viết: mũi tên ghi `(E-?)` theo DOC-82 mục 1 và mục "Câu hỏi còn mở" liệt kê.
+Tài liệu mô tả bốn luồng chi tiết `FL-01…04`, từng tầng, từng transaction và người dùng thấy gì nếu tiến trình chết sau mỗi commit. Thuật toán và tham số (chuẩn hóa email, giới hạn gửi, Caffeine) ở [DOC-19](../auth-and-sessions.md); DDL ở DOC-15; payload endpoint ở DOC-37; chuỗi giao diện ở DOC-40; email ở DOC-51. Tài liệu này không lặp các phần đó. Mã `E-xx` theo DOC-37 §4 (E-01…05).
 
 Mọi sơ đồ dùng tên thành phần của DOC-82 §1. Thành phần cụ thể của luồng này:
 
@@ -21,7 +21,7 @@ Mọi sơ đồ dùng tên thành phần của DOC-82 §1. Thành phần cụ th
 
 ## FL-01 · Người dùng xin magic link
 
-- **UC / FR:** UC-01, FR-01 · **Màn hình:** `Login` ([DOC-44](../../08-ux-ui/screens/login.md)) · **Endpoint:** `POST /auth/magic-link` (E-?) · **Sự kiện:** không
+- **UC / FR:** UC-01, FR-01 · **Màn hình:** `Login` ([DOC-44](../../08-ux-ui/screens/login.md)) · **Endpoint:** `POST /auth/magic-link` (E-01) · **Sự kiện:** không
 - **Trigger:** khách bấm "Gửi đường dẫn đăng nhập" hoặc "Gửi lại" ở `Login`; hoặc bị chuyển tới `/login?returnTo=…` khi bấm giữ vé hoặc vào studio mà chưa có session (UC-03 bước 1a).
 - **Điều kiện đầu:** có địa chỉ email nhận được thư; chưa cần tài khoản (`app_user` tạo ở FL-02).
 
@@ -57,7 +57,7 @@ sequenceDiagram
     L-->>G: auth.form.email.error, không gọi API
   end
   L->>W: requestMagicLink(email, returnTo, locale)
-  W->>N: POST /auth/magic-link (E-?)
+  W->>N: POST /auth/magic-link (E-01)
   alt E5 vượt auth_ip 10 r/phút burst 5
     N-->>W: 429 RATE_LIMITED + Retry-After
     W-->>L: errors.rate_limited
@@ -142,7 +142,7 @@ Bản 202 của E2 giống 202 thường ngoại trừ header để không lộ 
 
 ## FL-02 · Mở link và nhận session
 
-- **UC / FR:** UC-01, FR-01 · **Màn hình:** `AuthCallback`, `Login` (DOC-44) · **Endpoint:** `POST /auth/verify` (E-?), `GET /me` (E-?) · **Sự kiện:** không
+- **UC / FR:** UC-01, FR-01 · **Màn hình:** `AuthCallback`, `Login` (DOC-44) · **Endpoint:** `POST /auth/verify` (E-02), `GET /me` (E-04) · **Sự kiện:** không
 - **Trigger:** người dùng mở `/auth/callback?token=…` từ email, có thể ở tab hoặc thiết bị khác.
 - **Điều kiện đầu:** có một `login_token` hợp lệ (`used_at IS NULL AND superseded_at IS NULL AND expires_at > now()`).
 
@@ -173,7 +173,7 @@ sequenceDiagram
   C->>C: history.replaceState: bỏ token khỏi URL
   C-->>B: Đang xác minh đường dẫn (auth.verifying.*)
   C->>W: verify(token) một lần duy nhất
-  W->>A: POST /auth/verify (E-?) không CSRF, không cookie
+  W->>A: POST /auth/verify (E-02) không CSRF, không cookie
   A->>M: consume(token)
   Note over M,D: T1 begin
   M->>D: UPDATE login_token SET used_at = now() WHERE token_hash = SHA-256(token) AND used_at IS NULL AND superseded_at IS NULL AND expires_at > now() RETURNING email, return_to, locale
@@ -193,7 +193,7 @@ sequenceDiagram
     M-->>A: LoginResult(returnTo, csrfToken)
     A-->>W: 200 {returnTo, csrfToken} + Set-Cookie tb_session
     W->>W: authStore.set(csrfToken)
-    W->>A: GET /me (E-?) kèm cookie
+    W->>A: GET /me (E-04) kèm cookie
     A-->>W: 200 {userId, email, locale, roles, organizer, csrfToken, serverTime}
     W->>W: i18n.changeLanguage(me.locale) nếu khác cookie tb_lang
     W-->>C: đã đăng nhập
@@ -251,7 +251,7 @@ sequenceDiagram
 
 ## FL-03 · Đăng xuất và hết phiên
 
-- **UC / FR:** UC-01, FR-01 · **Màn hình:** mọi màn (menu tài khoản), `Login` biến thể "Đã đăng xuất" và "Hết phiên" · **Endpoint:** `POST /auth/logout` (E-?), mọi endpoint có thể trả 401 `UNAUTHENTICATED` · **Sự kiện:** không
+- **UC / FR:** UC-01, FR-01 · **Màn hình:** mọi màn (menu tài khoản), `Login` biến thể "Đã đăng xuất" và "Hết phiên" · **Endpoint:** `POST /auth/logout` (E-03), mọi endpoint có thể trả 401 `UNAUTHENTICATED` · **Sự kiện:** không
 - **Trigger:** (a) người dùng bấm "Đăng xuất" trong menu tài khoản; (b) bất kỳ lời gọi API nào nhận 401 `UNAUTHENTICATED` vì session hết hạn (30 ngày không hoạt động) hoặc đã bị thu hồi.
 - **Điều kiện đầu:** (a) có session hợp lệ; (b) cookie `tb_session` còn nhưng session không còn hợp lệ.
 
@@ -278,7 +278,7 @@ sequenceDiagram
   participant D as db
   B->>M: Bấm Đăng xuất
   M->>W: logout()
-  W->>A: POST /auth/logout (E-?) + X-CSRF-Token
+  W->>A: POST /auth/logout (E-03) + X-CSRF-Token
   A->>SS: revoke(cookie)
   alt session hợp lệ
     Note over SS,D: T1 begin
@@ -374,7 +374,7 @@ sequenceDiagram
 
 ## FL-04 · Đổi ngôn ngữ giao diện
 
-- **UC / FR:** UC-20, FR-17 · **Màn hình:** mọi màn (`LanguageSwitcher` ở header) · **Endpoint:** `PATCH /me` (E-?), `GET /me` (E-?) · **Sự kiện:** không
+- **UC / FR:** UC-20, FR-17 · **Màn hình:** mọi màn (`LanguageSwitcher` ở header) · **Endpoint:** `PATCH /me` (E-05), `GET /me` (E-04) · **Sự kiện:** không
 - **Trigger:** người dùng chọn `vi` hoặc `en` ở bộ chọn ngôn ngữ.
 - **Điều kiện đầu:** không có (khách cũng đổi được).
 
@@ -403,7 +403,7 @@ sequenceDiagram
   W->>W: i18n.changeLanguage en, nạp namespace đang dùng
   W-->>U: Giao diện đổi ngay, không tải lại trang
   opt đã đăng nhập
-    W->>A: PATCH /me {locale: en} (E-?) + X-CSRF-Token
+    W->>A: PATCH /me {locale: en} (E-05) + X-CSRF-Token
     alt E1 locale không hỗ trợ
       A-->>W: 422 VALIDATION_FAILED rule=invalid_locale
     else hợp lệ
@@ -473,6 +473,4 @@ Mọi quyết định mới là DR-113…115 (cùng dãy DR-109…115 với DOC-
 
 ## Câu hỏi còn mở
 
-- Mã `E-xx` của `POST /auth/magic-link`, `POST /auth/verify`, `POST /auth/logout`, `GET /me`, `PATCH /me` chưa có (DOC-37 chưa viết); các mũi tên ghi `(E-?)`. Điền khi DOC-37 có khung nhóm xác thực.
-- `rule` của `VALIDATION_FAILED` cho `token` sai độ dài (`invalid_token`) chưa nằm trong DOC-40 §3.x; thêm khi DOC-40 và DOC-37 rà lại (cùng ghi chú `invalid_locale` của DOC-31).
-- DOC-19 chưa tồn tại lúc viết; các tham chiếu `DOC-19 §n` ở trên theo cấu trúc dự kiến (thuật toán magic link ở §3, session ở §4) và cần đối chiếu khi DOC-19 xong.
+Không còn.

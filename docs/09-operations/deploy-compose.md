@@ -1,6 +1,6 @@
 # Triển khai compose
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-62
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-62
 > Phụ thuộc: SDD gốc §10, §14, [DOC-07](../03-architecture/system-context-and-containers.md) §2, [DOC-11](../03-architecture/tech-stack-and-versions.md) §6, [DOC-61](local-dev.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 09, 22, 38, 51, 55, 56, 61, 72, 73, 74, 75, 76, 80)
 > Người dùng chính: P1-02 (compose), P1-01, P6-08 (profile `obs`), P0-14, DOC-70 (giới hạn tài nguyên thực nghiệm), DOC-33, DOC-34, người vận hành
 
@@ -295,6 +295,12 @@ geo $limited { default 1; include /etc/nginx/allowlist.conf; }        # DR-55: I
 map $limited $limit_key { 1 $binary_remote_addr; 0 ""; }               # khóa rỗng = không giới hạn
 map "$request_method:$limited" $hold_key { "POST:1" $binary_remote_addr; default ""; }
 
+# DR-99: token magic link không vào log và `Referer`
+map $uri $referrer_policy { = /auth/callback no-referrer; default strict-origin-when-cross-origin; }
+log_format no_query '$remote_addr - $remote_user [$time_local] "$request_method $uri $server_protocol" '
+                    '$status $body_bytes_sent $request_time "$request_id"';
+access_log /var/log/nginx/access.log no_query;                         # $uri thay $request: không ghi query string
+
 limit_req_zone $limit_key zone=api_ip:10m  rate=20r/s;
 limit_req_zone $limit_key zone=auth_ip:1m  rate=10r/m;
 limit_req_zone $hold_key  zone=hold_ip:10m rate=5r/s;
@@ -313,7 +319,7 @@ server {
   # Header bảo mật (chi tiết và lý do ở DOC-32)
   add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' https://api.stripe.com; img-src 'self' data: https://*.stripe.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
   add_header X-Content-Type-Options "nosniff" always;
-  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Referrer-Policy $referrer_policy always;                  # no-referrer cho /auth/callback (DR-99)
   add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
   # Strict-Transport-Security chỉ thêm khi có TLS (không có ở dev)
 
@@ -490,8 +496,12 @@ Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-
 | DR-126 | Khóa công khai Stripe vào frontend bằng build arg `VITE_STRIPE_PUBLISHABLE_KEY` (biến `STRIPE_PUBLISHABLE_KEY`) | DR-50 dùng Payment Element nhưng chưa nói khóa công khai tới trình duyệt bằng cách nào; build arg khớp `VITE_PAYMENTS` của DR-51 |
 | DR-127 | Body 429 do nginx sinh đủ trường Problem Details; `nginx` bỏ `Cookie` ở location cache; CSP có `style-src 'unsafe-inline'` cho Stripe Elements | DR-55 chỉ nêu "Problem Details `RATE_LIMITED`"; cần chốt nội dung; CSP cần xác nhận với Payment Element ở P3-08 |
 
-## Câu hỏi còn mở
+## Kiểm chứng ở task sau
 
 - SeaweedFS có nhận khóa truy cập qua `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` không (§5), và cách `stripe-cli` chuyển `whsec_…` cho `api` (§7): xác nhận ở P1-02; kết quả ghi lại tại đây và [DOC-61](local-dev.md) §7.
-- CSP `style-src 'unsafe-inline'` có thể siết (hash/nonce) không với Stripe Payment Element: kiểm ở P3-08, cập nhật DOC-32.
+- CSP `style-src 'unsafe-inline'` có siết được (hash/nonce) với Stripe Payment Element không: kiểm ở P3-08, cập nhật DOC-32.
 - Tag cụ thể của `chrislusf/seaweedfs`, `prom/prometheus`, `grafana/grafana`: khóa ở P1-02 và P6-08, ghi vào DOC-11 §6.
+
+## Câu hỏi còn mở
+
+Không còn.

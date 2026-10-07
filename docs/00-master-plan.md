@@ -1054,4 +1054,4 @@ sequenceDiagram
 | FLG-01 | Hai tab gửi giữ vé cùng lúc khác key | Một tab 201, tab kia 409 `ACTIVE_RESERVATION_EXISTS` |
 ````
 
-Quy tắc sơ đồ: `autonumber` để bảng chi tiết dẫn theo số mũi tên; tên thành phần tham gia theo DOC-82; mỗi mũi tên ghi lời gọi thật (endpoint kèm `E-xx`, method, câu SQL, họ key Redis); mỗi luồng lỗi của UC là một nhánh `alt`/`else`; `Note over` đánh dấu bắt đầu/commit/rollback transaction. Luồng dài quá ~25 mũi tên tách thành luồng con (`FL-13.1`, `FL-13.2`) dẫn qua lại nhau. Nội dung tin nhắn trong `sequenceDiagram` không đặt trong dấu nháy (dấu nháy hiện nguyên văn) và tránh `;`, `#`.
+Quy tắc sơ đồ: `autonumber` để bảng chi tiết dẫn theo số mũi tên; tên thành phần tham gia theo DOC-82; mỗi mũi tên ghi lời gọi thật (endpoint kèm `E-xx`, method, câu SQL, họ key Redis); mỗi luồng lỗi của UC là một nhánh `alt`/`else`; `Note over` đánh dấu bắt đầu/commit/rollback transaction. Luồng dài quá ~25 mũi tên tách thành luồng con (`FL-xx.1`, `FL-xx.2`) dẫn qua lại nhau. Nội dung tin nhắn trong `sequenceDiagram` không đặt trong dấu nháy (dấu nháy hiện nguyên văn) và tránh `;`, `#`.

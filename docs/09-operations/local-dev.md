@@ -1,6 +1,6 @@
 # Môi trường dev
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-61
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-61
 > Phụ thuộc: SDD gốc §14, [DOC-07](../03-architecture/system-context-and-containers.md) §2, [DOC-11](../03-architecture/tech-stack-and-versions.md) §7, [DOC-12](../03-architecture/code-architecture.md), [DOC-62](deploy-compose.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 07, 22, 51, 72, 73, 77, 78, 80)
 > Người dùng chính: P1-01, P1-02, P1-11 (người mới phải đăng nhập `buyer1@demo.test` trong ≤ 15 phút); mọi task `Pn-xx` khi chạy và kiểm thử cục bộ; DOC-81 (kịch bản demo)
 
@@ -193,7 +193,11 @@ Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-
 | DR-124 | Ba file compose ghi đè: `docker-compose.dev.yml` (mở cổng 8333, 9090 cho `make dev`), `docker-compose.experiment.yml` (giới hạn tài nguyên và tham số PostgreSQL của thực nghiệm), file gốc `docker-compose.yml` | DR-72 để `storage` và quản trị `api` không ra host; `make dev` cần chúng |
 | DR-125 | `PAYMENTS_MODE` (`fake`\|`stripe`) và profile `fake-payments`/`stripe` phải khớp; API từ chối khởi động nếu lệch | `docker compose up` thuần phải chạy được (NFR-08) nên `.env.example` đặt cả hai; kiểm tra lúc khởi động chặn cấu hình nửa vời |
 
+## Kiểm chứng ở task sau
+
+- Giá trị `payment.min-amount` và hành vi thẻ 3-D Secure thật phụ thuộc kết quả S-02 (P0-03, chạy trước P3-00 theo DR-152); §7 ghi số thẻ test chuẩn của Stripe, xác nhận lại ở S-02.
+- Cách `stripe-cli` ghi `whsec_…` vào volume dùng chung (§7 bước 3) và cách SeaweedFS nhận khóa truy cập từ biến môi trường (DOC-62 §5) xác nhận khi dựng compose thật ở P1-02; nếu khác, cập nhật DOC-61 và DOC-62 trong PR của P1-02.
+
 ## Câu hỏi còn mở
 
-- Giá trị `payment.min-amount` và hành vi thẻ 3-D Secure thật phụ thuộc kết quả S-02 (P0-03); §7 ghi số thẻ test chuẩn của Stripe, cần xác nhận lại ở S-02.
-- Cách `stripe-cli` ghi `whsec_…` vào volume dùng chung (§7 bước 3) và cách SeaweedFS nhận khóa truy cập từ biến môi trường (DOC-62 §5) cần xác nhận khi dựng compose thật ở P1-02; nếu khác, cập nhật DOC-61 và DOC-62 trong PR của P1-02.
+Không còn.

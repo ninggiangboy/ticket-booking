@@ -1,6 +1,6 @@
 # Danh mục endpoint
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-37
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-37
 > Phụ thuộc: SDD gốc §12.1–12.2, [DOC-06](../02-glossary.md), [DOC-14](../05-data/domain-model.md), [DOC-15](../05-data/ops-model.md), [DOC-31](../06-design/i18n.md), [DOC-35](../06-design/error-handling.md) §3–§4, [DOC-36](api-guidelines.md), [DOC-82](../06-design/flows/README.md), [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 35, 36, 37, 38, 41, 43, 44, 45, 46, 47, 48, 57, 58, 59, 62, 63, 64, 65, 66, 70, 71)
 > Người dùng chính: P1-04 (nhóm xác thực), P2-xx, P3-xx, P4-xx, P5-xx, P6-xx (mỗi phase cài nhóm endpoint của mình); tác giả DOC-42…60 (cột "Endpoint" của màn hình); DOC-32 (ma trận quyền); `OpenApiExportTest` (so `operationId`)
 
@@ -1278,8 +1278,12 @@ Các mục dưới đây do Claude chốt theo quyền Owner ủy quyền (maste
 - **Quyết định:** E-44 kiểm tra JSON Schema và giới hạn cứng (5 MB, 20.000 ghế, 1.000 hàng, 200 zone, 200 trang trí); mọi mã DR-35 chỉ chạy ở E-45 và E-46.
 - **Hệ quả:** Bản nháp có thể chứa ghế chồng nhau; `publish-checks` (E-28) và E-46 chặn xuất bản. Ghi vào DOC-21, DOC-22.
 
-## 11. Câu hỏi còn mở
+## 11. Kiểm chứng ở task sau
 
-- **Tên key Redis `sales:event:{eventId}`** (E-37) tạm đặt; chốt ở DOC-17 (P5).
-- **Số liệu hiệu năng** ở mọi mục là kế hoạch; chưa có số đo. Đo ở EXP-02, EXP-09, EXP-10 và S-03, S-05.
-- **Mã `rule` mới** (`locked_after_sale_start`, `invalid_media`, `invalid_prefix`, `schema_invalid`, `limit_exceeded`, `duplicate`, `out_of_range`, `not_allowed`, `invalid_email`) cần thêm vào bảng `rule` của DOC-35 §3 và key `validation.<rule>` của DOC-40.
+- **Tên key Redis `sales:event:{eventId}`** (E-37) tạm đặt; DOC-17 chốt ở gate P5 (P5-00).
+- **Số liệu hiệu năng** ở mọi mục là kế hoạch, chưa có số đo; đo ở S-03 (trước P2-00), EXP-02, EXP-10 (P2-14), S-05 (trước P4-00) và EXP-09 (P4-10).
+- **Mã `rule`** của từng endpoint có key `validation.<rule>` ở [DOC-40](../08-ux-ui/ui-states-and-copy.md) §3.8 (bổ sung 2026-10-07); endpoint mới thêm `rule` thì thêm key trong cùng PR.
+
+## 12. Câu hỏi còn mở
+
+Không còn.

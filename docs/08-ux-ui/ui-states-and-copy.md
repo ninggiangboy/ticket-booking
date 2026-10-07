@@ -1,6 +1,6 @@
 # Trạng thái giao diện và microcopy
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-40
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-40
 > Phụ thuộc: SDD gốc §12.3, §13, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 24, 25, 26, 28, 41, 44, 45, 52, 57, 58, 59, 63, 64, 66, 70), [DOC-06](../02-glossary.md), [DOC-31](../06-design/i18n.md) (quy trình thêm chuỗi), [DOC-35](../06-design/error-handling.md) (bảng exception → mã lỗi), [DOC-38](ux-principles-and-ia.md), [DOC-39](design-system.md)
 > Người dùng chính: P1-01 (khung frontend, i18n), mọi task màn hình P1–P6, DOC-41…60 (màn hình dẫn key ở đây), DOC-51 (email dùng cùng phong cách), người dịch
 
@@ -785,6 +785,15 @@ Server trả `errors: [{ "field", "rule" }]` (422 `VALIDATION_FAILED`); client t
 | `invalid_email` | Email chưa đúng định dạng. | That email doesn't look right. |
 | `invalid_prefix` | Nhập đúng hai chữ cái in hoa. | Enter exactly two capital letters. |
 | `too_many_units` | Mỗi lần giữ vé tối đa {max} vé. | You can hold at most {max} tickets at a time. |
+| `invalid_token` | Đường dẫn đăng nhập không hợp lệ. | That sign-in link isn't valid. |
+| `invalid_locale` | Ngôn ngữ này chưa được hỗ trợ. | That language isn't supported. |
+| `locked_after_sale_start` | Không đổi được giờ mở bán sau khi đã mở bán. | The sales start time can't change once sales have opened. |
+| `invalid_media` | Ảnh này không dùng được, hãy tải ảnh khác. | That image can't be used. Upload another one. |
+| `duplicate` | Tên này đã được dùng. | That name is already in use. |
+| `out_of_range` | Giá trị nằm ngoài khoảng cho phép. | That value is outside the allowed range. |
+| `not_allowed` | Trường này không dùng được trong trường hợp này. | This field isn't allowed here. |
+| `schema_invalid` | Sơ đồ không đúng định dạng. | The seat map isn't in a valid format. |
+| `limit_exceeded` | Sơ đồ vượt giới hạn cho phép ({limit}). | The seat map is over the allowed limit ({limit}). |
 
 Chuỗi dạng `required.<field>` có trong canvas dùng cho `name`, `venue`, thời gian; `required` chung dùng cho trường khác. `{field}` là tên trường đã dịch (`studio.info.<field>.label`).
 

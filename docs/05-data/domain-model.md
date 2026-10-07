@@ -1,6 +1,6 @@
 # Mô hình miền
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-14
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-14
 > Phụ thuộc: SDD gốc §6, §7.8, §8, §9, §11, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md), [Sổ quyết định](../00-decision-register.md) (DR-05, 11, 12, 13, 14, 15, 16, 17, 18, 20, 24, 27, 28, 38, 40, 41, 43, 44, 52), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md), [ADR-0018](../04-adr/0018-uuidv7-primary-keys.md)
 > Người dùng chính: P1-03 (Flyway migration đầu tiên), P1-05 (ArchUnit sở hữu bảng), mọi task của module `event`, `map`, `inventory`, `reservation`, `order`, `ticket`, `media`, `auth`; [DOC-24](../06-design/inventory-and-reservation.md), [DOC-26](../06-design/checkout-and-payment.md), [DOC-30](../06-design/invariant-checker.md)
 
@@ -664,16 +664,19 @@ DDL tested on PostgreSQL 18.6 (`postgres:18-alpine`, aarch64) on 2026-10-06: m�
 
 ## 10. Quyết định mới khi viết tài liệu này
 
-| ID tạm | Nội dung | Trạng thái |
+| DR | Nội dung | Trạng thái |
 | --- | --- | --- |
-| `DR-90` | `reservation.closed_at` đặt khi vào `CONFIRMED`, `EXPIRED`, `CANCELLED`; `close_reason` luôn NULL ở `ACTIVE`/`CONFIRMED`-trực-tiếp và luôn có giá trị ở `EXPIRING`/`EXPIRED`/`CANCELLED`; `TIMEOUT → EXPIRED`, `BUYER_CANCELLED` và `EVENT_CANCELLED → CANCELLED` | Đề xuất (xem bên dưới) |
-| `DR-91` | `orders` đã `EXPIRED`/`CANCELLED` do `EVENT_CANCELLED` không phải `REFUND_PENDING` (chưa thu tiền); chỉ đơn đã có tiền mới chuyển | Đề xuất |
-| `DR-92` | Thêm index khóa ngoại còn thiếu (`media_organizer_idx`, `event_media_idx`, `event_seat_map_version_idx`, `seat_map_organizer_idx`, `seat_map_clone_idx`, `pool_ticket_type_idx`, `reservation_event_idx`, `unit_ticket_type_idx`, `reservation_item_pool_idx`, `reservation_item_type_idx`, `orders_event_idx`, `ticket_event_idx`, `ticket_unit_idx`) và cột `inventory_pool.created_at`; tách vòng khóa ngoại `event ↔ seat_map_version` bằng `ALTER TABLE` | Đề xuất |
+| DR-90 | `reservation.closed_at` đặt khi vào `CONFIRMED`, `EXPIRED`, `CANCELLED`; `close_reason` luôn NULL ở `ACTIVE`/`CONFIRMED`-trực-tiếp và luôn có giá trị ở `EXPIRING`/`EXPIRED`/`CANCELLED`; `TIMEOUT → EXPIRED`, `BUYER_CANCELLED` và `EVENT_CANCELLED → CANCELLED` | Đề xuất (xem bên dưới) |
+| DR-91 | `orders` đã `EXPIRED`/`CANCELLED` do `EVENT_CANCELLED` không phải `REFUND_PENDING` (chưa thu tiền); chỉ đơn đã có tiền mới chuyển | Chốt |
+| DR-92 | Thêm index khóa ngoại còn thiếu (`media_organizer_idx`, `event_media_idx`, `event_seat_map_version_idx`, `seat_map_organizer_idx`, `seat_map_clone_idx`, `pool_ticket_type_idx`, `reservation_event_idx`, `unit_ticket_type_idx`, `reservation_item_pool_idx`, `reservation_item_type_idx`, `orders_event_idx`, `ticket_event_idx`, `ticket_unit_idx`) và cột `inventory_pool.created_at`; tách vòng khóa ngoại `event ↔ seat_map_version` bằng `ALTER TABLE` | Chốt |
 
-Nội dung đầy đủ của từng đề xuất (Vấn đề · Quyết định · Hệ quả) được trả về cho agent điều phối để đưa vào sổ quyết định; không sửa sổ quyết định ở bước viết tài liệu này.
+Nội dung đầy đủ (Vấn đề · Quyết định · Hệ quả) ở sổ quyết định; Claude chốt theo ủy quyền của Owner.
+
+## Kiểm chứng ở task sau
+
+- `CHECK` bắt buộc `close_reason` theo `status` của `reservation` (DR-90) thêm vào migration ở P2-01, kèm test ở §9.1.
+- Thời gian chèn 100.000 unit đo ở S-03 (P0-04, chạy trước P2-00 theo DR-152); các test song song chạy bằng `make it`: DM-13, DM-14 ở P2-06, DM-15 ở P2-09, DM-12 (claim ghế) ở P5-02.
 
 ## Câu hỏi còn mở
 
-1. `DR-90`, `DR-91`, `DR-92` chờ gán số DR thật. Chúng đều nhỏ và dễ đảo ngược, thuộc phạm vi Claude được tự chốt (master plan §0.1).
-2. Có thêm `CHECK` bắt buộc `close_reason` theo `status` của `reservation` không (`DR-90`)? Tài liệu này chưa thêm vào DDL vì DR-18 không có ràng buộc đó; thêm khi gán số DR.
-3. Thời gian chèn 100.000 unit (S-03) và các test song song DM-12…15 chưa chạy; S-03 đo ở P0-14.
+Không còn.

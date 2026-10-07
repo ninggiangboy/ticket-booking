@@ -1,6 +1,6 @@
 # Bảo mật
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-32
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-32
 > Phụ thuộc: SDD gốc §5, §9.3, §12, §14.1, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §5, [DOC-15](../05-data/ops-model.md), [DOC-35](error-handling.md), [DOC-36](../07-api/api-guidelines.md), [DOC-62](../09-operations/deploy-compose.md) §8, [DOC-63](../09-operations/ci-cd.md) §9, [Sổ quyết định](../00-decision-register.md) (DR-21, 22, 23, 38, 48, 51, 55, 56, 58, 61, 64, 65), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth), P1-02 (nginx), mọi task viết endpoint, [DOC-19](auth-and-sessions.md), DOC-37, DOC-69, người review PR (checklist [DOC-12](../03-architecture/code-architecture.md) §7)
 
@@ -177,7 +177,7 @@ Do nginx đặt (cấu hình đầy đủ ở DOC-62 §8; tài liệu này chố
 | --- | --- | --- |
 | `Content-Security-Policy` | `default-src 'self'; script-src 'self' https://js.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; connect-src 'self' https://api.stripe.com; img-src 'self' data: https://*.stripe.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` | Chặn script lạ; cho phép Stripe |
 | `X-Content-Type-Options` | `nosniff` | Chặn đoán MIME |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Không lộ `returnTo`/query sang bên ngoài |
+| `Referrer-Policy` | `strict-origin-when-cross-origin`; riêng `/auth/callback` là `no-referrer` (DR-99) | Không lộ `returnTo`/query sang bên ngoài; token magic link không vào `Referer` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Tắt API không dùng |
 | `Strict-Transport-Security` | `max-age=31536000` | Chỉ khi có TLS (không ở dev) |
 | `Cache-Control: no-store` | Với `GET /me`, mọi `/auth/*`, `/organizer/**`, `/me/**`, `/orders/**`, `/reservations/**` | Không cache dữ liệu cá nhân ở trình duyệt hay nginx |

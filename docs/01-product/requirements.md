@@ -1,6 +1,6 @@
 # Yêu cầu
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-03
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-03
 > Phụ thuộc: SDD gốc §3.3–§3.4, [DOC-01](vision-and-scope.md), [DOC-02](personas-and-journeys.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-10…13, 21…28, 31…38, 41…49, 52, 55…66, 70, 71, 73, 74, 75)
 > Người dùng chính: P0-11; [DOC-04](use-cases.md), [DOC-05](feature-catalog.md); mọi tài liệu thiết kế; mọi task `Pn-xx` khi viết test nghiệm thu
 
@@ -34,7 +34,7 @@ Nguồn: SDD gốc §5, DR-21, DR-22. UC-01. Thiết kế: DOC-19.
 | FR-01.8 | `return_to` chỉ nhận đường dẫn tương đối cùng origin | **G** `returnTo` = `/checkout/0199…`, `//evil.example`, `/\evil`, chuỗi 513 ký tự **W** verify **T** giá trị đầu giữ nguyên; ba giá trị sau thành `/` | M | AU-08 |
 | FR-01.9 | Trang callback không tiêu thụ token khi tải | **G** token hợp lệ **W** `GET /auth/callback?token=…` 5 lần (bộ quét link) **T** `used_at` vẫn NULL; chỉ `POST /auth/verify` tiêu thụ | M | AU-09, E2E |
 | FR-01.10 | Session cookie an toàn, hết hạn 30 ngày không hoạt động | **G** session tạo lúc t **W** request ở t + 30 ngày + 1 giây **T** 401 `UNAUTHENTICATED`; cookie `tb_session` có `HttpOnly; Secure; SameSite=Lax` (`Secure` tắt ở profile `dev`); `last_seen_at` chỉ cập nhật khi cũ hơn 1 giờ | M | AU-10 |
-| FR-01.11 | CSRF cho mọi request ghi | **G** session hợp lệ **W** `POST/PUT/PATCH/DELETE` thiếu `X-CSRF-Token` **T** 403 `FORBIDDEN`; ngoại lệ `POST /webhooks/stripe`, `POST /auth/magic-link`, `POST /auth/verify` | M | AU-11 |
+| FR-01.11 | CSRF cho mọi request ghi | **G** session hợp lệ **W** `POST/PUT/PATCH/DELETE` thiếu `X-CSRF-Token` **T** 403 `CSRF_TOKEN_INVALID`; ngoại lệ `POST /webhooks/stripe`, `POST /auth/magic-link`, `POST /auth/verify` | M | AU-11 |
 | FR-01.12 | Đăng xuất xóa session phía server | **G** session hợp lệ **W** `POST /auth/logout` **T** `revoked_at` khác NULL; request kế tiếp trong ≤ 1 giây nhận 401 `UNAUTHENTICATED` | M | AU-12 |
 
 ### FR-02 · Quản lý sự kiện và loại vé

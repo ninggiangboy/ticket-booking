@@ -1,6 +1,6 @@
 # Stack và phiên bản
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 (S-01 xong) · DOC-11
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-11
 > Phụ thuộc: SDD gốc §4.3, [DOC-07](system-context-and-containers.md), [Sổ quyết định](../00-decision-register.md) (DR-01…05, 08, 38, 51, 68, 72, 77, 81), [ADR-0011](../04-adr/0011-java-25-spring-boot-4.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P0-02 (spike S-01), P1-01 (khởi tạo monorepo), P1-02 (compose), P1-09 (khung frontend); DOC-12, DOC-61, DOC-62, DOC-63
 
@@ -142,9 +142,13 @@ S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Doc
 - Driver PostgreSQL phải là `implementation`, vì converter `jsonb` dùng `PGobject` trong code chính.
 - Spring Modulith `starter-core` và `starter-test` đi chung BOM `spring-modulith-bom`; AWS SDK đi qua `software.amazon.awssdk:bom`.
 
+## Kiểm chứng ở task sau
+
+- S-02 (P0-03, chạy trước P3-00 theo DR-152) kiểm `stripe-java` với PaymentIntent thật ở test mode; nếu thất bại chỉ ảnh hưởng thư viện này, không kéo theo lùi Java.
+- `spikes/s01/` chỉ để chạy lại khi nâng version (`./gradlew test`, cần Docker); các kịch bản còn giá trị (CSRF, `jsonb`, S3, Modulith) được viết lại thành test của task P1 tương ứng.
+
 ## Câu hỏi còn mở
 
-- S-02 (P0-03) sẽ kiểm `stripe-java` với PaymentIntent thật ở test mode; nếu thất bại chỉ ảnh hưởng thư viện này, không kéo theo lùi Java.
-- `spikes/s01/` chỉ để chạy lại khi nâng version (`./gradlew test`, cần Docker); các kịch bản còn giá trị (CSRF, `jsonb`, S3, Modulith) được viết lại thành test của task P1 tương ứng.
+Không còn.
 
 Quyết định phát sinh khi viết tài liệu này: DR-81 (thư viện bổ sung ngoài DR-02…05: JCS, networknt JSON Schema, Immer, MSW, Awaitility, Spotless, Lettuce và các thư viện kèm theo).

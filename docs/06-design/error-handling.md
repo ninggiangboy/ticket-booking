@@ -1,6 +1,6 @@
 # Xử lý lỗi
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-35
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-35
 > Phụ thuộc: SDD gốc §10.5, §12.3, [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md) §4, [DOC-36](../07-api/api-guidelines.md), [Sổ quyết định](../00-decision-register.md) (DR-09, 10, 12, 21, 25, 35, 41, 43, 44, 45, 47, 48, 55, 56, 58, 61, 63, 64, 66)
 > Người dùng chính: P1-01 (khung `common.error`), P1-04 (Problem Details và i18n); mọi task backend khi thêm exception; [DOC-37](../07-api/api-endpoints.md) (cột mã lỗi), [DOC-40](../08-ux-ui/ui-states-and-copy.md) (ánh xạ mã lỗi → thông báo)
 
@@ -67,10 +67,10 @@ Các exception cụ thể (tên là class trong package gốc của module nếu
 | `RevisionConflictException` | `seatmap` | `REVISION_CONFLICT` | `currentRevision` |
 | `ValidationFailedException` | mọi module | `VALIDATION_FAILED` | `errors[]` |
 | `NotFoundException` | mọi module | `NOT_FOUND` | — |
-| `ForbiddenException` | `identity` | `FORBIDDEN`, `ORGANIZER_PROFILE_REQUIRED` | — |
-| `UnauthenticatedException` | `identity` | `UNAUTHENTICATED`, `LOGIN_LINK_INVALID` | — |
+| `ForbiddenException` | `auth` | `FORBIDDEN`, `ORGANIZER_PROFILE_REQUIRED` | — |
+| `UnauthenticatedException` | `auth` | `UNAUTHENTICATED`, `LOGIN_LINK_INVALID` | — |
 | `OverloadedException` (con của `TransientException`) | `common` | `OVERLOADED` | `retryAfterSeconds` |
-| `ProviderUnavailableException` (con của `TransientException`) | `payment`, `identity` | `PAYMENT_PROVIDER_UNAVAILABLE`, `EMAIL_PROVIDER_UNAVAILABLE` | `retryAfterSeconds` |
+| `ProviderUnavailableException` (con của `TransientException`) | `payment`, `auth` | `PAYMENT_PROVIDER_UNAVAILABLE`, `EMAIL_PROVIDER_UNAVAILABLE` | `retryAfterSeconds` |
 
 Tên module theo [DOC-07](../03-architecture/system-context-and-containers.md) §4; các mã còn lại (mục 3) dùng một exception một mã cùng quy ước đặt tên `<CodeInPascalCase>Exception`.
 
@@ -123,7 +123,7 @@ Cột "Nguồn": **SDD** = SDD gốc 12.3, **DR-64** = bổ sung của DR-64, **
 
 Tổng: 11 mã của SDD gốc + 24 của DR-64 + 5 mới = 40.
 
-Ghi chú về `rule` của `VALIDATION_FAILED`: giá trị `rule` là `snake_case` chữ thường (`after_event_start`, `too_many_units`, `invalid_timezone`, `locked_after_publish`) và là phần của `errors[]`, không phải `code`. Các chỗ DR-12 và DR-25 viết "422 `invalid_timezone`" nghĩa là `422 VALIDATION_FAILED` với `errors: [{ "field": "timezone", "rule": "invalid_timezone" }]`. Client tra key `validation.<rule>` (DOC-40).
+Ghi chú về `rule` của `VALIDATION_FAILED`: giá trị `rule` là `snake_case` chữ thường (`after_event_start`, `too_many_units`, `invalid_timezone`, `locked_after_publish`) và là phần của `errors[]`, không phải `code`. Các chỗ DR-12 và DR-25 viết "422 `invalid_timezone`" nghĩa là `422 VALIDATION_FAILED` với `errors: [{ "field": "timezone", "rule": "invalid_timezone" }]`. Client tra key `validation.<rule>` (DOC-40); danh sách `rule` và thông báo nằm ở DOC-40 §3.8.
 
 ## 4. Thành viên mở rộng của Problem Details
 

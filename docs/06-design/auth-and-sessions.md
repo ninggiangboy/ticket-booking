@@ -1,6 +1,6 @@
 # Xác thực và session
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-19
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-19
 > Phụ thuộc: SDD gốc §5, [Sổ quyết định](../00-decision-register.md) (DR-14, 21, 22, 23, 64, 67), [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md) §2–§3, [DOC-14](../05-data/domain-model.md) (`app_user`, `organizer`), [DOC-15](../05-data/ops-model.md) §3–§4 (`login_token`, `session`), [DOC-31](i18n.md), [DOC-35](error-handling.md), [DOC-36](../07-api/api-guidelines.md), [DOC-82](flows/README.md) (FL-01…04), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth), P1-08 (khung frontend), [DOC-32](security.md), [DOC-37](../07-api/api-endpoints.md), DOC-44 (màn Đăng nhập), DOC-53 (hồ sơ tổ chức), DOC-83 (luồng FL-01…04)
 
@@ -346,7 +346,7 @@ Location: /api/v1/organizer
 
 | Trường | Quy tắc | Lỗi |
 | --- | --- | --- |
-| `name` | `trim`, 1–120 ký tự | 422 `VALIDATION_FAILED` (`rule = required` / `max_length`) |
+| `name` | `trim`, 1–120 ký tự | 422 `VALIDATION_FAILED` (`rule = required` / `too_long`) |
 | `contactEmail` | Không bắt buộc; có thì chuẩn hóa và kiểm tra như email đăng nhập (mục 3.1); `null` hoặc rỗng nghĩa là dùng email đăng nhập | 422 `rule = invalid_email` |
 | Đã có hồ sơ | `INSERT` vi phạm `organizer_owner_user_id_key` | 409 `ORGANIZER_EXISTS` |
 
@@ -365,7 +365,7 @@ Mã và nguồn ở DOC-35 §3; bảng dưới chỉ gom những mã `auth` ném
 
 | Mã | HTTP | Khi nào | Người dùng thấy |
 | --- | --- | --- | --- |
-| `VALIDATION_FAILED` (`invalid_email`, `invalid_locale`, `required`, `max_length`) | 422 | Email sai định dạng, locale lạ, tên tổ chức sai | Lỗi ngay ô nhập |
+| `VALIDATION_FAILED` (`invalid_email`, `invalid_locale`, `required`, `too_long`) | 422 | Email sai định dạng, locale lạ, tên tổ chức sai | Lỗi ngay ô nhập |
 | `LOGIN_LINK_INVALID` | 401 | Token đã dùng, hết hạn, bị thay, không tồn tại, sai định dạng | Màn "Đường dẫn không còn dùng được" |
 | `UNAUTHENTICATED` | 401 | Không có session hợp lệ | Màn hết phiên hoặc chuyển tới `/login?returnTo=` |
 | `CSRF_TOKEN_INVALID` | 403 | Thiếu hoặc sai `X-CSRF-Token` | Không hiện; client tự lấy token mới và thử lại một lần |
@@ -488,8 +488,8 @@ Mọi quyết định dưới đây do Claude chốt theo quyền Owner ủy quy
 - **DR-100 · IP của người xin link lấy từ `X-Real-IP`.** *Vấn đề:* `login_token.requested_ip` (giới hạn 10 link/IP/giờ) cần IP thật của máy khách phía sau nginx. *Quyết định:* nginx đặt `proxy_set_header X-Real-IP $remote_addr` (ghi đè giá trị client gửi); `api` chỉ nghe trong mạng compose nên không có đường tới `api` mà không qua nginx; thiếu header thì dùng `remoteAddr`. Không tin `X-Forwarded-For`. *Hệ quả:* khi một NAT chung có nhiều người dùng, 10 link/giờ là chung cho cả nhóm (chấp nhận). *Ghi vào:* DOC-19, DOC-32, DOC-62.
 - **DR-101 · Tạo hoặc cập nhật người dùng bằng một upsert; locale của người đã có không bị ghi đè.** *Vấn đề:* DR-21 nói "tạo `app_user` nếu chưa có" nhưng không nói đua giữa hai verify của hai email-mới cùng lúc (không thể, vì mỗi email chỉ một token hợp lệ) và locale của người đã có. *Quyết định:* `INSERT … ON CONFLICT (email) DO UPDATE SET last_login_at = now()`; `locale` chỉ lấy từ `login_token.locale` khi tạo mới. Người dùng đổi ngôn ngữ bằng `PATCH /me`. *Hệ quả:* đăng nhập từ trình duyệt đặt ngôn ngữ khác không đổi tùy chọn đã lưu của người dùng. *Ghi vào:* DOC-19.
 
-Cần cập nhật ở tài liệu khác (không sửa trong thay đổi này): DOC-03 FR-01.11 (`FORBIDDEN` → `CSRF_TOKEN_INVALID`); DOC-35 §2 (module `identity` → `auth`); DOC-12 §2 (thêm `common.mail`); DOC-62 (nginx: `X-Real-IP`, `Referrer-Policy`, log `$uri`).
+Đã đồng bộ sang tài liệu khác (2026-10-07, khi duyệt M0): DOC-03 FR-01.11 (`FORBIDDEN` → `CSRF_TOKEN_INVALID`); DOC-35 §2 (module `identity` → `auth`); DOC-12 §2 (thêm `common.mail`); DOC-62 (nginx: `X-Real-IP`, `Referrer-Policy`, log `$uri`).
 
 ## Câu hỏi còn mở
 
-Không. Các quyết định phát sinh khi viết là `DR-96…6` (mục 14), chờ được gán số trong sổ quyết định.
+Không còn.

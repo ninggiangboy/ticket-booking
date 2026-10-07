@@ -1,6 +1,6 @@
 # CI
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-63 (khung ở P1)
+> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-63 (khung ở P1)
 > Phụ thuộc: SDD gốc §14, §15, [DOC-11](../03-architecture/tech-stack-and-versions.md) §2, §4, [DOC-12](../03-architecture/code-architecture.md) §8, [DOC-61](local-dev.md) §3, [DOC-62](deploy-compose.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 07, 08, 77, 81), master plan §7
 > Người dùng chính: P1-01 (khởi tạo `ci.yml`), mọi PR; P1-08 (`make contract`); P1-09 (kích thước bundle); DOC-69, DOC-32 (quét phụ thuộc)
 
@@ -332,8 +332,12 @@ Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-
 | DR-129 | Job `audit` (OSV-Scanner, chạy hằng tuần) **không** bắt buộc; bật Gradle dependency locking; `oasdiff` có nhãn `breaking-ok`; tiêu đề PR kiểm bằng script | DOC-32 yêu cầu quét phụ thuộc; DR-08 chưa chọn công cụ; tránh chặn PR vì CVE ngoài phạm vi PR |
 | DR-130 | Branch protection cho cả `dev` và `main` với danh sách check ở §10 | DR-08 nói "chặn merge khi đỏ" nhưng chưa nêu tên check |
 
-## Câu hỏi còn mở
+## Kiểm chứng ở task sau
 
-- Version cụ thể và SHA của các action (`actions/*`, `gradle/actions`, `pnpm/action-setup`, `oasdiff-action`, `osv-scanner-action`): khóa ở P1-01 (YAML ở §3.1 là khung).
+- Version và SHA của các action đã khóa ở P1-01 (`.github/workflows/ci.yml`); `oasdiff-action`, `osv-scanner-action` khóa khi thêm job tương ứng.
 - Thời gian `it` thật và việc `ubuntu-latest` có đủ cho ba container Testcontainers cùng test đồng thời 64 luồng: đo ở P2; nếu quá 12 phút thì áp dụng hướng cache image ở §7.
 - Cách `make contract` so khớp "chỉ endpoint đã làm" (danh sách endpoint đã cài đặt lấy từ đâu): chốt ở P1-08 cùng `make contract`; cập nhật §4.4.
+
+## Câu hỏi còn mở
+
+Không còn.
