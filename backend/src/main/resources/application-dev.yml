@@ -1,0 +1,7 @@
+# Profile dev (DOC-34 §2): Safari rejects Secure cookies on http://localhost (DR-22)
+auth:
+  cookie-secure: false
+
+springdoc:
+  swagger-ui:
+    enabled: true

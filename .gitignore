@@ -1,3 +1,6 @@
 .DS_Store
 .idea/
 .vscode/
+
+# Local compose environment (copied from .env.example)
+deploy/compose/.env

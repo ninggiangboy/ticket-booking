@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
-group = "app.ticket"
+group = "io.ticket"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -25,6 +25,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("com.github.ben-manes.caffeine:caffeine")
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.postgresql:postgresql")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
@@ -47,6 +52,8 @@ dependencies {
     testImplementation(libs.awaitility)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
+tasks.bootJar { archiveFileName = "api.jar" }
 
 spotless {
     java {

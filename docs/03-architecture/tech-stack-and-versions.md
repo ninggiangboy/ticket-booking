@@ -99,7 +99,7 @@ Khóa tag theo minor (DR-04); cập nhật có chủ đích bằng một PR.
 | `nginx` | `nginx:1.28-alpine` | BSD-2-Clause | |
 | `mailpit` | `axllent/mailpit:v1.27` | MIT | |
 | `stripe-cli` | `stripe/stripe-cli:v1.30` | Apache-2.0 | Profile `stripe` |
-| `storage` | `chrislusf/seaweedfs` tag minor khóa lúc P1-01 | Apache-2.0 | Không dùng MinIO (bản cộng đồng ngừng phát hành image, repo lưu trữ năm 2026, DR-38) |
+| `storage` | `chrislusf/seaweedfs:4.48` (khóa ở P1-02) | Apache-2.0 | Không dùng MinIO (bản cộng đồng ngừng phát hành image, repo lưu trữ năm 2026, DR-38) |
 | `api` | build từ `eclipse-temurin:25-jre-alpine` | GPLv2 + Classpath Exception | |
 | `prometheus`, `grafana` | tag minor khóa lúc P6-08 | Apache-2.0; AGPL-3.0 | Profile `obs`, chỉ chạy thực nghiệm |
 

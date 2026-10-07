@@ -1,0 +1,4 @@
+# `make dev`: infrastructure only; the api runs on the host and needs the S3 and management ports.
+services:
+  storage:
+    ports: ["8333:8333"]

@@ -6,7 +6,7 @@
 
 Tài liệu đặc tả toàn bộ cách chạy hệ thống bằng Docker Compose: profile, thứ tự khởi động, healthcheck, giới hạn tài nguyên, biến môi trường và `.env.example`, cấu hình nginx, service `storage`, tham số PostgreSQL cho thực nghiệm, migration khi khởi động và dọn dẹp. Sơ đồ container và trách nhiệm ở [DOC-07](../03-architecture/system-context-and-containers.md) §2; lệnh `make` và hướng dẫn dev ở [DOC-61](local-dev.md); danh sách key cấu hình đầy đủ ở DOC-34 (bảng biến ở §6 chỉ liệt kê các biến compose cần và phải khớp DOC-34); metric và dashboard ở DOC-33. Giới hạn tài nguyên **chính thức** của thực nghiệm do DOC-70 chốt sau S-06; ở đây là cơ chế và giá trị khởi điểm.
 
-> **Chưa chạy thử.** Chưa có Docker trong phiên viết tài liệu P0 và chưa có `deploy/compose/`. Mọi file YAML, script và cấu hình nginx dưới đây là đặc tả cho P1-02; chạy `docker compose config` và `nginx -t` là bước đầu tiên của task đó. Con số tài nguyên là **dự kiến** (planned).
+> **Đã chạy thử ở P1-02 (2026-10-07).** `deploy/compose/` có `docker-compose.yml`, `docker-compose.dev.yml`, `.env.example` và `nginx/`; `make reset` đưa mọi service về `healthy` trong ~45 giây (image đã tải). Các khác biệt so với bản đặc tả ban đầu được ghi ở mục "Kết quả P1-02" cuối tài liệu. `docker-compose.experiment.yml`, `prometheus/`, `grafana/` chưa có (P6-08). Con số tài nguyên vẫn là **dự kiến** (planned).
 
 ## 1. Cấu trúc thư mục
 
@@ -65,14 +65,14 @@ Thứ tự được ép bằng `depends_on: { <svc>: { condition: service_health
 | --- | --- | --- | --- |
 | `postgres` | `pg_isready -U $POSTGRES_USER -d $POSTGRES_DB` | 5 s / 3 s / 10 / 5 s | ≤ 10 s |
 | `redis` | `redis-cli ping` trả `PONG` | 5 s / 3 s / 10 / 2 s | ≤ 5 s |
-| `storage` | `wget -q --spider http://localhost:9333/cluster/status` (master của SeaweedFS) | 5 s / 3 s / 20 / 10 s | ≤ 20 s |
+| `storage` | `wget -q --spider http://127.0.0.1:9333/cluster/status` (master của SeaweedFS, chỉ nghe IPv4) | 5 s / 3 s / 20 / 10 s | ≤ 20 s |
 | `mailpit` | `wget -q --spider http://localhost:8025/livez` | 5 s / 3 s / 10 / 2 s | ≤ 5 s |
 | `api` | `wget -qO- http://localhost:9090/actuator/health/readiness` chứa `"status":"UP"` | 5 s / 3 s / 30 / 30 s | ≤ 90 s (Flyway + khởi động JVM + tạo bucket) |
-| `nginx` | `wget -q --spider http://localhost/healthz` | 5 s / 3 s / 10 / 2 s | ≤ 5 s sau `api` |
+| `nginx` | `wget -q --spider http://127.0.0.1/healthz` | 5 s / 3 s / 10 / 2 s | ≤ 5 s sau `api` |
 | `stripe-cli` | không | — | — |
 | `prometheus`, `grafana` | `wget -q --spider http://localhost:9090/-/ready`, `http://localhost:3000/api/health` | 10 s / 3 s / 10 / 10 s | ≤ 30 s |
 
-Readiness của `api` (nhóm `readiness` của Actuator) chỉ `UP` khi: pool Hikari lấy được connection, migration xong, Redis `PING` trả lời, bucket `STORAGE_S3_BUCKET` tồn tại. Redis mất giữa chừng **không** kéo `readiness` xuống (hệ thống vẫn bán được, DR-56); SMTP không nằm trong readiness. Mục tiêu NFR-08 và M1: mọi service healthy ≤ 3 phút từ máy sạch (image đã tải).
+Readiness của `api` (nhóm `readiness` của Actuator: `readinessState`, `db`, `redisStartup`, `storage`) chỉ `UP` khi: pool Hikari lấy được connection, migration xong, Redis `PING` trả lời **một lần lúc khởi động** (`redisStartup`), bucket `STORAGE_S3_BUCKET` tồn tại. Redis mất giữa chừng **không** kéo `readiness` xuống (hệ thống vẫn bán được, DR-56); SMTP không nằm trong readiness. Mục tiêu NFR-08 và M1: mọi service healthy ≤ 3 phút từ máy sạch (image đã tải).
 
 ## 4. Giới hạn tài nguyên
 
@@ -97,14 +97,19 @@ Theo DR-38: image `chrislusf/seaweedfs`, tag khóa theo minor tại P1-02 (ghi v
 
 ```yaml
   storage:
-    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG}        # khóa minor lúc P1-02
-    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-volume.max=20"]
+    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG}        # 4.48 (P1-02)
+    entrypoint: ["/bin/sh", "-c"]
+    command:                                           # ghi identity S3 từ biến rồi chạy server (spike S-01: bắt buộc -s3.config)
+      - |
+        printf '{"identities":[{"name":"app","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List"]}]}' \
+          "$$STORAGE_S3_ACCESS_KEY" "$$STORAGE_S3_SECRET_KEY" > /tmp/s3.json
+        exec /entrypoint.sh server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -volume.max=20
     environment:
-      AWS_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY}      # tạo identity quản trị cho S3 gateway
-      AWS_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_KEY}
+      STORAGE_S3_ACCESS_KEY: ${STORAGE_S3_ACCESS_KEY}
+      STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY}
     volumes: ["storage-data:/data"]
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9333/cluster/status || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9333/cluster/status || exit 1"]   # 127.0.0.1: master chỉ nghe IPv4
       interval: 5s
       timeout: 3s
       retries: 20
@@ -119,7 +124,7 @@ Theo DR-38: image `chrislusf/seaweedfs`, tag khóa theo minor tại P1-02 (ghi v
 | `STORAGE_S3_BUCKET` | `ticket-media` | API tạo lúc khởi động nếu chưa có; bucket private |
 | `STORAGE_S3_ACCESS_KEY`, `STORAGE_S3_SECRET_KEY` | `ticketdev` / `ticketdev-secret` | Chỉ cho dev; giá trị thật không commit |
 
-Việc SeaweedFS nhận khóa qua `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` cần xác nhận ở P1-02; nếu bản được chọn không hỗ trợ thì thay bằng file `-s3.config` sinh từ biến lúc khởi động (Câu hỏi còn mở). `make reset` xóa cả volume `storage-data` (DR-38). Không có job quét bucket (DR-74): object sót do lỗi hiếm chỉ tốn dung lượng và bị xóa khi reset.
+SeaweedFS 4.48 cần file `-s3.config` (spike S-01); compose sinh file đó từ `STORAGE_S3_ACCESS_KEY` và `STORAGE_S3_SECRET_KEY` lúc khởi động (P1-02, đã chạy thử với `aws s3 ls`). `make reset` xóa cả volume `storage-data` (DR-38). Không có job quét bucket (DR-74): object sót do lỗi hiếm chỉ tốn dung lượng và bị xóa khi reset.
 
 ## 6. Biến môi trường và `.env.example`
 
@@ -203,7 +208,7 @@ services:
     environment: { POSTGRES_DB: "${POSTGRES_DB}", POSTGRES_USER: "${POSTGRES_USER}", POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
     command: ["postgres", "-c", "max_connections=100", "-c", "shared_buffers=512MB", "-c", "synchronous_commit=on"]
     ports: ["${POSTGRES_PORT}:5432"]
-    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    volumes: ["postgres-data:/var/lib/postgresql"]   # PostgreSQL 18: PGDATA nằm trong /var/lib/postgresql/18/docker
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"], interval: 5s, timeout: 3s, retries: 10, start_period: 5s }
   redis:
     image: redis:8.2-alpine
@@ -238,7 +243,7 @@ services:
     environment: { RATE_LIMIT_ALLOWLIST: "${RATE_LIMIT_ALLOWLIST}" }
     ports: ["${NGINX_PORT}:80"]
     depends_on: { api: { condition: service_healthy } }
-    healthcheck: { test: ["CMD-SHELL", "wget -q --spider http://localhost/healthz || exit 1"], interval: 5s, timeout: 3s, retries: 10, start_period: 2s }
+    healthcheck: { test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"], interval: 5s, timeout: 3s, retries: 10, start_period: 2s }
   stripe-cli:
     profiles: ["stripe"]
     image: stripe/stripe-cli:v1.30
@@ -336,13 +341,13 @@ server {
 
   # Giới hạn riêng, đặt trước location /api/ chung (regex ưu tiên theo thứ tự)
   location = /api/v1/auth/magic-link {
-    limit_req zone=auth_ip burst=5;
+    limit_req zone=auth_ip burst=5 nodelay;
     limit_req zone=api_ip burst=40 nodelay;
     error_page 429 = @rate_limited;
     proxy_pass http://api;
   }
   location ~ ^/api/v1/events/[^/]+/reservations$ {
-    limit_req zone=hold_ip burst=10;
+    limit_req zone=hold_ip burst=10 nodelay;
     limit_req zone=api_ip burst=40 nodelay;
     error_page 429 = @rate_limited;
     proxy_pass http://api;
@@ -386,7 +391,7 @@ server {
   location @rate_limited {
     default_type application/problem+json;
     add_header Retry-After 1 always;
-    return 429 '{"type":"https://ticket.localhost/problems/rate-limited","title":"Too many requests","status":429,"code":"RATE_LIMITED","detail":"Rate limit exceeded at the edge.","retryAfterSeconds":1}';
+    return 429 '{"type":"https://errors.ticket.dev/RATE_LIMITED","title":"Too many requests","status":429,"code":"RATE_LIMITED","detail":"Rate limit exceeded at the edge.","retryAfterSeconds":1}';
   }
 }
 ```
@@ -496,9 +501,22 @@ Owner chốt các quyết định dưới đây theo đề xuất ngày 2026-10-
 | DR-126 | Khóa công khai Stripe vào frontend bằng build arg `VITE_STRIPE_PUBLISHABLE_KEY` (biến `STRIPE_PUBLISHABLE_KEY`) | DR-50 dùng Payment Element nhưng chưa nói khóa công khai tới trình duyệt bằng cách nào; build arg khớp `VITE_PAYMENTS` của DR-51 |
 | DR-127 | Body 429 do nginx sinh đủ trường Problem Details; `nginx` bỏ `Cookie` ở location cache; CSP có `style-src 'unsafe-inline'` cho Stripe Elements | DR-55 chỉ nêu "Problem Details `RATE_LIMITED`"; cần chốt nội dung; CSP cần xác nhận với Payment Element ở P3-08 |
 
+## Kết quả P1-02
+
+Khác biệt giữa bản đặc tả và thứ đã chạy (2026-10-07):
+
+- **Healthcheck dùng `127.0.0.1`, không `localhost`** cho `storage` và `nginx`: image alpine phân giải `localhost` ra `::1` trước, trong khi master SeaweedFS và `listen 80` của nginx chỉ nghe IPv4.
+- **SeaweedFS 4.48** khóa ở `SEAWEEDFS_TAG`; khóa truy cập đi qua file `-s3.config` (mục 5), không qua `AWS_ACCESS_KEY_ID`.
+- **PostgreSQL 18** gắn volume ở `/var/lib/postgresql` (PGDATA có thư mục phiên bản), không `/var/lib/postgresql/data`.
+- **`limit_req … burst` cần `nodelay`** ở `auth_ip` và `hold_ip`: thiếu thì nginx làm chậm thay vì từ chối và không bao giờ trả 429 (OPS-15). Với 10 r/phút, burst 5: yêu cầu thứ 7 trong một phút bị 429 (một yêu cầu đi thẳng + 5 burst).
+- **Header bảo mật** nằm ở `nginx/security-headers.conf`, `include` vào từng location có `add_header` riêng, vì nginx bỏ header kế thừa khi location tự khai báo `add_header`.
+- **`X-Request-Id`**: nginx giữ giá trị client gửi nếu khớp `[A-Za-z0-9-]{8,64}`, ngược lại dùng `$request_id` (DOC-36 §6.1). Body 429 và 503 do nginx sinh dùng `type` `https://errors.ticket.dev/<code>` và có `requestId`, theo DOC-36 §5.
+- Log nginx dùng `$uri`; kiểm tra `/auth/callback?token=…` không lộ token ở OPS khi có endpoint.
+- Thời gian: `make reset` từ volume trống tới mọi service `healthy` ≈ 45 giây (image đã tải); lần build đầu thêm vài phút.
+
 ## Kiểm chứng ở task sau
 
-- SeaweedFS có nhận khóa truy cập qua `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` không (§5), và cách `stripe-cli` chuyển `whsec_…` cho `api` (§7): xác nhận ở P1-02; kết quả ghi lại tại đây và [DOC-61](local-dev.md) §7.
+- Cách `stripe-cli` chuyển `whsec_…` cho `api` (§7): xác nhận ở P3 khi có webhook; kết quả ghi lại tại đây và [DOC-61](local-dev.md) §7. (SeaweedFS nhận khóa qua `-s3.config`: đã xác nhận ở P1-02.)
 - CSP `style-src 'unsafe-inline'` có siết được (hash/nonce) với Stripe Payment Element không: kiểm ở P3-08, cập nhật DOC-32.
 - Tag cụ thể của `chrislusf/seaweedfs`, `prom/prometheus`, `grafana/grafana`: khóa ở P1-02 và P6-08, ghi vào DOC-11 §6.
 

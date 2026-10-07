@@ -1,0 +1,9 @@
+.git
+docs
+spikes
+**/node_modules
+**/build
+**/.gradle
+frontend/dist
+frontend/coverage
+deploy/compose/.env
