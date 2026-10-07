@@ -75,12 +75,16 @@ testing {
             useJUnitJupiter()
             dependencies {
                 implementation(project())
+                implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
                 implementation(platform(libs.testcontainers.bom))
                 implementation("org.springframework.boot:spring-boot-starter-test")
                 implementation("org.springframework.boot:spring-boot-testcontainers")
                 implementation("org.testcontainers:testcontainers-junit-jupiter")
                 implementation("org.testcontainers:testcontainers-postgresql")
                 implementation(libs.awaitility)
+                implementation("org.flywaydb:flyway-core")
+                implementation("org.flywaydb:flyway-database-postgresql")
+                implementation("org.postgresql:postgresql")
             }
             targets.all {
                 testTask.configure {

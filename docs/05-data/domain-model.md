@@ -88,6 +88,8 @@ Các khối `sql ddl` dưới đây chạy được theo đúng thứ tự xuấ
 | 3 | `V202610060003__reservation_order_inventory.sql` | `inventory_pool`, `reservation`, `inventory_unit`, `reservation_item`, `orders`, `ticket` | `reservation` trước `inventory_unit` vì `inventory_unit.reservation_id` |
 | 4 | `V202610060004__ops_tables.sql` | bảng của DOC-15 | |
 
+> **Tên tệp thực tế (P1-03).** Task P1-03 chỉ tạo bảng nền tảng của phase 1 nên tách khác bản mẫu trên: `V202610070001__account.sql` (`app_user`, `organizer`), `V202610070002__forbid_update_function.sql` (`forbid_update()`), `V202610070003__ops_tables.sql` (`login_token`, `session`, `idempotency_key`, `stripe_event`, `outbox`). `media`, `event` và các bảng còn lại do migration của task sở hữu chúng thêm sau (phiên bản lớn hơn); `forbid_update()` đã có nên các migration đó không tạo lại. Test lược đồ: `OpsModelIT` (OM-02…11 và các kiểm tra CHECK).
+
 ### 4.2 Tài khoản, tổ chức, ảnh
 
 `login_token` và `session` thuộc cùng module `auth` nhưng là dữ liệu vận hành, nằm ở DOC-15 §3 và §4.
