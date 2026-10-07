@@ -71,6 +71,7 @@ spotless {
 
 testing {
     suites {
+        named<JvmTestSuite>("test") { useJUnitJupiter() }
         val integrationTest by registering(JvmTestSuite::class) {
             useJUnitJupiter()
             dependencies {

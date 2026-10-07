@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * decided in the service layer.
  */
 @Configuration
-class SecurityConfig {
+public class SecurityConfig {
 
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) {
