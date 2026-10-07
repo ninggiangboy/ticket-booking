@@ -153,6 +153,8 @@ Index `ticket_event_idx` phục vụ câu này (DOC-14 §5). `VOID` không giả
 
 ## 5. Outbox
 
+> **Cài đặt ở P1-06.** `common.mail` (`MailSender`/`SmtpMailSender`, `EmailRenderer`, `MailFormats`), `notification` (`NotificationApi`, `OutboxRelayService`, job `OutboxRelay`, `OutboxQueueService` cho các transaction ngắn, `MailModelFactory`) và mẫu `tickets` (HTML + text, `email.tickets.*` ở hai file messages). Mẫu `event-changed` và `refund-pending` chưa có (P3): relay coi lỗi dựng mẫu là một lần thử, nên dòng đó đi hết backoff rồi `FAILED`. Lỗi từ chối vĩnh viễn (người nhận bị SMTP 5xx từ chối) chuyển thẳng `FAILED`. Test `OutboxRelayIT`.
+
 DDL, máy trạng thái và payload mẫu nằm ở DOC-15 §7; phần này nói **ai ghi, ai đọc, nhịp và lỗi**.
 
 ### 5.1 Ghi (enqueue)

@@ -61,6 +61,26 @@ springdoc:
   swagger-ui:
     enabled: false
 
+platform:
+  timezone: Asia/Ho_Chi_Minh
+
+mail:
+  from: "ticket <no-reply@ticket.localhost>"
+  smtp:
+    timeout: PT5S
+
+outbox:
+  relay:
+    enabled: true
+    interval: PT1S
+    batch-size: 50
+    lease: PT60S
+    backoff-base: PT10S
+    backoff-max: PT1H
+    max-attempts: 12
+    batch-budget: PT40S
+  enqueue-batch-size: 500
+
 app:
   name: ticket
   base-url: http://localhost:8080

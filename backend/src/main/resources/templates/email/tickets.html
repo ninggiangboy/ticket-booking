@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{email.tickets.subject(${eventName})}">Tickets</title>
+</head>
+<body style="margin:0;padding:0;background:#ECEEF1;">
+  <div style="display:none;max-height:0;overflow:hidden" th:text="#{email.tickets.preheader}">preheader</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ECEEF1;">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#FFFFFF;border-radius:6px;">
+        <tr><td style="padding:32px;font-family:'Be Vietnam Pro','Segoe UI',Arial,sans-serif;color:#2E323C;font-size:15px;line-height:1.5;">
+          <div style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:22px;color:#12141A;"><span th:text="${appName}">ticket</span><span style="color:#D63312;">.</span></div>
+          <h1 style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;text-transform:uppercase;font-size:28px;color:#12141A;margin:16px 0 8px;" th:text="#{email.tickets.heading}">Your tickets</h1>
+          <p style="margin:0 0 16px;" th:text="#{email.tickets.intro(${eventName})}">intro</p>
+          <p style="margin:0 0 4px;color:#5B6272;" th:text="${startsAt}">date</p>
+          <p style="margin:0 0 20px;color:#5B6272;" th:text="${venue}">venue</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" th:each="t : ${tickets}" style="border-top:2px dashed #B9BEC8;margin-top:12px;">
+            <tr><td style="padding:12px 0;">
+              <div style="font-size:14px;color:#5B6272;" th:text="${t.typeName}">VIP</div>
+              <div style="font-size:14px;color:#2E323C;" th:text="${t.seat}">seat</div>
+              <div style="font-family:'IBM Plex Mono',Menlo,Consolas,monospace;font-size:20px;color:#12141A;" th:text="${t.code}">CODE</div>
+            </td></tr>
+          </table>
+          <p style="margin:20px 0;" th:text="#{email.tickets.total(${amount})}">total</p>
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td bgcolor="#12141A" style="border-radius:6px;"><a th:href="${ordersUrl}" href="#" style="display:inline-block;padding:15px 24px;color:#FFFFFF;font-weight:700;font-size:16px;text-decoration:none;" th:text="#{email.tickets.button}">My tickets</a></td>
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

@@ -85,6 +85,8 @@ testing {
                 implementation(libs.awaitility)
                 implementation("org.springframework.boot:spring-boot-starter-data-jdbc-test")
                 implementation("tools.jackson.core:jackson-databind")
+                implementation("org.springframework.boot:spring-boot-starter-mail")
+                implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
                 implementation("org.flywaydb:flyway-core")
                 implementation("org.flywaydb:flyway-database-postgresql")
                 implementation("org.postgresql:postgresql")

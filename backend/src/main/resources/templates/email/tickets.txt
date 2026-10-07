@@ -1,0 +1,13 @@
+[(#{email.tickets.heading})]
+
+[(#{email.tickets.intro(${eventName})})]
+[(${startsAt})]
+[(${venue})]
+
+[# th:each="t : ${tickets}"]
+- [(${t.code})]  [(${t.typeName})]  [(${t.seat})]
+[/]
+
+[(#{email.tickets.total(${amount})})]
+
+[(#{email.tickets.button})]: [(${ordersUrl})]
