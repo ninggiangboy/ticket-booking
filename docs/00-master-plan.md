@@ -568,7 +568,7 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 
 | ID | Việc | Đầu ra và tiêu chí nghiệm thu | Phụ thuộc | Tài liệu |
 | --- | --- | --- | --- | --- |
-| P1-00 | Gate: DOC-01…07, DOC-11…15, DOC-19, DOC-27, DOC-31…41, DOC-44, DOC-51, DOC-52, DOC-61…63, DOC-69, DOC-82, DOC-83; ADR-0001, 0002, 0006, 0007, 0011, 0012, 0016, 0018 | Approved | M0 | — |
+| P1-00 | Gate: DOC-01…07, DOC-11…15, DOC-19, DOC-27, DOC-31…41, DOC-44, DOC-51, DOC-52, DOC-61…63, DOC-69, DOC-82, DOC-83; ADR-0001, 0002, 0006, 0007, 0011, 0012, 0016, 0018 — **Xong 2026-10-07** (`42902cd`) | Approved | M0 | — |
 | P1-01 | Khởi tạo monorepo: `backend/` Gradle Kotlin DSL + version catalog, `frontend/` Vite + pnpm, `Makefile`, `.github/workflows/ci.yml` — **Xong 2026-10-07** (`f6bfa3a`) | `make lint test` chạy được trên repo rỗng; CI xanh trên PR đầu tiên | P1-00 | DOC-11, DOC-12, DOC-63 |
 | P1-02 | `deploy/compose/docker-compose.yml`: nginx, api, postgres, redis, storage (SeaweedFS), mailpit; healthcheck; `.env.example` với `PAYMENTS_MODE=fake` | `docker compose up` → mọi service healthy ≤ 3 phút trên máy dev | P1-01 | DOC-62, DOC-61 |
 | P1-03 | Migration Flyway: `app_user`, `organizer`, `login_token`, `session`, `outbox`, `idempotency_key`, `stripe_event`, hàm `forbid_update` | API khởi động chạy migration sạch; test Testcontainers kiểm tra mọi bảng và CHECK tồn tại | P1-02 | DOC-14, DOC-15 |
