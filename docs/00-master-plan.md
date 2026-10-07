@@ -560,7 +560,7 @@ Mục tiêu: chốt mọi quyết định chặn P1/P2 và có đủ tài liệu
 | P0-16 | Viết DOC-36, DOC-37 (khung: nhóm xác thực, `/me`) — **Approved 2026-10-07** | Approved | P0-15 | DOC-36, DOC-37 |
 | P0-17 | Viết DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 — **Approved 2026-10-07** | Microcopy có đủ `en` và `vi` cho các màn gate P1; Approved | P0-15 | DOC-38, DOC-39, DOC-40, DOC-41, DOC-44, DOC-51, DOC-52 |
 | P0-19 | Viết DOC-82 Mục lục luồng chi tiết và DOC-83 Luồng đăng nhập và tài khoản — **Approved 2026-10-07** | FL-01…04 có sơ đồ tuần tự với mọi nhánh lỗi của UC-01, UC-20; thành phần tham gia khớp DOC-07, DOC-37, DOC-44; Approved | P0-16, P0-17 | DOC-82, DOC-83 |
-| P0-18 | Duyệt M0 | Checklist M0 đạt; `check_docs.py` không còn E1/E2 cho ID đã định nghĩa | P0-02, P0-08…17, P0-19 | — |
+| P0-18 | Duyệt M0 — **Xong 2026-10-07** (`42902cd`) | Checklist M0 đạt; `check_docs.py` không còn E1/E2 cho ID đã định nghĩa | P0-02, P0-08…17, P0-19 | — |
 
 **Tiêu chí thoát (M0):** mọi DR chặn P1 và P2 ở trạng thái Chốt/Đổi; S-01 có ghi chú kết luận, S-02…S-06 hoãn tới gate của phase cần (DR-152); 34 tài liệu và 8 ADR gate P1 Approved; DDL của DOC-14/15 chạy sạch trên PostgreSQL 18.
 
