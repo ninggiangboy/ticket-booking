@@ -42,7 +42,7 @@ make reset   # wipe data and rebuild
 
 After `make up`, the app is at `http://localhost:$NGINX_PORT` and dev email is in Mailpit (`$MAILPIT_UI_PORT`); ports are set in `deploy/compose/.env`.
 
-For development with hot reload (infrastructure via compose, API via `bootRun`, frontend via Vite): `make dev`.
+For development with hot reload (infrastructure via compose, API via `bootRun`, frontend via Vite): `make dev`. To start only the infrastructure: `make infra`.
 
 ## Common commands
 
@@ -53,6 +53,7 @@ For development with hot reload (infrastructure via compose, API via `bootRun`, 
 | `make test` | Backend and frontend unit tests |
 | `make it` | Integration tests (Testcontainers, needs Docker) |
 | `make build` | Build jar, frontend, check bundle size, build Docker image |
+| `make infra` | Start only postgres, redis, storage and Mailpit (run API and frontend yourself) |
 | `make logs S=api` | Tail logs of one service |
 | `make psql` | Open psql on the local database |
 

@@ -64,6 +64,7 @@ Mỗi target là một dòng trong `Makefile`; CI gọi đúng các target này 
 | `make down` | Dừng stack, **giữ** volume | `docker compose … down` | |
 | `make reset` | Xóa mọi dữ liệu (volume `postgres-data`, `storage-data`, Mailpit) rồi dựng lại, **không** seed | `docker compose … down -v` rồi `up -d --wait` | Dùng `make reset seed` để về trạng thái demo (DR-78) |
 | `make seed` | Tạo tài khoản và sự kiện demo (§5) | `docker compose … run --rm api --spring.profiles.active=seed` | Chạy một lần rồi thoát; idempotent; xem DR-123 |
+| `make infra` | Chỉ khởi động hạ tầng (`postgres`, `redis`, `storage`, `mailpit`), không chạy `api` và frontend | `docker compose … -f docker-compose.dev.yml up -d --wait postgres redis storage mailpit` | Tạo `.env` nếu chưa có; dừng bằng `make down`; `make dev` gọi target này |
 | `make dev` | Hạ tầng bằng compose, API bằng `bootRun`, frontend bằng `pnpm dev` (§2) | `docker compose … -f docker-compose.dev.yml up -d --wait postgres redis storage mailpit`, rồi `./gradlew -p backend bootRun` và `pnpm --dir frontend dev` song song | Ctrl+C dừng cả hai; hạ tầng vẫn chạy, dừng bằng `make down` |
 | `make test` | Unit test backend và frontend | `./gradlew -p backend test` và `pnpm --dir frontend test --run` | Gồm test kiến trúc (Spring Modulith, ArchUnit) |
 | `make it` | Test tích hợp và đồng thời bằng Testcontainers | `./gradlew -p backend integrationTest` | Cần Docker; 64 luồng × 20 lần (DR-77); kèm `make invariants` kiểm tra sau test khi task chạm kho vé |

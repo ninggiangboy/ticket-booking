@@ -38,7 +38,7 @@ make fmt      # spotlessApply + prettier
 make test     # backend unit + frontend vitest
 make it       # integration tests (Testcontainers; needs Docker)
 make build    # bootJar, frontend build, bundle size, docker image
-make up / down / reset / dev / logs S=<svc> / psql
+make up / down / reset / dev / infra / logs S=<svc> / psql
 ```
 
 Run `make fmt lint test` before finishing; run `make it` when touching persistence, migrations, or outbox/jobs. Single backend test: `./backend/gradlew -p backend test --tests '<FQCN>'`. Single frontend test: `pnpm --dir frontend test --run <file>`.

@@ -3,7 +3,7 @@ ENV_FILE ?= deploy/compose/.env
 COMPOSE = docker compose --env-file $(ENV_FILE) -f deploy/compose/docker-compose.yml
 S ?=
 
-.PHONY: lint fmt test it build up down reset logs psql dev env
+.PHONY: lint fmt test it build up down reset logs psql dev infra env
 
 lint:
 	./backend/gradlew -p backend spotlessCheck
@@ -53,9 +53,12 @@ logs: env
 psql: env
 	$(COMPOSE) exec postgres sh -c 'psql -U $$POSTGRES_USER $$POSTGRES_DB'
 
-# Infrastructure through compose, api through bootRun, frontend through Vite (DOC-61 §2)
-dev: env
+# Infrastructure only (postgres, redis, storage, mailpit), no api or frontend
+infra: env
 	$(COMPOSE) -f deploy/compose/docker-compose.dev.yml up -d --wait postgres redis storage mailpit
+
+# Infrastructure through compose, api through bootRun, frontend through Vite (DOC-61 §2)
+dev: infra
 	@set -a; . $(ENV_FILE); set +a; \
 	export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:$$POSTGRES_PORT/$$POSTGRES_DB \
 	  SPRING_DATA_REDIS_HOST=localhost SPRING_DATA_REDIS_PORT=$$REDIS_PORT \
