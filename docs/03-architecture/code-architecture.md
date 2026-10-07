@@ -72,8 +72,8 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 | `map` | `event`, `inventory`, `media` |
 | `admission` | `event`, `inventory` |
 | `reservation` | `event`, `inventory`, `order`, `admission` |
-| `payment` | `reservation`, `order`, `inventory`, `ticket`, `notification`, `event` |
-| `studio` | `event`, `map`, `media`, `inventory`, `order`, `ticket`, `notification`, `reservation` |
+| `payment` | `reservation`, `order`, `inventory`, `ticket`, `notification`, `event`, `auth` |
+| `studio` | `event`, `map`, `media`, `inventory`, `order`, `ticket`, `notification`, `reservation`, `auth` |
 | `invariant` | (không có; đọc bảng bằng SQL chỉ đọc) |
 
 ### 2.3 Cây mẫu của một module: `reservation`
@@ -122,6 +122,8 @@ Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `reposit
 - Transaction nóng đặt `SET LOCAL statement_timeout` và `lock_timeout` bằng `JdbcClient` ở đầu transaction (giữ vé: 2 giây và 1 giây; xuất bản: 30 giây; hủy event: 60 giây; dựng lại kho vé theo sơ đồ: `lock_timeout` 5 giây).
 - **Không gọi ra ngoài khi đang mở transaction:** Stripe, SMTP, S3, Redis chạy trước hoặc sau transaction, hoặc qua outbox. Kiểm tra rẻ (Redis, `ZSCORE`, cờ hết vé, rate limit, bulkhead) chạy **trước** khi lấy connection.
 - So sánh thời gian quyết định nghiệp vụ nằm trong SQL bằng `now()`; Java không gọi `Instant.now()` cho hạn giữ vé, hạn token, khung mở bán (DR-12).
+
+> **Cài đặt ở P1-05.** `package-info.java` của 13 module khai báo `allowedDependencies`; mọi module thêm `common` (module `common` đặt `type = OPEN` để dùng được các package con). `payment` và `studio` có thêm `auth` theo `AuthApi` của DOC-19 §11 (DR-102). Test kiến trúc ở `backend/src/test/java/io/ticket/arch` và `ModularityTests`; mỗi quy tắc có fixture vi phạm ở `src/test/java/fixture/**` làm test đỏ (ARC-10…15). ARC-05 và ARC-07 đọc mã nguồn để tìm chuỗi SQL (ArchUnit không thấy literal). ARC-06 cấm `save()` trên `Reservation|Order|Ticket|Event|OutboxMessage` repository, trừ class tên kết thúc bằng `Inserter`. ARC-08 và ARC-09 chưa có `…Api`/khóa cấu hình nên chờ task sau.
 
 ## 3. Spring Data JDBC trong dự án
 
