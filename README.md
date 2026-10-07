@@ -64,6 +64,7 @@ CI (`.github/workflows/ci.yml`) calls only these `make` targets.
 - Conventional Commits with the module as scope, e.g. `feat(notification): …`.
 - `dev` is the main branch; one branch per task: `feat/<task-id>-<slug>`.
 - Progress and task list: [`docs/00-master-plan.md`](docs/00-master-plan.md).
+- How to contribute (workflow, PRs, commits): [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## For AI agents
 
