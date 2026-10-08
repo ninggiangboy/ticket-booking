@@ -34,6 +34,7 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation(libs.springdoc.webmvc.api)
+    implementation(libs.springdoc.webmvc.ui)
     implementation(libs.stripe)
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:url-connection-client")
