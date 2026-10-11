@@ -161,7 +161,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | module | module | `io.ticket.<module>`: `auth`, `event`, `map`, `inventory`, `reservation`, `order`, `payment`, `ticket`, `admission`, `notification`, `invariant`, `media` và `common` (dùng chung). Mỗi bảng và họ key Redis có đúng một module sở hữu | DR-05, DR-06, DOC-07 |
 | `…Api` | interface công khai của module | Interface ở package gốc của module (ví dụ `InventoryApi`), cùng DTO và event; module khác chỉ dùng package gốc | DR-06 |
 | layer | layer | Trong module: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`, cùng `entity`, `dto`. `@Transactional` chỉ ở `service` | DR-06, DOC-12 |
-| aggregate | aggregate | Entity Spring Data JDBC có `save()` (`AppUser`, `Event`, `Reservation`…); `inventory_unit` và `inventory_pool` không phải aggregate. Không đổi `status` bằng `save()` | DR-05, ADR-0012 |
+| aggregate | aggregate | Entity gốc Spring Data JPA có `JpaRepository` (`AppUser`, `Event`, `Reservation`…); `inventory_unit` và `inventory_pool` là entity chỉ đọc, không phải aggregate. Không đổi `status` bằng `save()`, setter hay dirty checking | DR-05, ADR-0012 |
 | conditional write | câu ghi có điều kiện | Mọi chuyển trạng thái là `UPDATE … WHERE … AND status = :from` kiểm số dòng trả về; code không đọc rồi mới quyết định ghi | DR-05, SDD gốc 4.2 |
 | Spring Modulith | Spring Modulith | Thư viện kiểm ranh giới module (`ApplicationModules.verify()`), kèm ArchUnit cho layer và sở hữu bảng | DR-05 |
 | UUIDv7 | UUIDv7 | Kiểu khóa chính `uuid` mặc định `uuidv7()` của PostgreSQL 18; Java sinh trước khi cần biết ID. ID trong tài liệu sơ đồ do client sinh | DR-11, ADR-0018 |

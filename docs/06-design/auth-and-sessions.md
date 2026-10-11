@@ -33,8 +33,8 @@ Module `auth` chỉ phụ thuộc `common` (DOC-12 §2.2). `auth` sở hữu `ap
 | `SessionService` | `service` | Tra session (cache + DB), cập nhật `last_seen_at`, thu hồi |
 | `OrganizerService` | `service` | Lập hồ sơ tổ chức |
 | `ReturnToSanitizer` | `service` | Kiểm tra `return_to` (mục 6) |
-| `LoginTokenRepository`, `SessionRepository` | `repository` | `JdbcClient` / `@Modifying @Query`, không `save()` (DOC-12 §3.1) |
-| `AppUserRepository`, `OrganizerRepository` | `repository` | `save()` chỉ để chèn; upsert đăng nhập bằng `@Query` |
+| `LoginTokenRepository`, `SessionRepository` | `repository` | `@Modifying @Query`, không `save()` (DOC-12 §3.1) |
+| `AppUserRepository`, `OrganizerRepository` | `repository` | `JpaRepository`; `save()` chèn và sửa trường không phải trạng thái; upsert đăng nhập bằng `@Query` |
 | `SessionAuthenticationFilter`, `CsrfFilter` | `security` | Gắn `CurrentUser` vào request, kiểm tra CSRF |
 | `AuthApi` | gốc `io.ticket.auth` | Giao diện cho module khác (mục 11) |
 

@@ -34,7 +34,7 @@ Allowed types: `feat fix docs refactor test chore perf build ci`. The PR title i
 
 Summary; the full text is in `AGENTS.md` and `code-architecture.md`.
 
-- Backend: modular monolith, calls go downward only (controller/job/listener → service → repository/client); `@Transactional` only in `service`; entities never leave the service layer; Spring Data JDBC and hand-written SQL, no JPA.
+- Backend: modular monolith, calls go downward only (controller/job/listener → service → repository/client); `@Transactional` only in `service`; entities never leave the service layer; Spring Data JPA for CRUD, `@Query` for special operations (no `JdbcClient`).
 - Never oversell. Never `save()` to change an entity's `status`; use conditional updates.
 - Migrations: Flyway, `V<yyyymmddHHmm>__<snake_case>.sql`; never edit an applied migration.
 - Errors: throw `common.error` exceptions; add messages to both `messages_en.properties` and `messages_vi.properties`.

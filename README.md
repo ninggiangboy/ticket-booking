@@ -8,7 +8,7 @@ Original design: [`event-ticket-booking-sdd.md`](event-ticket-booking-sdd.md). A
 
 | Area | Choice |
 | --- | --- |
-| Backend | Java 25, Spring Boot 4.0.x, Spring Modulith, Spring Data JDBC (no JPA), Gradle Kotlin DSL |
+| Backend | Java 25, Spring Boot 4.0.x, Spring Modulith, Spring Data JPA (Hibernate), Gradle Kotlin DSL |
 | Data | PostgreSQL (source of truth), Redis (rate limiting, waiting room), Flyway |
 | Frontend | React 19, Vite, TypeScript, pnpm 10, Node 22 |
 | Infrastructure | Docker Compose (nginx, api, postgres, redis, S3-compatible storage, Mailpit) |

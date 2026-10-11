@@ -174,7 +174,7 @@ Luật (DR-05, DR-06): mỗi bảng PostgreSQL và mỗi họ key Redis có **đ
 | `seat_map` | `map` | `MapDraftService`, `MapCloneService` | `MapApi.mapOf(eventId)` |
 | `seat_map_version` | `map` | `MapPublishService` (chỉ chèn; trigger `forbid_update`) | `MapApi.latestVersion(eventId)`, `versionDocument(versionId)` (`studio`) |
 | `inventory_pool` | `inventory` | `InventoryService` (xuất bản, đổi sức chứa) | `InventoryApi.poolsOf(eventId)`, `snapshot(eventId)` |
-| `inventory_unit` | `inventory` | `InventoryService`, `InventoryClaimer` (không phải aggregate có `save()`, DR-05) | `InventoryApi.claim/confirmSold/release(reservationId)`, `snapshot`, `sales` |
+| `inventory_unit` | `inventory` | `InventoryService`, `InventoryClaimer` (entity chỉ đọc, ghi bằng `@Query`, DR-05) | `InventoryApi.claim/confirmSold/release(reservationId)`, `snapshot`, `sales` |
 | `inventory_pool_counter` | `inventory` (profile `experiment`) | `CounterClaimer` | — |
 | `reservation` | `reservation` | `HoldService`, `ReleaseService`, `ReleaseExpiredHoldsJob` | `ReservationApi.get/confirm/beginExpiry/expireAllForEvent` |
 | `reservation_item` | `reservation` | `HoldService` (chèn một lần, DR-05) | `ReservationApi.itemsOf(reservationId)` |
@@ -273,7 +273,7 @@ Phân tích STRIDE cho ba ranh giới đầu ở [DOC-32](../06-design/security.
 | DDL của bảng trong §4.1 | [DOC-14](../05-data/domain-model.md), [DOC-15](../05-data/ops-model.md) |
 | Họ key Redis chi tiết và script Lua | DOC-17 |
 | Cấu hình compose, nginx, biến môi trường | [DOC-62](../09-operations/deploy-compose.md) |
-| Quyết định kiến trúc | [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0006](../04-adr/0006-transactional-outbox-for-email.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md) |
+| Quyết định kiến trúc | [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0006](../04-adr/0006-transactional-outbox-for-email.md), [ADR-0012](../04-adr/0012-spring-data-jpa-and-modulith-boundaries.md) |
 
 ## Câu hỏi còn mở
 
