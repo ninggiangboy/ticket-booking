@@ -27,7 +27,6 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-05 | Owner | Chốt theo đề xuất: tình trạng chỗ dạng bitmap | DR-62, DOC-29 |
 | 2026-10-05 | Owner | Chốt theo đề xuất: DDL tài khoản, sự kiện, sơ đồ, kho vé (thêm trạng thái unit `REMOVED`), reservation/đơn/vé, bảng vận hành — gồm các chỉnh sửa theo DR-28, DR-31, DR-44 | DR-14–19, DOC-14, DOC-15 |
 | 2026-10-06 | Owner | Đổi: Spring Data JDBC thay cho `JdbcClient` thuần; trạng thái chỉ đổi bằng `@Modifying @Query` có điều kiện, SQL phức tạp trong custom fragment | DR-05, DR-02 (S-01), ADR-0012, DOC-11, DOC-12 |
-| 2026-10-11 | Owner | Đổi: Spring Data JPA (Hibernate) thay cho Spring Data JDBC; CRUD dùng repository JPA, thao tác đặc biệt và đổi trạng thái có điều kiện viết bằng `@Query` (không dùng `JdbcClient`) | DR-05, DR-106, ADR-0012, DOC-11, DOC-12 |
 | 2026-10-06 | Owner | Claude được tự chốt mọi mục nhỏ trên toàn bộ sổ (mọi phase); mục mơ hồ thì hỏi Owner | Master plan §0 |
 | 2026-10-06 | Owner | Chốt: VND với Stripe test mode (VND là tiền tệ thanh toán Stripe hỗ trợ, không có phần lẻ); chỉ cần tài khoản Stripe đăng ký ở một nước Stripe hỗ trợ, dùng test mode, không cần kích hoạt | DR-13, S-02 |
 | 2026-10-06 | Owner | Đổi: ngôn ngữ mặc định (dự phòng) là `vi`; key i18n vẫn viết bằng tiếng Anh | DR-10, DR-14, ADR-0016, DOC-31, DOC-40 |
@@ -121,19 +120,18 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   | `api` | build từ `eclipse-temurin:25-jre-alpine` | |
 - **Ghi vào:** DOC-11, DOC-62.
 
-### DR-05 · Truy cập dữ liệu và kiểm tra ranh giới module — **Đổi: Spring Data JPA (Hibernate)**
-- **Vấn đề:** SDD gốc mục 4.3 chọn Spring JDBC; mục 4.1 yêu cầu module "chỉ gọi nhau qua interface công khai, không truy vấn bảng của nhau" nhưng không nói ép bằng gì. Transaction giữ vé lại phải chạm `idempotency_key`, `inventory_unit`, `reservation`, `orders` của bốn module trong một transaction. Mọi đổi trạng thái phải là câu ghi có điều kiện (SDD gốc 4.2), trong khi `save()` và dirty checking ghi đè cả dòng không điều kiện.
-- **Quyết định (Owner chốt; Owner đổi 2026-10-11):** Spring Data JPA với Hibernate (dòng đi kèm Spring Boot 4); CRUD thường dùng ORM, chỉ thao tác đặc biệt mới viết truy vấn tay.
-  - Mỗi module có repository `JpaRepository` cho entity của mình. Entity gốc (aggregate): `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@OneToMany(cascade = ALL, orphanRemoval = true)`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` là entity chỉ đọc (`@Immutable`), ghi bằng `@Query` riêng.
-  - **Truy vấn tay chỉ cho thao tác đặc biệt**, viết bằng `@Query` (JPQL hoặc `nativeQuery = true`) trong repository của module sở hữu bảng; **không dùng `JdbcClient`**. Gồm: đổi trạng thái có điều kiện, claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến, `SET LOCAL statement_timeout`, upsert đăng nhập, bảng không có entity (`login_token`, `session`, `idempotency_key`, `stripe_event`, `fake_payment_intent`). Câu lệnh mà `@Query` thật sự không diễn đạt được thì dùng `EntityManager.createNativeQuery` trong custom fragment (`…Claims` + `…Impl`).
-  - **Luật đổi trạng thái:** không bao giờ đổi `status` bằng `save()`, setter hay dirty checking. Cột `status` khai báo `@Column(updatable = false)` và entity không có setter cho nó. Mọi chuyển trạng thái là method `@Modifying(flushAutomatically = true, clearAutomatically = true) @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng, service kiểm tra số dòng. `save()` và dirty checking dùng cho chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
-  - ID gán trước bằng UUIDv7 (DR-11): `@Id` không có `@GeneratedValue`, entity cài `Persistable<UUID>` (cờ `isNew` đặt lúc tạo) để `save()` chạy `persist` thay vì `merge`.
-  - Cột `jsonb` (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng `@JdbcTypeCode(SqlTypes.JSON)`; cột trạng thái ánh xạ Java `enum` bằng `@Enumerated(EnumType.STRING)`.
-  - Cấu hình: mọi quan hệ `LAZY` (kể cả `@ManyToOne`); `spring.jpa.open-in-view=false`; `spring.jpa.hibernate.ddl-auto=none` (Flyway sở hữu schema); truy vấn đọc cho giao diện dùng projection `record` hoặc `@EntityGraph`; chèn nhiều dòng dùng JDBC batch của Hibernate (`hibernate.jdbc.batch_size`) hoặc `INSERT … SELECT` bằng `@Query`.
+### DR-05 · Truy cập dữ liệu và kiểm tra ranh giới module — **Đổi: Spring Data JDBC**
+- **Vấn đề:** SDD gốc mục 4.3 chọn Spring JDBC; mục 4.1 yêu cầu module "chỉ gọi nhau qua interface công khai, không truy vấn bảng của nhau" nhưng không nói ép bằng gì. Transaction giữ vé lại phải chạm `idempotency_key`, `inventory_unit`, `reservation`, `orders` của bốn module trong một transaction. Mọi đổi trạng thái phải là câu ghi có điều kiện (SDD gốc 4.2), trong khi `save()` của Spring Data ghi đè cả dòng không điều kiện.
+- **Quyết định (Owner chốt):** Spring Data JDBC (dòng đi kèm Spring Boot 4, kiểm tra trong S-01); không JPA.
+  - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng.
+  - **Luật đổi trạng thái:** không bao giờ đổi `status` bằng `save()`. Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng, service kiểm tra số dòng. `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
+  - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
+  - Câu lệnh mà `@Query` không diễn đạt gọn (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment (`InventoryUnitClaims` + `…Impl`) dùng `JdbcClient`. Vẫn là SQL viết tay, ở trong module sở hữu bảng.
+  - Cột `jsonb` (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
   - Transaction mở ở service của module điều phối (`reservation.service.HoldService`), module khác tham gia qua interface `…Api` của mình, chạy trong cùng transaction (DR-06) (propagation `MANDATORY` cho method chỉ được gọi trong transaction).
-  - Ranh giới module kiểm tra bằng Spring Modulith (`ApplicationModules.of(Application.class).verify()` trong một unit test) cộng ArchUnit: entity và repository của module X chỉ được dùng trong X; chuỗi SQL và JPQL chỉ nhắc bảng/entity mà X sở hữu (danh sách ở DOC-07).
-- **Hệ quả:** Bớt mã lặp cho CRUD của studio và các bảng vận hành; giữ được SQL viết tay cho đường nóng. Đổi lại có lazy loading (nguy cơ N+1 ngoài ý muốn) và dirty checking (nguy cơ ghi đè); giảm bằng quan hệ `LAZY`, `@EntityGraph`, `updatable = false` cho `status`, `clearAutomatically` sau `@Modifying`. Test kiến trúc đổi: aggregate có cột `status` phải khai báo `updatable = false` và không có setter `status`; không method nào ngoài lớp chèn gọi `save()` trên chúng. Mã P1-05 và P1-06 đang theo Spring Data JDBC và `JdbcClient`, cần task chuyển sang JPA.
-- *Đổi 2026-10-11:* đề xuất cũ (2026-10-06) là Spring Data JDBC, không JPA, SQL phức tạp trong custom fragment dùng `JdbcClient`; đề xuất đầu nữa là `JdbcClient` cho mọi truy vấn.
+  - Ranh giới module kiểm tra bằng Spring Modulith (`ApplicationModules.of(Application.class).verify()` trong một unit test) cộng ArchUnit: entity và repository của module X chỉ được dùng trong X; chuỗi SQL chỉ nhắc bảng mà X sở hữu (danh sách ở DOC-07).
+- **Hệ quả:** Bớt mã lặp cho CRUD của studio và các bảng vận hành; giữ được SQL viết tay cho đường nóng. Spring Data JDBC không có lazy loading nên không có N+1 ẩn, nhưng aggregate có `@MappedCollection` bị xóa-chèn lại toàn bộ con khi `save()`: `Reservation` chỉ `save()` một lần lúc chèn. Thêm test kiến trúc: không method nào ngoài lớp chèn gọi `save()` trên aggregate có cột `status`. Checklist review ở DOC-12 thêm mục này.
+- *Đổi 2026-10-06:* đề xuất cũ là `JdbcClient` cho mọi truy vấn, không dùng Spring Data.
 - **Ghi vào:** ADR-0012, DOC-11, DOC-12, DOC-07.
 
 ### DR-06 · Cấu trúc package trong mỗi module và luật phụ thuộc — **Đổi: kiến trúc n-layer bên trong, luật modular monolith bên ngoài**
@@ -147,7 +145,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   | `<module>.job` | Điểm vào | `@Scheduled` (`…Job`): đọc lịch/cấu hình, gọi service | Không ai (lịch) |
   | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Không ai (event) |
   | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay entity ↔ DTO (`…Mapper`) | Điểm vào cùng module |
-  | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JPA, truy vấn đặc biệt bằng `@Query` (DR-05), truy cập Redis (`…RedisRepository`) | Service cùng module |
+  | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `JdbcClient` (DR-05), truy cập Redis (`…RedisRepository`) | Service cùng module |
   | `<module>.client` | Truy cập hệ thống ngoài | Stripe (`PaymentGateway` và hai bản cài đặt, DR-51), S3 (DR-38), SMTP; chỉ module nào cần mới có | Service cùng module |
   | `<module>.entity` | (dữ liệu) | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module |
   | `<module>.dto` | (dữ liệu) | `record` request/response của REST API | Controller, service cùng module |
@@ -1497,7 +1495,7 @@ Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-1
 
 #### DR-106 · Fan-out theo lô JDBC 500 — **Chốt**
 - **Vấn đề:** đổi lịch và hủy sự kiện ghi một dòng cho mỗi đơn `PAID` trong một transaction; một event 5.000 đơn không nên gọi `enqueue` 5.000 lần qua 5.000 round-trip.
-- **Quyết định:** `NotificationApi.enqueueAll` dùng JDBC batch của Hibernate theo lô `outbox.enqueue-batch-size` = 500, vẫn trong transaction của người gọi.
+- **Quyết định:** `NotificationApi.enqueueAll` dùng `JdbcClient.batchUpdate` theo lô `outbox.enqueue-batch-size` = 500, vẫn trong transaction của người gọi.
 - **Hệ quả:** transaction `PATCH` và hủy sự kiện giữ lâu hơn một chút với event lớn (`statement_timeout` 60 giây của DR-28 đủ).
 - **Nguồn:** `06-design/tickets-and-notifications.md`
 

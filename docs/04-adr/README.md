@@ -19,7 +19,7 @@ Mục lục các ADR (MADR rút gọn, mẫu A.1). Mỗi ADR một quyết đị
 | ADR-0009 | Tài liệu sơ đồ tham số, phiên bản bất biến | Chưa viết | P4 | SDD gốc 7.1, 7.8, DR-32 |
 | ADR-0010 | Một sơ đồ cho mỗi sự kiện, dùng lại bằng nhân bản sinh ID mới | Chưa viết | P4 | DR-31 |
 | [ADR-0011](0011-java-25-spring-boot-4.md) | Java 25 và Spring Boot 4 | Accepted | P1 | DR-02 |
-| [ADR-0012](0012-spring-data-jpa-and-modulith-boundaries.md) | Spring Data JPA (Hibernate), trạng thái đổi bằng `@Modifying @Query` có điều kiện, ranh giới module bằng Spring Modulith | Accepted | P1 | DR-05 |
+| [ADR-0012](0012-spring-data-jdbc-and-modulith-boundaries.md) | Spring Data JDBC (trạng thái đổi bằng `@Modifying @Query` có điều kiện), ranh giới module bằng Spring Modulith | Accepted | P1 | DR-05 |
 | ADR-0013 | Tình trạng chỗ dạng bitmap, snapshot cache trong tiến trình | Chưa viết | P5 | DR-62 |
 | ADR-0014 | Store editor ngoài React, ghế vẽ bằng một Konva custom shape | Chưa viết | P4 | SDD gốc 7.9, 13.2, DR-39 |
 | ADR-0015 | Ảnh lưu ở object storage tương thích S3, API phục vụ qua cache nginx | Chưa viết | P2 | DR-38 |

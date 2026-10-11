@@ -1,7 +1,7 @@
 # Stack và phiên bản
 
 > Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-11
-> Phụ thuộc: SDD gốc §4.3, [DOC-07](system-context-and-containers.md), [Sổ quyết định](../00-decision-register.md) (DR-01…05, 08, 38, 51, 68, 72, 77, 81), [ADR-0011](../04-adr/0011-java-25-spring-boot-4.md), [ADR-0012](../04-adr/0012-spring-data-jpa-and-modulith-boundaries.md)
+> Phụ thuộc: SDD gốc §4.3, [DOC-07](system-context-and-containers.md), [Sổ quyết định](../00-decision-register.md) (DR-01…05, 08, 38, 51, 68, 72, 77, 81), [ADR-0011](../04-adr/0011-java-25-spring-boot-4.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P0-02 (spike S-01), P1-01 (khởi tạo monorepo), P1-02 (compose), P1-09 (khung frontend); DOC-12, DOC-61, DOC-62, DOC-63
 
 Tài liệu khóa thư viện và công cụ của dự án kèm lý do và giấy phép, và là nơi ghi bảng tương thích của spike S-01. Cách dùng thư viện trong code nằm ở [DOC-12](code-architecture.md); image hạ tầng và cấu hình compose ở [DOC-62](../09-operations/deploy-compose.md); lệnh `make` ở [DOC-61](../09-operations/local-dev.md).
@@ -33,7 +33,7 @@ Tài liệu khóa thư viện và công cụ của dự án kèm lý do và gi�
 | --- | --- | --- | --- | --- | --- |
 | Web | Spring Web MVC (starter-web), Bean Validation | Theo BOM | REST/JSON; platform thread | Apache-2.0 | SDD gốc 4.3 |
 | Bảo mật | Spring Security | Theo BOM | Bộ lọc session tự viết trên SecurityContext, CSRF synchronizer, header (DR-22) | Apache-2.0 | DR-22 |
-| Truy cập dữ liệu | Spring Data JPA (Hibernate); truy vấn đặc biệt bằng `@Query`; **không `JdbcClient`** | Theo BOM | ORM cho CRUD, SQL viết tay chỉ cho thao tác đặc biệt; quan hệ `LAZY`, `open-in-view=false` (DR-05) | Apache-2.0; LGPL-2.1 (Hibernate) | DR-05 |
+| Truy cập dữ liệu | Spring Data JDBC + `JdbcClient` cho custom fragment; **không JPA** | Theo BOM | Aggregate + SQL viết tay; không lazy loading (DR-05) | Apache-2.0 | DR-05 |
 | Ranh giới module | Spring Modulith (`spring-modulith-starter-core`, test) | Dòng: dòng tương thích Boot 4 (xác nhận ở S-01) | `ApplicationModules.verify()` (DR-05, DR-06) | Apache-2.0 | DR-05 |
 | Kiểm tra kiến trúc | ArchUnit | Dòng: 1.x mới nhất tương thích Java 25 (xác nhận ở S-01) | `layeredArchitecture()`, luật `@Transactional`, sở hữu bảng, không `save()` đổi `status` | Apache-2.0 | DR-06 |
 | Database | PostgreSQL JDBC driver, HikariCP (kèm Boot) | Theo BOM | Pool 40, `connection-timeout` 1000 ms (DR-61) | BSD-2-Clause; Apache-2.0 | DR-61 |
@@ -125,7 +125,7 @@ S-01 (P0-02) chạy ngày 2026-10-06 trên JDK Temurin 25.0.4, Gradle 9.8.0, Doc
 | --- | --- | --- | --- | --- |
 | 1 | Java 25 + Gradle 9 + Kotlin DSL | Temurin 25.0.4; Gradle 9.8.0 | Build, test trên JDK 25 (toolchain 25) | Đạt |
 | 2 | Spring Boot + Spring Security | Boot 4.0.8; Framework 7.0.9; Security 7.0.7 | Context khởi động; `POST` không có token CSRF → 403, có token → 200 | Đạt |
-| 3 | Spring Data JDBC (kết quả cũ, trước DR-05 đổi 2026-10-11) | 4.0.7; PostgreSQL JDBC 42.7.13 | `JdbcAggregateTemplate.insert` với UUID gán trước; converter `jsonb` qua `PGobject`; `@Modifying @Query` có điều kiện trả `int` (1 rồi 0); `@MappedCollection` | Đạt; **cần kiểm lại với Spring Data JPA + Hibernate 7 trên Java 25** (UUID gán trước bằng `Persistable`, `@JdbcTypeCode(JSON)`, `@Modifying` có điều kiện) |
+| 3 | Spring Data JDBC | 4.0.7; PostgreSQL JDBC 42.7.13 | `JdbcAggregateTemplate.insert` với UUID gán trước; converter `jsonb` qua `PGobject` (cột đúng kiểu `jsonb`); `@Modifying @Query` có điều kiện trả `int` (1 rồi 0); `@MappedCollection` | Đạt |
 | 4 | Flyway + PostgreSQL 18 | Flyway 11.14.1 + `flyway-database-postgresql` | Migration có `uuidv7()` (UUID version 7), index một phần, trigger `forbid_update` chặn UPDATE | Đạt |
 | 5 | springdoc-openapi | 3.0.2 | `/v3/api-docs` trả OpenAPI 3.1; `openapi-typescript` 7.13.0 sinh `schema.d.ts` từ tài liệu đó | Đạt |
 | 6 | stripe-java | 34.0.0 | `Webhook.constructEvent` xác minh chữ ký (offline). Tạo PaymentIntent thật thuộc S-02 | Đạt (phần offline) |

@@ -165,7 +165,7 @@ docs/
     0009-parametric-seat-map-document-immutable-versions.md
     0010-one-seat-map-per-event.md
     0011-java-25-spring-boot-4.md
-    0012-spring-data-jpa-and-modulith-boundaries.md
+    0012-spring-data-jdbc-and-modulith-boundaries.md
     0013-availability-bitmap-snapshot.md
     0014-editor-store-outside-react-konva-custom-shape.md
     0015-media-in-s3-compatible-object-storage.md
@@ -292,7 +292,7 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-09 | Hợp đồng tích hợp | Stripe: phiên bản SDK và API, tham số PaymentIntent (DR-47), mã lỗi khi hủy theo trạng thái (kết quả S-02), danh sách event webhook đăng ký, **payload mẫu đầy đủ** cho `payment_intent.succeeded`, `payment_failed`, `canceled`, header `Stripe-Signature`, dung sai 300 giây; định dạng chữ ký của cổng giả (DR-51); SMTP: biến cấu hình, `Message-ID` | P3 |
 | DOC-10 | Thuộc tính chất lượng | Với mỗi NFR: chiến thuật → cơ chế → nơi cài đặt → kiểm chứng; **ngân sách độ trễ của lệnh giữ vé theo chặng** (nginx, rate limit Redis, kiểm tra lượt vào `ZSCORE`, lấy connection, transaction, commit) cho p95 < 500 ms; **ước lượng dung lượng**: số dòng `inventory_unit` cho sự kiện 5.000/100.000 chỗ, request/giây của phòng chờ với 100.000 người theo nhịp `retryAfter` (DR-59), băng thông availability (DR-62), số connection; ngân sách tài nguyên container trên máy thực nghiệm | P2 |
 | DOC-11 | Stack và phiên bản | Bảng thư viện và công cụ khóa phiên bản (DR-02, DR-03, DR-04) kèm lý do và giấy phép; công cụ dev; **bảng tương thích từ S-01** | P1 |
-| DOC-12 | Kiến trúc code | **Layer trong mỗi module `io.ticket.<module>`: điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; việc của từng layer và việc nó không được làm; cây thư mục mẫu của một module** (DR-06); **luật modular monolith: package gốc là API công khai (`…Api`, DTO, event), gọi đồng bộ qua `…Api`, báo ngược bằng event, không vòng phụ thuộc** (DR-06); test Spring Modulith `verify()` + ArchUnit `layeredArchitecture()` (DR-05, DR-06); nơi mở transaction (chỉ service), propagation `MANDATORY`; **Spring Data JPA: danh sách entity gốc, luật "không đổi `status` bằng `save()`/setter/dirty checking" (`updatable = false`), UUID gán trước bằng `Persistable`, `@JdbcTypeCode(JSON)`, `@Query` cho SQL đặc biệt, không `JdbcClient`** (DR-05); DTO dạng `record`, mapper viết tay; cấu trúc frontend `features/*`, `map-core`, `api`, `locales`; **checklist review: câu ghi có điều kiện, không gọi ra ngoài trong transaction, không chuỗi cứng** | P1 |
+| DOC-12 | Kiến trúc code | **Layer trong mỗi module `io.ticket.<module>`: điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; việc của từng layer và việc nó không được làm; cây thư mục mẫu của một module** (DR-06); **luật modular monolith: package gốc là API công khai (`…Api`, DTO, event), gọi đồng bộ qua `…Api`, báo ngược bằng event, không vòng phụ thuộc** (DR-06); test Spring Modulith `verify()` + ArchUnit `layeredArchitecture()` (DR-05, DR-06); nơi mở transaction (chỉ service), propagation `MANDATORY`; **Spring Data JDBC: danh sách aggregate, luật "không đổi `status` bằng `save()`", chèn bằng `JdbcAggregateTemplate.insert`, converter `jsonb`, custom fragment dùng `JdbcClient` cho SQL phức tạp** (DR-05); DTO dạng `record`, mapper viết tay; cấu trúc frontend `features/*`, `map-core`, `api`, `locales`; **checklist review: câu ghi có điều kiện, không gọi ra ngoài trong transaction, không chuỗi cứng** | P1 |
 
 #### 04-adr
 
@@ -311,7 +311,7 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | ADR-0009 | Tài liệu sơ đồ tham số, phiên bản bất biến | SDD gốc 7.1, 7.8, DR-32 | P4 |
 | ADR-0010 | Một sơ đồ cho mỗi sự kiện, dùng lại bằng nhân bản sinh ID mới | DR-31 | P4 |
 | ADR-0011 | Java 25 và Spring Boot 4 | DR-02 | P1 |
-| ADR-0012 | Spring Data JPA (Hibernate; trạng thái đổi bằng `@Modifying @Query` có điều kiện), ranh giới module bằng Spring Modulith | DR-05 | P1 |
+| ADR-0012 | Spring Data JDBC (trạng thái đổi bằng `@Modifying @Query` có điều kiện), ranh giới module bằng Spring Modulith | DR-05 | P1 |
 | ADR-0013 | Tình trạng chỗ dạng bitmap, snapshot cache trong tiến trình | DR-62 | P5 |
 | ADR-0014 | Store editor ngoài React, ghế vẽ bằng một Konva custom shape | SDD gốc 7.9, 13.2, DR-39 | P4 |
 | ADR-0015 | Ảnh lưu ở object storage tương thích S3, API phục vụ qua cache nginx | DR-38 | P2 |
@@ -774,7 +774,7 @@ Mục tiêu: lõi NEVER OVERSELL chạy đầu cuối trên mô hình đơn gi�
 
 | Rủi ro | Dấu hiệu sớm | Xử lý |
 | --- | --- | --- |
-| Hệ sinh thái Spring Boot 4 chưa đủ cho springdoc, Spring Modulith, Spring Data JPA (Hibernate) hoặc stripe-java | S-01 có thư viện không khởi động được | Lùi toàn bộ về Java 21 + Boot 3.5 (DR-02), ghi ADR thay ADR-0011 |
+| Hệ sinh thái Spring Boot 4 chưa đủ cho springdoc, Spring Modulith, Spring Data JDBC hoặc stripe-java | S-01 có thư viện không khởi động được | Lùi toàn bộ về Java 21 + Boot 3.5 (DR-02), ghi ADR thay ADR-0011 |
 | Mức tối thiểu của VND trên tài khoản Stripe test cao hơn dự kiến (phụ thuộc tiền tệ quyết toán của nước đăng ký) | S-02 trả lỗi `amount_too_small` | Nâng `payment.min-amount` lên mức đo được (giá vé khác 0 tối thiểu tăng theo); giá trong dữ liệu mẫu (DR-78) đặt ≥ mức đó; vẫn chỉ VND (DR-13) |
 | Một máy không sinh nổi 100.000 người dùng ảo | S-06 dưới mục tiêu | DR mới hiệu chỉnh NFR-02 theo trần đo được, giữ tỉ lệ người/vé 20:1 |
 | Konva không đạt 30 fps ở 10.000 ghế | S-04 hoặc EXP-09 dưới 30 fps | Vẽ layer ghế bằng Canvas 2D thuần với cache theo tile; hạ ngưỡng chi tiết xuống 60% zoom |
