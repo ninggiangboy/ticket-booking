@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-/** ARC-02, ARC-04, ARC-10: layer direction and controller/entity separation. */
+/** ARC-02, ARC-04, ARC-10: layer direction and controller/model separation. */
 class LayerRulesTest {
 
   @Test
@@ -36,6 +36,6 @@ class LayerRulesTest {
     var classes = ArchitectureRules.importFixture("fixture.layer");
     assertThatThrownBy(
             () -> ArchitectureRules.controllersAvoidEntities("fixture.layer").check(classes))
-        .hasMessageContaining("BadEntity");
+        .hasMessageContaining("BadModel");
   }
 }

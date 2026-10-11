@@ -160,7 +160,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | modular monolith | monolith chia module | Một ứng dụng API, job nền chạy cùng tiến trình, PostgreSQL là nguồn chuẩn duy nhất; module chỉ gọi nhau qua package gốc | ADR-0002, DR-06 |
 | module | module | `io.ticket.<module>`: `auth`, `event`, `map`, `inventory`, `reservation`, `order`, `payment`, `ticket`, `admission`, `notification`, `invariant`, `media` và `common` (dùng chung). Mỗi bảng và họ key Redis có đúng một module sở hữu | DR-05, DR-06, DOC-07 |
 | `…Api` | interface công khai của module | Interface ở package gốc của module (ví dụ `InventoryApi`), cùng DTO và event; module khác chỉ dùng package gốc | DR-06 |
-| layer | layer | Trong module: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`, cùng `entity`, `dto`. `@Transactional` chỉ ở `service` | DR-06, DOC-12 |
+| layer | layer | Trong module: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`, cùng `model`, `dto`. `@Transactional` chỉ ở `service` | DR-06, DOC-12 |
 | aggregate | aggregate | Entity Spring Data JDBC có `save()` (`AppUser`, `Event`, `Reservation`…); `inventory_unit` và `inventory_pool` không phải aggregate. Không đổi `status` bằng `save()` | DR-05, ADR-0012 |
 | conditional write | câu ghi có điều kiện | Mọi chuyển trạng thái là `UPDATE … WHERE … AND status = :from` kiểm số dòng trả về; code không đọc rồi mới quyết định ghi | DR-05, SDD gốc 4.2 |
 | Spring Modulith | Spring Modulith | Thư viện kiểm ranh giới module (`ApplicationModules.verify()`), kèm ArchUnit cho layer và sở hữu bảng | DR-05 |

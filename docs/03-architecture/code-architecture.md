@@ -36,10 +36,10 @@ Gói gốc `io.ticket`. Mỗi module nghiệp vụ `io.ticket.<module>` là mộ
 | `<module>.controller` | Điểm vào | `@RestController`, webhook endpoint: nhận request, validate hình thức (`@Valid`), gọi service, trả DTO | HTTP | Gọi repository, client; mở transaction; chứa logic nghiệp vụ; trả entity |
 | `<module>.job` | Điểm vào | `@Scheduled` `…Job`: đọc lịch/cấu hình, gọi service | Lịch | Gọi repository; mở transaction; gọi controller |
 | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Event | Như `job` |
-| `<module>.service` | Service | `@Service`: logic nghiệp vụ, **ranh giới transaction**, cài đặt `…Api`, mapper `…Mapper` entity ↔ DTO | Điểm vào cùng module; module khác qua `…Api` | Trả entity ra ngoài layer; gọi controller; gọi `service` của module khác (chỉ qua `…Api`) |
+| `<module>.service` | Service | `@Service`: logic nghiệp vụ, **ranh giới transaction**, cài đặt `…Api`, mapper `…Mapper` model ↔ DTO | Điểm vào cùng module; module khác qua `…Api` | Trả entity ra ngoài layer; gọi controller; gọi `service` của module khác (chỉ qua `…Api`) |
 | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `…Claims` + `…Impl` dùng `JdbcClient`, `…RedisRepository` | Service cùng module | Gọi service; mở transaction; chứa quyết định nghiệp vụ |
 | `<module>.client` | Hệ thống ngoài | Stripe (`PaymentGateway` + hai adapter), S3, SMTP | Service cùng module | Gọi service; chạy trong transaction của người gọi mà không có timeout |
-| `<module>.entity` | Dữ liệu | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module | Có logic gọi ra ngoài |
+| `<module>.model` | Dữ liệu | Model ánh xạ bảng, enum trạng thái | Repository, service cùng module | Có logic gọi ra ngoài |
 | `<module>.dto` | Dữ liệu | `record` request/response của REST API | Controller, service cùng module | Dùng ở module khác (DTO chia sẻ nằm ở package gốc) |
 | `<module>.config` | Kỹ thuật (không phải layer) | `@Configuration`, `@ConfigurationProperties` (`record`), bean chọn bản cài đặt (`inventory.strategy`) | Spring | Chứa logic nghiệp vụ |
 
@@ -49,7 +49,7 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 
 1. Chiều gọi chỉ đi xuống: điểm vào (`controller`, `job`, `listener`) → `service` → `repository` / `client`. Điểm vào không gọi repository hay client và không gọi lẫn nhau; repository và client không gọi service.
 2. `@Transactional` chỉ đặt ở `service`; điểm vào không tự mở transaction.
-3. Entity không ra khỏi layer service: controller nhận và trả DTO; service đổi entity ↔ DTO bằng mapper viết tay (`…Mapper`, không MapStruct).
+3. Model không ra khỏi layer service: controller nhận và trả DTO; service đổi model ↔ DTO bằng mapper viết tay (`…Mapper`, không MapStruct).
 4. DTO là `record` (Java 25), bất biến; validate bằng Bean Validation trên controller (`@Valid`).
 5. Hằng số tên cột/bảng không dùng chung giữa module (mỗi module có SQL của riêng mình).
 
@@ -102,7 +102,7 @@ io.ticket.reservation
 │   ├── ReservationClaims.java              # custom fragment: câu SQL claim reservation đến hạn (JdbcClient)
 │   ├── ReservationClaimsImpl.java
 │   └── IdempotencyKeyRepository.java
-├── entity/
+├── model/
 │   ├── Reservation.java                    # aggregate, @MappedCollection reservation_item
 │   ├── ReservationItem.java
 │   └── ReservationStatus.java              # enum ↔ text
@@ -131,7 +131,7 @@ Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `reposit
 
 | Module | Aggregate (có `save()` để chèn và sửa trường không phải trạng thái) | Truy cập không qua aggregate |
 | --- | --- | --- |
-| `auth` | `AppUser`, `Organizer` | `login_token`, `session` (`JdbcClient`/`@Modifying @Query`, không `save()`) |
+| `auth` | `AppUser`, `Organizer`, `LoginToken` (khóa `token_hash bytea`; dòng được chèn bằng `@Modifying @Query` để `created_at`/`expires_at` lấy từ `now()` của DB, DR-12; không `save()`) | `session` (`JdbcClient`/`@Modifying @Query`, không `save()`) |
 | `media` | `Media` | — |
 | `event` | `Event` (`@Version` trên `row_version`), `TicketType` | — |
 | `map` | `SeatMap`, `SeatMapVersion` | — |
@@ -145,11 +145,11 @@ Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `reposit
 ### 3.2 Luật
 
 1. **Không bao giờ đổi `status` bằng `save()`.** Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng; service kiểm tra số dòng và quyết định (SDD gốc 4.2). `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
-2. **ID gán trước bằng UUIDv7** (DR-11): chèn bằng `JdbcAggregateTemplate.insert(entity)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
+2. **ID gán trước bằng UUIDv7** (DR-11): chèn bằng `JdbcAggregateTemplate.insert(model)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
 3. **`Reservation` chỉ `save()` một lần lúc chèn:** aggregate có `@MappedCollection` bị xóa-chèn lại toàn bộ con khi `save()`.
 4. **SQL phức tạp** (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt `generate_series`, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment dùng `JdbcClient`; vẫn là SQL viết tay, ở trong module sở hữu bảng.
 5. **Cột `jsonb`** (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
-6. **Khóa lạc quan:** `Event.rowVersion` dùng `@Version`; `PATCH` so `rowVersion` của client với entity đã đọc, lệch → `StaleEventVersionException` (409 `STALE_EVENT_VERSION`); `OptimisticLockingFailureException` do đua cũng ánh xạ về mã này (DR-70).
+6. **Khóa lạc quan:** `Event.rowVersion` dùng `@Version`; `PATCH` so `rowVersion` của client với model đã đọc, lệch → `StaleEventVersionException` (409 `STALE_EVENT_VERSION`); `OptimisticLockingFailureException` do đua cũng ánh xạ về mã này (DR-70).
 7. **Truy vấn đọc cho giao diện** viết bằng `@Query` trả projection `record`, không nạp aggregate.
 
 ```java
@@ -236,7 +236,7 @@ class HoldService {
 
 ## 4. DTO, lỗi và log
 
-- **DTO** là `record`; tên trường camelCase; trường không có giá trị là `null` (không bỏ, DR-63). Mapper entity ↔ DTO viết tay, đặt ở `service`.
+- **DTO** là `record`; tên trường camelCase; trường không có giá trị là `null` (không bỏ, DR-63). Mapper model ↔ DTO viết tay, đặt ở `service`.
 - **Lỗi nghiệp vụ** là exception kế thừa `common.error.DomainException(code, status)`; exception thuộc hợp đồng `…Api` nằm ở package gốc, exception nội bộ ở `service`. `@RestControllerAdvice` trong `common` đổi sang Problem Details; bảng exception → mã lỗi → HTTP ở DOC-35. Service không trả `ResponseEntity`.
 - **Log:** JSON ECS; MDC `trace_id` (từ `X-Request-Id`), `user_id`, `event_id`, `reservation_id`, `order_id`; không bao giờ log email (DR-09, DR-22). Lỗi nghiệp vụ mức INFO/WARN, lỗi lập trình mức ERROR (DOC-35).
 
@@ -249,7 +249,7 @@ Chạy trong `make test`; mỗi quy tắc có test thất bại có chủ đích
 | ARC-01 | Spring Modulith `ApplicationModules.of(Application.class).verify()` | Chỉ dùng package gốc của module khác; không vòng phụ thuộc; chỉ `allowedDependencies` khai báo | Một unit test `ModularityTests` |
 | ARC-02 | ArchUnit `layeredArchitecture()` | Chiều gọi trong module: điểm vào → service → repository/client; điểm vào không gọi nhau | `LayerRulesTest` |
 | ARC-03 | ArchUnit | `@Transactional` chỉ trong `..service..` | `TransactionRulesTest` |
-| ARC-04 | ArchUnit | `..controller..` không dùng `..entity..` | `LayerRulesTest` |
+| ARC-04 | ArchUnit | `..controller..` không dùng `..model..` | `LayerRulesTest` |
 | ARC-05 | ArchUnit tùy biến | Chuỗi SQL (hằng, `@Query`, text block) trong module X chỉ nhắc bảng của X theo danh sách ở DOC-07 §4.1 | `TableOwnershipTest` |
 | ARC-06 | ArchUnit tùy biến | Không method nào ngoài lớp chèn gọi `save()` trên aggregate có cột `status` (`Reservation`, `Order`, `Ticket`, `Event`, `OutboxMessage`) | `NoStatusSaveTest` |
 | ARC-07 | ArchUnit tùy biến | Package `io.ticket.invariant` không chứa `INSERT/UPDATE/DELETE` | `InvariantReadOnlyTest` |
@@ -303,7 +303,7 @@ Người review (và tác giả) đối chiếu từng mục; mục nào liên q
 | 1 | **Câu ghi có điều kiện:** mọi đổi trạng thái là `UPDATE … WHERE … AND status = :from`, kiểm số dòng trả về; không đọc rồi mới quyết định ghi | Đọc diff; `NoStatusSaveTest` |
 | 2 | **Không gọi ra ngoài trong transaction:** Stripe, SMTP, S3, Redis nằm trước, sau transaction hoặc qua outbox; kiểm tra rẻ chạy trước khi lấy connection | Đọc diff; không `@Transactional` gọi `client`/Redis |
 | 3 | **Không chuỗi giao diện cứng** trong JSX, email, message; có key ở `vi` và `en` | `pnpm i18n:check`, test `messages_*.properties` |
-| 4 | Layer đúng: controller chỉ nhận/trả DTO, entity không ra khỏi `service`, `@Transactional` chỉ ở `service` | `LayerRulesTest`, `TransactionRulesTest` |
+| 4 | Layer đúng: controller chỉ nhận/trả DTO, model không ra khỏi `service`, `@Transactional` chỉ ở `service` | `LayerRulesTest`, `TransactionRulesTest` |
 | 5 | Chỉ dùng package gốc của module khác; bảng của module khác không xuất hiện trong SQL | `ModularityTests`, `TableOwnershipTest` |
 | 6 | `…Api` mới: method chỉ gọi trong transaction đánh `MANDATORY` và có trong bảng giao dịch liên module ở DOC-07 §4.3 | Đọc diff, cập nhật DOC-07 |
 | 7 | Thời gian quyết định nghiệp vụ dùng `now()` của database | `grep Instant.now` trong service nghiệp vụ |

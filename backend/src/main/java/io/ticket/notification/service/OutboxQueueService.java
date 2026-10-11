@@ -1,7 +1,7 @@
 package io.ticket.notification.service;
 
 import io.ticket.notification.config.OutboxProperties;
-import io.ticket.notification.entity.OutboxMessage;
+import io.ticket.notification.model.OutboxMessage;
 import io.ticket.notification.repository.OutboxRepository;
 import java.util.List;
 import java.util.UUID;

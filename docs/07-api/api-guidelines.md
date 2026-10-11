@@ -229,7 +229,7 @@ Quy tắc:
 
 - springdoc-openapi sinh **OpenAPI 3.1** tại `/v3/api-docs` (DR-63, DOC-11). Chỉ truy cập được trong mạng nội bộ compose và profile `dev`; nginx không proxy `/v3/` và không bật Swagger UI ở compose.
 - Mỗi module một **tag** (`auth`, `catalog`, `inventory`, `reservation`, `payment`, `seatmap`, `studio`, `media`, `queue`, `webhooks`), mỗi nhóm một `GroupedOpenApi`.
-- Hợp đồng chỉ gồm class ở `controller` và `dto` của module; entity không bao giờ xuất hiện trong schema (DOC-12 §2.1).
+- Hợp đồng chỉ gồm class ở `controller` và `dto` của module; model không bao giờ xuất hiện trong schema (DOC-12 §2.1).
 
 ### 10.2 Quy ước mô tả
 

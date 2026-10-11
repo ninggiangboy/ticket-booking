@@ -102,7 +102,7 @@ final class ArchitectureRules {
         .resideInAPackage(root + "..controller..")
         .should()
         .dependOnClassesThat()
-        .resideInAPackage(root + "..entity..")
+        .resideInAPackage(root + "..model..")
         .allowEmptyShould(true);
   }
 

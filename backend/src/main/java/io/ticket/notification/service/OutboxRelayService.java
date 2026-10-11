@@ -7,7 +7,7 @@ import io.ticket.common.mail.MailProperties;
 import io.ticket.common.mail.MailSender;
 import io.ticket.common.mail.OutgoingEmail;
 import io.ticket.notification.config.OutboxProperties;
-import io.ticket.notification.entity.OutboxMessage;
+import io.ticket.notification.model.OutboxMessage;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;

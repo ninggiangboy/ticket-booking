@@ -1,7 +1,7 @@
 package io.ticket.notification.repository;
 
 import io.ticket.notification.OutboxKind;
-import io.ticket.notification.entity.OutboxMessage;
+import io.ticket.notification.model.OutboxMessage;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;

@@ -33,7 +33,9 @@ Module `auth` chỉ phụ thuộc `common` (DOC-12 §2.2). `auth` sở hữu `ap
 | `SessionService` | `service` | Tra session (cache + DB), cập nhật `last_seen_at`, thu hồi |
 | `OrganizerService` | `service` | Lập hồ sơ tổ chức |
 | `ReturnToSanitizer` | `service` | Kiểm tra `return_to` (mục 6) |
-| `LoginTokenRepository`, `SessionRepository` | `repository` | `JdbcClient` / `@Modifying @Query`, không `save()` (DOC-12 §3.1) |
+| `LoginTokenRepository` | `repository` | `ListCrudRepository<LoginToken, byte[]>` + `@Query`/`@Modifying @Query` (đếm giới hạn, `supersedeUnused`, `insert`, `consume … RETURNING`, `deleteExpired`, khóa `pg_advisory_xact_lock`); không `save()` vì hạn token tính bằng `now()` của DB (DOC-12 §3.1) |
+| `SessionRepository` | `repository` | `JdbcClient` / `@Modifying @Query`, không `save()` (DOC-12 §3.1) |
+| `LoginToken` | `model` | Aggregate của `login_token`; không ánh xạ `requested_ip` (cột `inet`, chỉ ghi bằng `insert` và đếm bằng SQL) |
 | `AppUserRepository`, `OrganizerRepository` | `repository` | `save()` chỉ để chèn; upsert đăng nhập bằng `@Query` |
 | `SessionAuthenticationFilter`, `CsrfFilter` | `security` | Gắn `CurrentUser` vào request, kiểm tra CSRF |
 | `AuthApi` | gốc `io.ticket.auth` | Giao diện cho module khác (mục 11) |

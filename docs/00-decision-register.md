@@ -37,7 +37,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Owner | Đổi: mở ô chọn múi giờ IANA ở form studio (mặc định `Asia/Ho_Chi_Minh`, khóa sau khi xuất bản); tiền tệ giữ chỉ VND | DR-12, DR-25, DOC-20, DOC-31, DOC-40, DOC-55 |
 | 2026-10-06 | Owner | Đổi: chỉ VND, gán cứng; bỏ `PLATFORM_CURRENCY`, bảng `minorUnitDigits` và kiểm tra tiền tệ khi khởi động; `orders.currency` CHECK `= 'VND'`; phương án dự phòng của S-02 là nâng `payment.min-amount`, không đổi tiền tệ | DR-13, DR-18, DOC-14, DOC-26, DOC-34 |
 | 2026-10-06 | Owner | Cập nhật master plan theo template mới của skill: thêm nhóm luồng chi tiết `06-design/flows/` (DOC-82…90, FL-01…35, mẫu A.8), gate và task tương ứng; không đổi DR nào | Master plan §0.4, §1.3, §3, §5, §6, Phụ lục A; README |
-| 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
+| 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `model`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
 | 2026-10-06 | Owner | Đổi theo đề xuất đơn giản hóa của Claude (dự án để học): magic link gửi trực tiếp sau commit, bỏ mã hóa token trong outbox; bỏ token vào cửa, kiểm tra `ZSCORE admitted` theo session; `admit_rate` cố định, bỏ AIMD; bỏ rate limiter dự phòng khi mất Redis; cache tình trạng chỗ bằng Caffeine trong tiến trình; idempotency băm body thô; tiền tố mã vé do người tổ chức nhập; bỏ quét bucket | DR-21, DR-19, DR-38, DR-45, DR-52, DR-56, DR-57, DR-58, DR-60, DR-62, DR-64, DR-74, ADR-0007, ADR-0013, DOC-17, DOC-18, DOC-19, DOC-28, DOC-29, DOC-32, DOC-36, DOC-83, DOC-90, P1-07, P5-03, P6-02, P6-05, P6-06 |
 | 2026-10-06 | Owner | Đổi: sơ đồ khóa toàn bộ từ giờ mở bán, kể cả khi chưa ai mua; trước giờ mở bán xuất bản phiên bản mới thì dựng lại kho vé; bỏ diff và `MAP_VERSION_CONFLICT`. Thêm đóng bán sớm (`close-sale`). DR-36 (tự lưu, IndexedDB) giữ nguyên | DR-37, DR-24, DR-40, DR-64, FR-15, UC-09, UC-14, DOC-20, DOC-22, DOC-23, DOC-57, DOC-59, DOC-84, DOC-89, P2-05.1, P5-05.1 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-79 (đồ thị phụ thuộc module, module `studio`), DR-80 (cổng `api` 8081), DR-81 (thư viện bổ sung) khi viết DOC-07, 11, 12 | DR-79, DR-80, DR-81, DOC-07, DOC-11, DOC-12, ADR-0002 |
@@ -125,7 +125,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Quyết định (Owner chốt):** Spring Data JDBC (dòng đi kèm Spring Boot 4, kiểm tra trong S-01); không JPA.
   - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng.
   - **Luật đổi trạng thái:** không bao giờ đổi `status` bằng `save()`. Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng, service kiểm tra số dòng. `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
-  - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
+  - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
   - Câu lệnh mà `@Query` không diễn đạt gọn (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment (`InventoryUnitClaims` + `…Impl`) dùng `JdbcClient`. Vẫn là SQL viết tay, ở trong module sở hữu bảng.
   - Cột `jsonb` (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
   - Transaction mở ở service của module điều phối (`reservation.service.HoldService`), module khác tham gia qua interface `…Api` của mình, chạy trong cùng transaction (DR-06) (propagation `MANDATORY` cho method chỉ được gọi trong transaction).
@@ -144,10 +144,10 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   | `<module>.controller` | Điểm vào | `@RestController`, webhook endpoint: nhận request, validate hình thức (`@Valid`), gọi service, trả response | Không ai (HTTP) |
   | `<module>.job` | Điểm vào | `@Scheduled` (`…Job`): đọc lịch/cấu hình, gọi service | Không ai (lịch) |
   | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Không ai (event) |
-  | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay entity ↔ DTO (`…Mapper`) | Điểm vào cùng module |
+  | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay model ↔ DTO (`…Mapper`) | Điểm vào cùng module |
   | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `JdbcClient` (DR-05), truy cập Redis (`…RedisRepository`) | Service cùng module |
   | `<module>.client` | Truy cập hệ thống ngoài | Stripe (`PaymentGateway` và hai bản cài đặt, DR-51), S3 (DR-38), SMTP; chỉ module nào cần mới có | Service cùng module |
-  | `<module>.entity` | (dữ liệu) | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module |
+  | `<module>.model` | (dữ liệu) | Model ánh xạ bảng, enum trạng thái | Repository, service cùng module |
   | `<module>.dto` | (dữ liệu) | `record` request/response của REST API | Controller, service cùng module |
 
   Không phải module nào cũng có đủ package; tạo package khi có class đầu tiên. Ví dụ module `inventory`: `InventoryApi`, `ClaimResult` (gốc); `controller/AvailabilityController`; `job/ReleaseExpiredHoldsJob`; `listener/EventPublishedListener`; `service/InventoryService implements InventoryApi`, `service/InventoryMapper`; `repository/InventoryUnitRepository` + `InventoryUnitClaims` + `InventoryUnitClaimsImpl`; `entity/InventoryUnit`; `dto/AvailabilityResponse`.
@@ -155,11 +155,11 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   **Luật layer (trong một module):**
   - Chiều gọi chỉ đi xuống: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`. Điểm vào không gọi repository hay client và không gọi lẫn nhau; repository và client không gọi service.
   - `@Transactional` chỉ ở `service`; điểm vào không tự mở transaction.
-  - Entity không ra khỏi layer service: controller nhận và trả DTO, service đổi entity ↔ DTO bằng mapper.
+  - Model không ra khỏi layer service: controller nhận và trả DTO, service đổi model ↔ DTO bằng mapper.
 
   **Luật modular monolith (giữa các module), giữ như SDD gốc 4.1 và DR-05:**
   - Mỗi bảng PostgreSQL và họ key Redis có đúng một module sở hữu (DOC-07); chỉ repository của module đó được đọc/ghi. Không module nào truy vấn bảng của module khác, kể cả bằng SQL thuần hay join.
-  - Module khác chỉ được dùng package gốc (`…Api`, DTO, event); mọi package con (`controller`, `job`, `listener`, `service`, `repository`, `client`, `entity`, `dto`) là nội bộ. Đây là mặc định của Spring Modulith, không cần `@NamedInterface`.
+  - Module khác chỉ được dùng package gốc (`…Api`, DTO, event); mọi package con (`controller`, `job`, `listener`, `service`, `repository`, `client`, `model`, `dto`) là nội bộ. Đây là mặc định của Spring Modulith, không cần `@NamedInterface`.
   - Gọi đồng bộ: service của module A gọi `BApi` của module B (inject interface, không inject class cài đặt). Báo ngược chiều hoặc báo cho nhiều module: publish event của module, module nhận xử lý ở `listener`. Không có vòng phụ thuộc giữa các module.
   - `common` (cấu hình, xử lý lỗi `@RestControllerAdvice`, i18n, bảo mật, tiện ích) là module dùng chung, không phụ thuộc module nghiệp vụ. Module bổ sung so với SDD gốc: `media` (DR-38); `i18n` không phải module (chỉ là cấu hình trong `common`).
 
