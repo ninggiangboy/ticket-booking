@@ -1,4 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
+import { delay, http } from "msw";
+import { problem } from "../../mocks/problem";
 import { server } from "../../test-setup";
 import { issueMockLink, renderApp, TOKEN } from "../../test/renderApp";
 
@@ -37,6 +39,23 @@ describe("AuthCallback", () => {
           .join(),
       ).not.toMatch(/csrf|Qm9Z/i);
     }
+  });
+
+  it("LGN-10: a guest probe still in flight when verify succeeds does not count as the answer", async () => {
+    // The boot GET /me leaves before the session exists and answers 401 after verify succeeded.
+    let probe = true;
+    server.use(
+      http.get("*/api/v1/me", async () => {
+        if (!probe) return undefined;
+        probe = false;
+        await delay(150);
+        return problem(401, "UNAUTHENTICATED");
+      }),
+    );
+    const token = await issueMockLink("an@example.com", "/me/tickets");
+    const { router } = await renderApp(`/auth/callback?token=${token}`);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/me/tickets"));
+    expect(await screen.findByRole("heading", { name: "Vé của tôi" })).toBeInTheDocument();
   });
 
   it("LGN-11: a used link shows the expired variant with a new-link button", async () => {

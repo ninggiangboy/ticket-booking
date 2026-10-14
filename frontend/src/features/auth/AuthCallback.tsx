@@ -57,6 +57,9 @@ export function AuthCallback() {
     (async () => {
       try {
         const result = await verifyMagicLink(token);
+        // The boot probe of GET /me may still be in flight from before the session existed;
+        // fetchQuery would share its answer (401), so drop it and ask again.
+        await queryClient.cancelQueries({ queryKey: meKey });
         const me = await queryClient.fetchQuery({ ...meQuery, staleTime: 0 });
         if (!me) throw new ApiError({ status: 500, code: "SESSION_NOT_STORED" });
         await applyAccountLocale(me, queryClient, { afterSignIn: true });
