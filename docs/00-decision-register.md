@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-07 (mọi DR-01…152 đã Chốt hoặc Đổi; Owner hoãn spike S-02…S-06 (DR-152); Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-14 (mọi DR-01…153 đã Chốt hoặc Đổi; Owner hoãn spike S-02…S-06 (DR-152); Owner chốt DR-153 (cú pháp dễ đọc, 2026-10-14); Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -51,6 +51,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Claude (Owner yêu cầu chạy) | Chốt qua spike S-01: giữ Java 25 + Spring Boot 4.0.8, không lùi Java 21; 9 kịch bản tích hợp xanh trên PostgreSQL 18 và SeaweedFS 4.48. Phát hiện: Boot 4 dùng Jackson 3 nên networknt đổi từ 1.5.x sang 3.0.8; SeaweedFS cần `-s3.config` | DR-02, DR-81, ADR-0011, DOC-11 |
 | 2026-10-07 | Owner | Chốt theo đề xuất DR-123–130 (ops): profile `seed` và target `make` bổ sung, ba file compose, `PAYMENTS_MODE` khớp profile, khóa công khai Stripe bằng build arg, body 429 của nginx và CSP cho Stripe Elements, `e2e.yml` riêng, job `audit` và `breaking-ok`, branch protection `dev`/`main`. Sổ quyết định và master plan lên `Approved v1.0` (P0-01) | DR-123–130, DOC-61, DOC-62, DOC-63, master plan P0-00, P0-01 |
 | 2026-10-07 | Owner | Hoãn spike S-02…S-06 tới gate của phase cần kết quả; M0 chỉ cần S-01 | DR-152, master plan §4.1, §5, §9, P0-03…07, P0-18, P2-00, P3-00, P4-00 |
+| 2026-10-14 | Owner | Ưu tiên cú pháp khai báo, dễ đọc: transaction chỉ bằng `@Transactional` (không `TransactionTemplate`), chấp nhận transaction rộng hơn mức tối thiểu; `outbox` không là aggregate; batch bằng `JdbcTemplate.batchUpdate` | DR-153, DR-05, DR-106, DOC-12, DOC-27 |
 
 ---
 
@@ -123,7 +124,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 ### DR-05 · Truy cập dữ liệu và kiểm tra ranh giới module — **Đổi: Spring Data JDBC**
 - **Vấn đề:** SDD gốc mục 4.3 chọn Spring JDBC; mục 4.1 yêu cầu module "chỉ gọi nhau qua interface công khai, không truy vấn bảng của nhau" nhưng không nói ép bằng gì. Transaction giữ vé lại phải chạm `idempotency_key`, `inventory_unit`, `reservation`, `orders` của bốn module trong một transaction. Mọi đổi trạng thái phải là câu ghi có điều kiện (SDD gốc 4.2), trong khi `save()` của Spring Data ghi đè cả dòng không điều kiện.
 - **Quyết định (Owner chốt):** Spring Data JDBC (dòng đi kèm Spring Boot 4, kiểm tra trong S-01); không JPA.
-  - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng.
+  - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng. *Đổi (DR-153):* `outbox` không là aggregate; `OutboxRepository` là class dùng `JdbcClient`, `OutboxMessage` chỉ là `record` của dòng đã claim.
   - **Luật đổi trạng thái:** không bao giờ đổi `status` bằng `save()`. Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng, service kiểm tra số dòng. `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
   - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
   - Câu lệnh mà `@Query` không diễn đạt gọn (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment (`InventoryUnitClaims` + `…Impl`) dùng `JdbcClient`. Vẫn là SQL viết tay, ở trong module sở hữu bảng.
@@ -218,6 +219,12 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Quyết định:** Hoãn S-02…S-06; mỗi spike chạy trước gate của phase đầu tiên cần kết quả: S-03 (P0-04) và S-06 (P0-07) trước P2-00; S-02 (P0-03) trước P3-00; S-04 (P0-05) và S-05 (P0-06) trước P4-00. Giữ nguyên ID task; M0 chỉ cần S-01.
 - **Hệ quả:** P1 bắt đầu được ngay sau P0-18. DR-13, DR-27, DR-35, DR-39, DR-75 giữ phương án đã chốt tới khi spike tương ứng chạy; kết quả xấu ghi thành dòng mới trong nhật ký chốt như cũ.
 - **Ghi vào:** Master plan §4.1, §5 (Phase 0, gate P2-00, P3-00, P4-00), §9.
+
+### DR-153 · Cú pháp khai báo, dễ đọc trước — **Chốt** (Owner)
+- **Vấn đề:** Spring có nhiều cách làm cùng một việc (`@Transactional` hay `TransactionTemplate`, `@Query` hay `JdbcClient`, `@ConfigurationProperties` hay `@Value`). Cách lập trình (callback, API cấp thấp) cho kiểm soát chặt hơn nhưng làm code khó đối chiếu với tài liệu, trong khi người làm là dev backend còn ít kinh nghiệm (DR-06).
+- **Quyết định:** khi hai cách cùng đúng, chọn cách khai báo. Transaction chỉ mở bằng `@Transactional` trên method `public` của `service`; mã chính không dùng `TransactionTemplate`, `PlatformTransactionManager`, `TransactionSynchronizationManager`. Luồng cần nhiều transaction ngắn xen với gọi ra ngoài tách thành service điều phối không transaction gọi service có method `@Transactional`. Transaction rộng hơn mức tối thiểu được chấp nhận, miễn không bọc lời gọi ra ngoài. Bảng chỉ đổi bằng câu có điều kiện và không cần `save()` (như `outbox`) không tạo aggregate: repository là class `@Repository` dùng `JdbcClient`. Bảng đầy đủ ở DOC-12 §2.5.
+- **Hệ quả:** code đọc từ trên xuống khớp sơ đồ trong tài liệu; đôi khi giữ connection lâu hơn vài câu `SELECT`. ARC-03 thêm điều kiện cấm API transaction lập trình trong mã chính; test vẫn được dùng `TransactionTemplate` để commit dữ liệu chuẩn bị.
+- **Ghi vào:** DOC-12, DOC-27, DR-05, DR-106.
 
 ---
 
@@ -1496,6 +1503,7 @@ Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-1
 #### DR-106 · Fan-out theo lô JDBC 500 — **Chốt**
 - **Vấn đề:** đổi lịch và hủy sự kiện ghi một dòng cho mỗi đơn `PAID` trong một transaction; một event 5.000 đơn không nên gọi `enqueue` 5.000 lần qua 5.000 round-trip.
 - **Quyết định:** `NotificationApi.enqueueAll` dùng `JdbcClient.batchUpdate` theo lô `outbox.enqueue-batch-size` = 500, vẫn trong transaction của người gọi.
+- *Đổi (DR-153):* `JdbcClient` không có API batch; cài đặt dùng `JdbcTemplate.batchUpdate`.
 - **Hệ quả:** transaction `PATCH` và hủy sự kiện giữ lâu hơn một chút với event lớn (`statement_timeout` 60 giây của DR-28 đủ).
 - **Nguồn:** `06-design/tickets-and-notifications.md`
 
