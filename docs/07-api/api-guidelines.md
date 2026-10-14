@@ -246,9 +246,9 @@ Quy tắc:
 ### 10.3 Sinh client frontend
 
 1. `make contract` (và CI) chạy test tích hợp `OpenApiExportTest` dựng ứng dụng, tải `/v3/api-docs` và ghi `backend/build/openapi.json` (DR-87); không cần chạy server riêng.
-2. `pnpm gen:api` chạy `openapi-typescript` đọc `backend/build/openapi.json` và ghi `frontend/src/api/schema.d.ts`; file được commit.
+2. `pnpm gen:api` chạy `openapi-typescript` đọc hợp đồng `api/openapi.yaml` (master plan §7.4; `make contract` bảo đảm `backend/build/openapi.json` khớp tệp này cho các endpoint đã cài) và ghi `frontend/src/api/schema.d.ts`; file được commit.
 3. Client là `openapi-fetch` gõ kiểu bằng `schema.d.ts`; **mọi** lời gọi đi qua `frontend/src/api/` (DOC-12 §6), interceptor ở đó: thêm `X-CSRF-Token`, sinh `Idempotency-Key`, đo `X-Server-Time`, tra `error.<code>`, backoff theo DOC-35 §6.
-4. CI bước (4) của DR-08: chạy lại bước 1–2 rồi `git diff --exit-code frontend/src/api/schema.d.ts`; lệch thì chặn merge.
+4. CI bước (4) của DR-08: `make lint` chạy lại bước 2 rồi `git diff --exit-code frontend/src/api/schema.d.ts`; lệch thì chặn merge.
 5. `oasdiff breaking backend/build/openapi.json <openapi của dev>` chạy ở CI (DR-77); thay đổi phá vỡ chỉ được vào khi PR có nhãn `api-breaking` và giải thích.
 
 Thay đổi **phá vỡ** gồm: xóa/đổi tên đường dẫn, trường, enum value hoặc `operationId`; thêm trường request bắt buộc; đổi kiểu; thu hẹp giá trị; đổi mã trạng thái thành công. **Không** phá vỡ: thêm endpoint, thêm trường response, thêm giá trị enum ở **response** (client phải chịu được giá trị lạ, DOC-35 §7: mã lạ → `error.UNKNOWN`), thêm mã lỗi.

@@ -240,6 +240,8 @@ Không phải khóa của `api`; nguồn của giá trị mẫu là `.env.exampl
 | `VITE_PAYMENTS` | `fake`\|`stripe` | = `PAYMENTS_MODE` | build `nginx` | Form giả hoặc Payment Element (DR-51) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | string | = `STRIPE_PUBLISHABLE_KEY` | build `nginx` | Khóa công khai (DR-126) |
 | `VITE_API_MOCK` | `1` | không đặt | `pnpm dev` | Bật MSW (master plan §7.4) |
+| `VITE_APP_NAME` | string | = `APP_NAME` (`ticket` khi không đặt) | build `nginx`, `pnpm dev` | Tên sản phẩm ở logo và `<title>` (UXP-15) |
+| `VITE_MAILPIT_URL` | URL | `http://localhost:${MAILPIT_UI_PORT}` ở compose; `http://localhost:8025` khi `pnpm dev` | build `nginx`, `pnpm dev` | Nút "Mở hộp thư" trỏ tới Mailpit với mọi miền email (DOC-44 §6.1); để trống thì chỉ webmail đã biết |
 
 Tham số `limit_req` của nginx (`api_ip` 20 r/s burst 40, `auth_ip` 10 r/phút burst 5, `hold_ip` 5 r/s burst 10, `client_max_body_size 6m`, cache `/media/` 1 ngày, `GET /events/{id}` 5 giây, `GET /events` 5 giây) là hằng số trong file cấu hình nginx (DOC-62 §8, DR-55, DR-86), không có khóa Spring; chỉ `RATE_LIMIT_ALLOWLIST` đổi được bằng biến.
 

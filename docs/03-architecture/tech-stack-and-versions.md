@@ -85,7 +85,8 @@ Tài liệu khóa thư viện và công cụ của dự án kèm lý do và gi�
 | Thanh toán | `@stripe/stripe-js` + `@stripe/react-stripe-js` | Dòng: mới nhất lúc P3-08 | Payment Element (DR-50) | MIT | SDD gốc 4.3 |
 | Mock API | MSW | Dòng: 2.x | Bật bằng `VITE_API_MOCK=1` (master plan §7.4) | MIT | DR-81 |
 | Test | Vitest, fast-check, Testing Library, Playwright | Khóa: Vitest 3, fast-check 4, Playwright 1.5x | Unit, property test, E2E WebKit + Chromium (DR-22, DR-77) | MIT; Apache-2.0 | DR-03 |
-| Lint, format | ESLint (flat config), Prettier | Khóa: 9, 3 | `make lint` | MIT | DR-03 |
+| Lint, format | ESLint (flat config) + `eslint-plugin-i18next` (`no-literal-string`), Prettier, Stylelint + `stylelint-declaration-strict-value` (không mã màu ngoài `tokens.css`) | Khóa: 9, 3; Stylelint dòng 17 | `make lint` | MIT | DR-03, DR-134, DOC-31 |
+| Kiểm tra tiếp cận | `@axe-core/playwright` | Dòng: 4.x | Quét axe trong E2E (UX-09, DS-05) | MPL-2.0 | DOC-38 |
 | Kiểm tra bundle | `rollup-plugin-visualizer` hoặc script kích thước gzip | — | JS ban đầu trang sự kiện ≤ 200 KB gzip (DR-81, DOC-38) | MIT | DOC-38 |
 
 ## 6. Hạ tầng (image Docker)

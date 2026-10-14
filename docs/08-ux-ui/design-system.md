@@ -193,7 +193,7 @@ export interface SeatTheme {
 
 ## 7. Catalog component
 
-Mỗi component có tên React (thư mục `frontend/src/shared/ui/`), nguồn canvas và quy tắc. Tên là thống nhất để DOC-41…60 dẫn lại. "Biến thể" là prop.
+Mỗi component có tên React (thư mục `frontend/src/components/`, DOC-12 §6), nguồn canvas và quy tắc. Tên là thống nhất để DOC-41…60 dẫn lại. "Biến thể" là prop.
 
 ### 7.1 Button (`Button`) — canvas `Components` mục A
 

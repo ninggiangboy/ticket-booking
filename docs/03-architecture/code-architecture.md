@@ -278,7 +278,7 @@ frontend/
 │   ├── map-core/               # schema/seat-map.v1.json, model, geometry, validation, render, fixtures/validation/*.json
 │   ├── components/             # component design system (DOC-39): Button, Field, Chip, SeatLegend, HoldTimer…
 │   ├── lib/                    # offset giờ server, idempotency key, lưu lựa chọn (localStorage), định dạng Intl
-│   ├── locales/{vi,en}/*.json  # common, events, seats, checkout, tickets, queue, studio, editor, auth, error, validation
+│   ├── locales/{vi,en}/*.json  # common, events, seats, checkout, tickets, queue, studio, editor, auth, errors, validation
 │   ├── mocks/                  # MSW handler theo nhóm endpoint (VITE_API_MOCK=1)
 │   └── styles/tokens.css       # token "Vé giấy" (DR-68)
 ├── e2e/                        # Playwright

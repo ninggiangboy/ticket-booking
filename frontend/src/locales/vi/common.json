@@ -1,0 +1,18 @@
+{
+  "common.retry": "Thử lại",
+  "common.retryNow": "Thử lại ngay",
+  "common.retry.auto": "Tự thử lại sau {seconds} giây",
+  "common.retry.running": "Đang thử lại…",
+  "common.nav.skipToContent": "Bỏ qua tới nội dung",
+  "common.nav.myTickets": "Vé của tôi",
+  "common.nav.studio": "Studio của bạn",
+  "common.nav.account": "Tài khoản",
+  "common.nav.signedInAs": "Đang đăng nhập",
+  "common.nav.signOut": "Đăng xuất",
+  "common.nav.signIn": "Đăng nhập",
+  "common.nav.createOrganizer": "Tạo hồ sơ tổ chức",
+  "common.nav.toEvents": "Về danh sách sự kiện",
+  "common.lang.label": "Ngôn ngữ",
+  "common.lang.vi": "Tiếng Việt",
+  "common.lang.en": "English"
+}

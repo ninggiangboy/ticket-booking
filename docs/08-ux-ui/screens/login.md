@@ -120,7 +120,7 @@ POST /api/v1/auth/verify
 
 HTTP/1.1 200 OK
 Set-Cookie: tb_session=…; Path=/; HttpOnly; SameSite=Lax; Secure
-{ "returnTo": "/events/0199b1c2-7a3e-7c40-8f11-2d5e9a6b0c35/seats", "csrfToken": "…" }
+{ "userId": "…", "email": "an@example.com", "locale": "vi", "roles": ["BUYER"], "organizer": null, "csrfToken": "…", "serverTime": 1795050601234, "returnTo": "/events/0199b1c2-7a3e-7c40-8f11-2d5e9a6b0c35/seats" }
 ```
 
 `locale` gửi theo ngôn ngữ giao diện hiện tại (`i18n.language`); email do server dựng theo giá trị này (DR-10).
@@ -145,7 +145,7 @@ Server **không** tiết lộ email đã có tài khoản hay chưa: 202 giống
 1. Người dùng mở `/auth/callback?token=…` (thường ở tab mới từ email).
 2. `AuthCallback` kiểm dạng token, `replaceState` bỏ token khỏi URL, hiện "Đang xác minh đường dẫn" (`auth.verifying.*`).
 3. Gọi `POST /auth/verify` (E-02) **đúng một lần**: lời gọi được giữ trong một `Map<token, Promise>` cấp module để `React.StrictMode` (hai lần mount ở `dev`) và việc mount lại không gửi lần hai, vì lần hai chắc chắn nhận 401 (token đã dùng).
-4. 200 → lưu `csrfToken` **trong bộ nhớ** (không `localStorage`), `GET /me` (E-04) để nạp người dùng, vai trò, `locale`; nếu `me.locale` khác ngôn ngữ đang hiển thị thì `i18n.changeLanguage(me.locale)` (DR-10: `app_user.locale` thắng cookie); `navigate(returnTo, { replace: true })` với `returnTo` từ response (server đã kiểm lại, sai thì `/`).
+4. 200 → lưu `csrfToken` **trong bộ nhớ** (không `localStorage`), `GET /me` (E-04) để nạp người dùng, vai trò, `locale`; nếu có cookie `tb_lang` khác `me.locale` thì cookie thắng và client gửi một `PATCH /me` (DR-115 mục 3, FLA-37), nếu không có cookie thì `i18n.changeLanguage(me.locale)` (DR-10); `navigate(returnTo, { replace: true })` với `returnTo` từ response (server đã kiểm lại, sai thì `/`).
 5. 401 `LOGIN_LINK_INVALID` (hết hạn, đã dùng, bị thay) hoặc token sai dạng → "Đường dẫn không còn dùng được" (`auth.invalid.*`) với nút "Gửi đường dẫn mới" (`auth.invalid.cta`): chuyển tới `/login` (giữ `returnTo` nếu còn biết; sau `replaceState` thì không còn, nên về `/login` trống `returnTo`). 
 6. 429/503/lỗi mạng ở bước này: hiện cùng thẻ nhưng nội dung `errors.generic.*` hoặc `errors.rate_limited.*` kèm nút "Thử lại" (`common.retry`) gọi lại E-02 **với cùng token**: an toàn vì nếu lần trước đã tiêu thụ token thì nhận 401 (hiện "không còn dùng được") và nếu chưa thì thành công. Không tự động thử lại (POST không idempotent theo `Idempotency-Key`).
 
