@@ -124,6 +124,24 @@ final class ArchitectureRules {
         .allowEmptyShould(true);
   }
 
+  /** ARC-03, second half: transactions are declared, never driven by hand (DOC-12 §2.5, DR-153). */
+  static ArchRule noProgrammaticTransactions(String root) {
+    return noClasses()
+        .that()
+        .resideInAPackage(root + "..")
+        .should()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName("org.springframework.transaction.support.TransactionTemplate")
+        .orShould()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName("org.springframework.transaction.PlatformTransactionManager")
+        .orShould()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName(
+            "org.springframework.transaction.support.TransactionSynchronizationManager")
+        .allowEmptyShould(true);
+  }
+
   private static final Set<String> STATUS_REPOSITORIES =
       Set.of("Reservation", "Order", "Ticket", "Event", "OutboxMessage");
 

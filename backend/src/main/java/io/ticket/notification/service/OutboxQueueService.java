@@ -24,18 +24,18 @@ class OutboxQueueService {
   }
 
   @Transactional
-  List<OutboxMessage> claim() {
+  public List<OutboxMessage> claim() {
     return outbox.claim(relay.batchSize(), relay.lease().toMillis() / 1000.0);
   }
 
   @Transactional
-  void sent(UUID id) {
+  public void sent(UUID id) {
     outbox.markSent(id);
   }
 
   /** Backoff while attempts remain, otherwise FAILED. Returns true when the row is now FAILED. */
   @Transactional
-  boolean failed(UUID id, String error, boolean permanent) {
+  public boolean failed(UUID id, String error, boolean permanent) {
     if (!permanent
         && outbox.markRetry(
                 id,
@@ -51,7 +51,7 @@ class OutboxQueueService {
   }
 
   @Transactional
-  void giveBack(List<UUID> ids) {
+  public void giveBack(List<UUID> ids) {
     outbox.giveBack(ids);
   }
 }
