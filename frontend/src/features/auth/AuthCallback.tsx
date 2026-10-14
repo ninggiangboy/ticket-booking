@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
@@ -18,6 +18,29 @@ import styles from "./Login.module.css";
 // call and POST /auth/verify runs once per token (DR-114).
 
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+// Sign-in steps after the link is accepted run once per token, even when StrictMode runs the
+// effect twice; otherwise the locale rule of DR-115 would be applied (and saved) twice.
+const signIns = new Map<string, Promise<string>>();
+
+function completeSignIn(token: string, queryClient: QueryClient): Promise<string> {
+  let pending = signIns.get(token);
+  if (!pending) {
+    pending = (async () => {
+      const result = await verifyMagicLink(token);
+      // The boot probe of GET /me may still be in flight from before the session existed;
+      // fetchQuery would share its answer (401), so drop it and ask again.
+      await queryClient.cancelQueries({ queryKey: meKey });
+      const me = await queryClient.fetchQuery({ ...meQuery, staleTime: 0 });
+      if (!me) throw new ApiError({ status: 500, code: "SESSION_NOT_STORED" });
+      await applyAccountLocale(me, queryClient, { afterSignIn: true });
+      return sanitizeReturnTo(result.returnTo);
+    })();
+    pending.catch(() => signIns.delete(token));
+    signIns.set(token, pending);
+  }
+  return pending;
+}
 
 type State = { kind: "verifying" } | { kind: "invalid" } | { kind: "failed"; error: ApiError };
 
@@ -56,14 +79,8 @@ export function AuthCallback() {
     let active = true;
     (async () => {
       try {
-        const result = await verifyMagicLink(token);
-        // The boot probe of GET /me may still be in flight from before the session existed;
-        // fetchQuery would share its answer (401), so drop it and ask again.
-        await queryClient.cancelQueries({ queryKey: meKey });
-        const me = await queryClient.fetchQuery({ ...meQuery, staleTime: 0 });
-        if (!me) throw new ApiError({ status: 500, code: "SESSION_NOT_STORED" });
-        await applyAccountLocale(me, queryClient, { afterSignIn: true });
-        if (active) navigate(sanitizeReturnTo(result.returnTo), { replace: true });
+        const returnTo = await completeSignIn(token, queryClient);
+        if (active) navigate(returnTo, { replace: true });
       } catch (cause) {
         if (!active) return;
         const error = isApiError(cause) ? cause : new ApiError({ status: null, cause });

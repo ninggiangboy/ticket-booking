@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { authStore } from "../api/authStore";
 import { configureApi } from "../api/client";
-import { meKey, useMe } from "../api/session";
+import { meKey, meQuery } from "../api/session";
 import { applyAccountLocale } from "../features/auth/localeSync";
 import { currentLocale } from "../lib/i18n";
 import { loginPath } from "../lib/returnTo";
@@ -43,16 +43,25 @@ export function wireSessionExpiry(
   });
 }
 
-/** Applies the account locale and any unsaved language choice once the first GET /me answers. */
+/**
+ * Applies the account locale and any unsaved language choice from the boot GET /me. Only that
+ * request counts: if sign-in cancels it (AuthCallback), the callback applies the locale itself.
+ */
 function SessionBoot() {
-  const me = useMe();
   const queryClient = useQueryClient();
-  const done = useRef(false);
+  const started = useRef(false);
   useEffect(() => {
-    if (done.current || !me.isFetched) return;
-    done.current = true;
-    if (me.data) void applyAccountLocale(me.data, queryClient, { afterSignIn: false });
-  }, [me.isFetched, me.data, queryClient]);
+    if (started.current) return;
+    started.current = true;
+    queryClient.fetchQuery(meQuery).then(
+      (me) => {
+        if (me) void applyAccountLocale(me, queryClient, { afterSignIn: false });
+      },
+      () => {
+        // cancelled by sign-in, or the API is down: the page shows its own state
+      },
+    );
+  }, [queryClient]);
   return null;
 }
 

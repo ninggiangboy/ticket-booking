@@ -58,6 +58,25 @@ describe("AuthCallback", () => {
     expect(await screen.findByRole("heading", { name: "Vé của tôi" })).toBeInTheDocument();
   });
 
+  it("FLA-37: with a slow guest probe the cookie language still wins after sign-in", async () => {
+    let probe = true;
+    server.use(
+      http.get("*/api/v1/me", async () => {
+        if (!probe) return undefined;
+        probe = false;
+        await delay(150);
+        return problem(401, "UNAUTHENTICATED");
+      }),
+    );
+    const token = await issueMockLink("an@example.com", "/me/tickets");
+    document.cookie = "tb_lang=en; Path=/";
+    await renderApp(`/auth/callback?token=${token}`, { locale: "en" });
+    expect(await screen.findByRole("heading", { name: "My tickets" })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(document.documentElement.lang).toBe("en");
+    expect(document.cookie).toContain("tb_lang=en");
+  });
+
   it("LGN-11: a used link shows the expired variant with a new-link button", async () => {
     const token = await issueMockLink("an@example.com");
     await fetch(`${location.origin}/api/v1/auth/verify`, {

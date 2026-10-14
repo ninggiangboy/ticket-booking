@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { StrictMode } from "react";
 import i18next from "i18next";
 import { createMemoryRouter } from "react-router";
 import { App, createQueryClient, wireSessionExpiry } from "../app/App";
@@ -22,7 +23,11 @@ export async function renderApp(path: string, options: { locale?: Locale } = {})
   const queryClient = createQueryClient();
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   wireSessionExpiry(router, queryClient);
-  const view = render(<App router={router} queryClient={queryClient} />);
+  const view = render(
+    <StrictMode>
+      <App router={router} queryClient={queryClient} />
+    </StrictMode>,
+  );
   return { ...view, router, queryClient };
 }
 

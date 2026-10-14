@@ -62,7 +62,7 @@ describe("Login form", () => {
     });
     submit();
     const heading = await screen.findByRole("heading", { name: "Kiểm tra hộp thư" });
-    expect(heading).toHaveFocus();
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByTestId("sent-body")).toHaveTextContent("an@example.com");
     expect(screen.getByRole("button", { name: "Gửi lại" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dùng email khác" })).toBeInTheDocument();
