@@ -1,6 +1,6 @@
 # Observability
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-33
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (metric gate P2: DR-160, 166, 171, 177, 178) · DOC-33
 > Phụ thuộc: SDD gốc §2.3, §10.4, §14.3, §15, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §3, [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-35](error-handling.md) §5, [DOC-36](../07-api/api-guidelines.md), [DOC-62](../09-operations/deploy-compose.md) §2, §7, [Sổ quyết định](../00-decision-register.md) (DR-09, 22, 42, 53, 56, 57, 60, 61, 62, 73, 75), [DOC-03](../01-product/requirements.md) NFR-02, NFR-03
 > Người dùng chính: P1-01 (khung log), P6-08 (profile `obs`), mọi task thêm metric (checklist [DOC-12](../03-architecture/code-architecture.md) §7 mục 10), người chạy EXP-02, EXP-04, EXP-05, EXP-08 ([DOC-70](../10-testing/experiments/README.md))
 
@@ -114,7 +114,7 @@ Cột "Nơi phát" là lớp (package `io.ticket.<module>`) chịu trách nhiệ
 
 | Metric | Kiểu | Label (tập giá trị) | Nơi phát | Ý nghĩa | Dùng cho |
 | --- | --- | --- | --- | --- | --- |
-| `ticket_hold_duration_seconds` | H | `model` ∈ {`GA`,`ZONE`,`SEAT`} | `reservation.service.HoldService` (bao quanh toàn bộ lệnh giữ vé từ lúc vào service tới lúc trả kết quả, **kể cả** khi lỗi) | Thời gian xử lý một lệnh giữ vé phía API. Bucket (giây): 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5 — có mốc 0.5 để đọc trực tiếp p95 < 500 ms | NFR-02, EXP-02, EXP-05 |
+| `ticket_hold_duration_seconds` | H | `model` ∈ {`GA`,`ZONE`,`SEAT`}; lệnh trộn: có ghế → `SEAT`, không ghế có zone → `ZONE`, còn lại `GA` (DR-171) | `reservation.service.HoldService` (bao quanh toàn bộ lệnh giữ vé từ lúc vào service tới lúc trả kết quả, **kể cả** khi lỗi) | Thời gian xử lý một lệnh giữ vé phía API. Bucket (giây): 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5 — có mốc 0.5 để đọc trực tiếp p95 < 500 ms | NFR-02, EXP-02, EXP-05 |
 | `ticket_hold_result_total` | C | `result` ∈ {`success`, `idempotent_replay`, `seats_unavailable`, `insufficient_capacity`, `queue_required`, `rate_limited`, `overloaded`, `not_on_sale`, `other`} | `HoldService` và `HoldController` (cho `rate_limited` từ bucket Redis) | Số lệnh giữ vé theo kết quả. `overloaded` gồm cả hết bulkhead lẫn hết `connection-timeout` | EXP-01, EXP-02, EXP-05, EXP-08 |
 | `ticket_connection_hold_seconds` | H | `op` ∈ {`hold`, `cancel`, `confirm`, `release`, `webhook`, `studio`, `read`} | `common.db.ConnectionHoldTimer` (bao `DataSource`: đo từ lúc lấy connection tới lúc trả) | Thời gian mỗi request/job **giữ** một connection. Bucket: 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2 | EXP-05 (trực tiếp), SDD gốc 10.4 |
 | `ticket_hold_bulkhead_in_use` | G | — | `HoldService` (số permit đang giữ, tối đa `hold.bulkhead.permits`) | Mức dùng bulkhead (DR-61) | EXP-05 |
@@ -138,9 +138,12 @@ Cột "Nơi phát" là lớp (package `io.ticket.<module>`) chịu trách nhiệ
 | `ticket_auth_magic_link_total` | C | `result` ∈ {`sent`, `throttled`, `smtp_error`} | `auth.service.MagicLinkService` | Magic link theo kết quả (DR-21) | DOC-19 |
 | `ticket_job_runs_total` | C | `job` ∈ {`outbox_relay`, `release_expired`, `payment_reconcile`, `admission_ticker`, `event_lifecycle`, `invariant_checker`, `retention`}, `result` ∈ {`ok`, `error`} | `common.job.JobMetrics` (bao `@Scheduled`) | Số lượt chạy job | Mọi EXP |
 | `ticket_job_duration_seconds` | H | `job` (như trên) | idem | Thời gian một lượt chạy | EXP-04, EXP-05 |
-| `ticket_invariant_violations` | G | `check` ∈ tên kiểm tra của DR-73 (ví dụ `POOL_UNIT_COUNT`) | `invariant.InvariantChecker` (giá trị lần chạy gần nhất; 0 khi sạch) | Số sai lệch theo mục | NFR-01, mọi EXP |
+| `ticket_invariant_violations` | G | `check` ∈ {`POOL_UNIT_COUNT`, `SEAT_UNIT_COUNT`, `UNIT_OWNER`, `HELD_ORPHAN`, `RESERVATION_UNIT_COUNT`, `SOLD_WITHOUT_TICKET`, `TICKET_WITHOUT_SALE`, `ACTIVE_OVERDUE`, `EXPIRING_STUCK`, `PAID_ORDER_TICKETS`, `ORDER_RESERVATION_STATE`, `ORDER_AMOUNT`, `CANCELLED_EVENT_SALES`, `OUTBOX_FAILED`} (mục mức VIOLATION của DOC-30 §3; mục REPORT không có metric này, DR-178) | `invariant.service.InvariantChecker` (giá trị lần chạy gần nhất; 0 khi sạch) | Số sai lệch theo mục | NFR-01, mọi EXP |
 | `ticket_invariant_check_seconds` | H | — | idem | Thời gian một lần kiểm tra | DR-73 |
 | `ticket_availability_snapshot_age_seconds` | G | — | `inventory.AvailabilitySnapshotCache` — **chỉ từ P5** (DR-62) | Tuổi snapshot tình trạng chỗ trong tiến trình | EXP-01 |
+| `ticket_idempotency_requests_total` | C | `operation` ∈ {`HOLD`, `CANCEL_HOLD`, `CONFIRM_FREE`}, `result` ∈ {`executed`, `replayed`, `reused`} | `reservation.service.IdempotencyService` | Request mang `Idempotency-Key` theo kết quả (DR-177) | EXP-03 |
+| `ticket_event_publish_seconds` | H | — | `studio.service.PublishService` | Thời gian transaction xuất bản tạo kho vé; bucket 0.1, 0.5, 1, 2, 5, 10, 30 (DR-166) | DR-27, S-03 |
+| `ticket_retention_deleted_total` | C | `table` ∈ {`login_token`, `session`, `idempotency_key`, `stripe_event`, `outbox`, `media`} | `common.retention.RetentionRunner` | Số dòng `RetentionJob` xóa (DR-160) | DOC-18 |
 
 Sáu metric đầu của DR-09 (`ticket_hold_duration_seconds`, `ticket_hold_result_total`, `ticket_connection_hold_seconds`, `ticket_expiry_batch_size`, `ticket_outbox_pending`, `ticket_queue_admitted`) giữ nguyên tên. Metric còn lại do tài liệu này bổ sung (DR-120); `ticket_http_errors_total` và `ticket_dependency_failures_total` do DOC-35 đặt tên (DR-82…89).
 

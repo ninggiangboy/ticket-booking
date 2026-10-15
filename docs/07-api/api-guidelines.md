@@ -1,6 +1,6 @@
 # Hướng dẫn API
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-36
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-175, DR-176; cache `/media` theo DR-38) · DOC-36
 > Phụ thuộc: SDD gốc §12, §10.5, [DOC-06](../02-glossary.md), [DOC-35](../06-design/error-handling.md), [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-12](../03-architecture/code-architecture.md) §4, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 22, 45, 55, 62, 63, 64, 66, 67, 77)
 > Người dùng chính: P1-01 (khung `common`), P1-04, P1-06 (sinh `schema.d.ts`); [DOC-37](api-endpoints.md) khi viết từng `E-xx`; mọi task backend và frontend gọi API
 
@@ -161,7 +161,7 @@ Idempotent-Replayed: true
 Location: /api/v1/reservations/0199b1c2-8d14-7e50-a1b3-4c5d6e7f8091
 ```
 
-Cùng key, body khác → 422 `IDEMPOTENCY_KEY_REUSED`. Chỉ response 2xx được lưu (DR-45), nên gửi lại sau 409 chạy thật.
+Cùng key, body khác → 422 `IDEMPOTENCY_KEY_REUSED`. Chỉ response 2xx được lưu (DR-45), nên gửi lại sau 409 chạy thật. Header không được lưu: `Location` dựng lại từ `reservationId`; body phát lại bằng body lần đầu theo nghĩa JSON, không từng byte (`jsonb` đổi thứ tự key), và là ảnh chụp lúc commit lần đầu (DR-176). Ngoại lệ: hủy giữ vé (E-16) tính response phát lại từ trạng thái hiện tại (DR-175, DOC-25 §3.5).
 
 ### 6.3 Đồng hồ server
 
@@ -208,7 +208,7 @@ Mặc định mọi response API: `Cache-Control: no-store`. Chỉ các endpoint
 | `GET /events/{id}` | `public, max-age=5` | 5 giây | `Vary: Accept-Language` |
 | `GET /events` | `public, max-age=5` (DR-86) | 5 giây | `Vary: Accept-Language`; khóa cache gồm cả query |
 | `GET /events/{id}/availability` | `no-store` | Không | Cache ở tiến trình `api` 2 giây (DR-62), không ở nginx |
-| `GET /media/{id}` | `public, max-age=86400` | 1 ngày | Tên file theo `media_id` bất biến |
+| `GET /media/{id}` | `public, max-age=31536000, immutable` | 1 ngày (`proxy_cache` của nginx) | `media_id` bất biến (DR-38). *Sửa 2026-10-14:* trước ghi `max-age=86400`, lệch DR-38 và ADR-0015 |
 
 Quy tắc:
 

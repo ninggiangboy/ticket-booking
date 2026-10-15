@@ -1,6 +1,6 @@
 # Danh mục endpoint
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-37
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-154, 155, 162, 163, 165, 175, 184, 185, 187, 189, 191; DR-108 cho `Label` GA; E-33 cài ở P2 theo P2-05.1) · DOC-37
 > Phụ thuộc: SDD gốc §12.1–12.2, [DOC-06](../02-glossary.md), [DOC-14](../05-data/domain-model.md), [DOC-15](../05-data/ops-model.md), [DOC-31](../06-design/i18n.md), [DOC-35](../06-design/error-handling.md) §3–§4, [DOC-36](api-guidelines.md), [DOC-82](../06-design/flows/README.md), [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 35, 36, 37, 38, 41, 43, 44, 45, 46, 47, 48, 57, 58, 59, 62, 63, 64, 65, 66, 70, 71)
 > Người dùng chính: P1-04 (nhóm xác thực), P2-xx, P3-xx, P4-xx, P5-xx, P6-xx (mỗi phase cài nhóm endpoint của mình); tác giả DOC-42…60 (cột "Endpoint" của màn hình); DOC-32 (ma trận quyền); `OpenApiExportTest` (so `operationId`)
 
@@ -35,7 +35,7 @@ CSRF: mọi `POST/PUT/PATCH/DELETE` có session cần `X-CSRF-Token` (DR-22); m�
 | E-06 | `GET /events` | `listEvents` | Công khai | UC-02 · FL-12 | P2 | `catalog` |
 | E-07 | `GET /events/{eventId}` | `getEvent` | Công khai | UC-02 · FL-12 | P2 | `catalog` |
 | E-08 | `GET /events/{eventId}/map` | `getEventMap` | Công khai | UC-02 · FL-29 | P5 | `seatmap` |
-| E-09 | `GET /events/{eventId}/availability` | `getAvailability` | Công khai | UC-02 · FL-29 | P5 | `inventory` |
+| E-09 | `GET /events/{eventId}/availability` | `getAvailability` | Công khai | UC-02 · FL-13, FL-29 | P2 (GA, DR-185), P5 (ghế) | `inventory` |
 | E-10 | `POST /events/{eventId}/queue` | `joinQueue` | Đăng nhập | UC-12 · FL-33 | P6 | `queue` |
 | E-11 | `GET /events/{eventId}/queue` | `getQueueStatus` | Đăng nhập | UC-12 · FL-33 | P6 | `queue` |
 | E-12 | `DELETE /events/{eventId}/queue` | `leaveQueue` | Đăng nhập | UC-12 · FL-35 | P6 | `queue` |
@@ -59,7 +59,7 @@ CSRF: mọi `POST/PUT/PATCH/DELETE` có session cần `X-CSRF-Token` (DR-22); m�
 | E-30 | `POST /organizer/events/{eventId}/pause` | `pauseEvent` | Tổ chức | UC-09 · FL-09 | P2 | `studio` |
 | E-31 | `POST /organizer/events/{eventId}/resume` | `resumeEvent` | Tổ chức | UC-09 · FL-09 | P2 | `studio` |
 | E-32 | `POST /organizer/events/{eventId}/close-sale` | `closeEventSale` | Tổ chức | UC-09 · FL-09 | P2 | `studio` |
-| E-33 | `POST /organizer/events/{eventId}/cancel` | `cancelEvent` | Tổ chức | UC-13 · FL-10 | P3 | `studio` |
+| E-33 | `POST /organizer/events/{eventId}/cancel` | `cancelEvent` | Tổ chức | UC-13 · FL-10 | P2 | `studio` |
 | E-34 | `POST /organizer/events/{eventId}/ticket-types` | `createTicketType` | Tổ chức | UC-07 · FL-07 | P2 | `studio` |
 | E-35 | `PATCH /organizer/events/{eventId}/ticket-types/{ticketTypeId}` | `updateTicketType` | Tổ chức | UC-07 · FL-07 | P2 | `studio` |
 | E-36 | `DELETE /organizer/events/{eventId}/ticket-types/{ticketTypeId}` | `deleteTicketType` | Tổ chức | UC-07 · FL-07 | P2 | `studio` |
@@ -89,7 +89,7 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
 | Schema | Trường |
 | --- | --- |
 | `Money` (phẳng, không đối tượng riêng) | `amount` hoặc `price` hoặc `unitPrice`: số nguyên VND; `currency`: `"VND"` ở đối tượng gốc của khoản thanh toán (DOC-36 §4) |
-| `Label` | Một trong `{ "section": "Khán đài A", "row": "C", "seat": "9" }` (SEAT) hoặc `{ "zone": "Fanzone" }` (ZONE) hoặc `{ "ticketType": "Vé tiêu chuẩn" }` (GA); đúng như `reservation_item.label` (DOC-14) |
+| `Label` | Một trong `{ "section": "Khán đài A", "row": "C", "seat": "9" }` (SEAT) hoặc `{ "zone": "Fanzone" }` (ZONE) hoặc `{}` (GA, DR-108); đúng như `reservation_item.label` (DOC-14). *Sửa 2026-10-14 (DR-108):* trước ghi GA là `{ "ticketType": … }`; tên loại vé nằm ở `ticketTypeName` |
 | `EventTimes` | `startsAt`, `endsAt`, `saleStartsAt`, `saleEndsAt` (UTC, `…Z`) và `timezone` (IANA). Response của studio thêm `startsAtLocal`, `endsAtLocal`, `saleStartsAtLocal`, `saleEndsAtLocal` (`yyyy-MM-dd'T'HH:mm` theo `timezone`) (DR-12, DR-89) |
 | `PublicTicketType` | `ticketTypeId`, `name`, `model` (`SEAT`/`ZONE`/`GA`), `price`, `currency`, `colorIndex` (1–5) |
 | `OrganizerTicketType` | `PublicTicketType` + `gaCapacity` (`null` khi không phải `GA`), `sortOrder`, `used` (số unit `HELD`+`SOLD`, DR-30) |
@@ -311,17 +311,19 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
     "displayStatus": "ON_SALE",
     "highDemand": true,
     "holdMinutes": 10,
+    "maxUnitsPerHold": 50,
     "hasSeatMap": true,
     "mapVersion": 2,
     "organizer": { "name": "Giao Mùa Studio", "contactEmail": "lienhe@giaomua.example" },
     "ticketTypes": [
       { "ticketTypeId": "0199b1c2-7b02-7f10-8a22-3c4d5e6f7082", "name": "Hạng A", "model": "SEAT", "price": 1200000, "currency": "VND", "colorIndex": 1, "soldOut": false },
       { "ticketTypeId": "0199b1c2-7b03-7f10-8a22-3c4d5e6f7083", "name": "Fanzone", "model": "ZONE", "price": 450000, "currency": "VND", "colorIndex": 2, "soldOut": false }
-    ]
+    ],
+    "cancelledWithRefunds": null
   }
   ```
 
-  `holdMinutes` = `reservation.hold-duration` (phút, DR-42) để màn hình ghi "10 phút"; `mapVersion` là `version_no` của phiên bản đang dùng (`null` khi chỉ GA); `organizer.contactEmail` là `organizer.contact_email` hoặc email đăng nhập của chủ (DR-23); `soldOut` theo từng loại vé từ snapshot tình trạng chỗ. Sự kiện `CANCELLED`/`ENDED` vẫn trả 200 với `displayStatus` tương ứng (DR-24).
+  `holdMinutes` = `reservation.hold-duration` (phút, DR-42) để màn hình ghi "10 phút"; `maxUnitsPerHold` = `reservation.max-units-per-hold` để bộ tăng giảm và giỏ ghế dừng đúng mức (DR-187); `cancelledWithRefunds` là `event.cancelled_with_refunds` khi `CANCELLED`, `null` ở trạng thái khác (DR-184); `mapVersion` là `version_no` của phiên bản đang dùng (`null` khi chỉ GA); `organizer.contactEmail` là `organizer.contact_email` hoặc email đăng nhập của chủ (DR-23), lấy qua `AuthApi.organizerPublicInfo` (DR-165); `soldOut` theo từng loại vé từ snapshot tình trạng chỗ. Sự kiện `CANCELLED`/`ENDED` vẫn trả 200 với `displayStatus` tương ứng (DR-24).
 - **Lỗi:** chỉ lỗi chung.
 - **Nguồn dữ liệu:** `event` (PK), `ticket_type` (`ticket_type_idx`, `deleted_at IS NULL`), `seat_map_version` (`version_no` qua `event.seat_map_version_id`), `organizer`; `displayStatus` tính ở server theo DR-24.
 - **Cache:** `public, max-age=5`, `Vary: Accept-Language`; `proxy_cache` 5 giây.
@@ -564,8 +566,9 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
 - **Tham số:** `reservationId` (path); `Idempotency-Key` (header, bắt buộc, uuid).
 - **Response:**
   - **200** `{ "reservationId": "0199b1c2-8d14-7e50-a1b3-4c5d6e7f8091", "status": "CANCELLED" }`: đã trả vé (hoặc đã đóng từ trước: trả trạng thái hiện tại).
-  - **202** `{ "reservationId": "…", "status": "EXPIRING" }`: Stripe lỗi hoặc timeout (3 giây) khi hủy PaymentIntent; `ReservationExpiryJob` hoàn tất sau.
+  - **202** `{ "reservationId": "…", "status": "EXPIRING" }`: Stripe lỗi hoặc timeout (3 giây) khi hủy PaymentIntent; `ReleaseExpiredHoldsJob` hoàn tất sau (*Sửa 2026-10-14 (DR-154):* trước ghi `ReservationExpiryJob`).
 - **Lỗi:** 409 `PAYMENT_ALREADY_SUCCEEDED` (kèm `orderId`; giao diện chuyển sang màn Kết quả); 400 `IDEMPOTENCY_KEY_REQUIRED`.
+- **Phát lại:** cùng key thì response tính từ trạng thái hiện tại, không lấy response đã lưu: đã đóng → 200, `EXPIRING` → 202, `CONFIRMED` → 409, kèm `Idempotent-Replayed: true` (DR-175, DOC-25 §3.5).
 - **Nguồn dữ liệu:** (1) `UPDATE reservation SET status='EXPIRING', close_reason='BUYER_CANCELLED', expiring_since=now() WHERE reservation_id=:id AND user_id=:uid AND status='ACTIVE'`; (2) sau commit đọc `orders.payment_intent_id`, hủy PaymentIntent (nếu có); (3) transaction trả vé: reservation `EXPIRING → CANCELLED` (`closed_at`), `UPDATE inventory_unit SET status='AVAILABLE', reservation_id=NULL WHERE reservation_id=:id AND status='HELD'` (`unit_reservation_idx`), order `PENDING_PAYMENT → CANCELLED`; xóa `soldout:pool:{poolId}`.
 - **Cache:** không. **Hiệu năng:** p95 < 150 ms khi không có PaymentIntent; < 3,2 giây khi gọi hủy Stripe (timeout 3 giây).
 
@@ -611,6 +614,7 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
     "currency": "VND",
     "paidAt": "2026-11-10T03:04:12Z",
     "refundReason": null,
+    "support": null,
     "lastPaymentError": null,
     "createdAt": "2026-11-10T03:00:01Z",
     "event": { "eventId": "0199b1c2-7a3e-7c40-8f11-2d5e9a6b0c35", "name": "Hòa nhạc Giao Mùa", "venue": "Nhà hát Hòa Bình, TP.HCM",
@@ -622,7 +626,7 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
   }
   ```
 
-  `status` ∈ `PENDING_PAYMENT`, `PAID`, `EXPIRED`, `CANCELLED`, `REFUND_PENDING`, `REFUNDED` (DR-44). `tickets` có khi `PAID` (SDD gốc 9.2 bước 6); rỗng `[]` ở trạng thái khác; sau khi sự kiện bị hủy vé chuyển `VOID` và đơn `REFUND_PENDING` với `refundReason = "EVENT_CANCELLED"` (`tickets` giữ các vé `VOID` để màn hiển thị). `refundReason` ∈ `LATE_PAYMENT`, `AMOUNT_MISMATCH`, `EVENT_CANCELLED` hoặc `null`. `lastPaymentError` là `decline_code` gần nhất (vd `insufficient_funds`) để màn Kết quả hiện "thẻ bị từ chối".
+  `status` ∈ `PENDING_PAYMENT`, `PAID`, `EXPIRED`, `CANCELLED`, `REFUND_PENDING`, `REFUNDED` (DR-44). `tickets` có khi `PAID` (SDD gốc 9.2 bước 6); rỗng `[]` ở trạng thái khác; sau khi sự kiện bị hủy vé chuyển `VOID` và đơn `REFUND_PENDING` với `refundReason = "EVENT_CANCELLED"` (`tickets` giữ các vé `VOID` để màn hiển thị). `refundReason` ∈ `LATE_PAYMENT`, `AMOUNT_MISMATCH`, `EVENT_CANCELLED` hoặc `null`. `lastPaymentError` là `decline_code` gần nhất (vd `insufficient_funds`) để màn Kết quả hiện "thẻ bị từ chối". `support` có khi `status = REFUND_PENDING`: `{ "email": "hotro@ticket.localhost", "refundSlaText": "5–10 ngày làm việc" }` (`support.email` có thể `null`; `refundSlaText` dịch theo `Accept-Language`), còn lại `null` (DR-189).
 - **Lỗi:** chỉ lỗi chung.
 - **Nguồn dữ liệu:** `orders` (PK), `event`, `ticket` (`ticket_order_idx`).
 - **Cache:** không. **Hiệu năng:** p95 < 15 ms. Client hỏi mỗi 2 giây trong 60 giây đầu, sau đó mỗi 10 giây tới 10 phút (DR-50): ~30 request/đơn đang chờ, nằm trong ngân sách `api_ip` (DR-55).
@@ -637,7 +641,7 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
   ```json
   {
     "items": [
-      { "orderId": "0199b1c2-8d15-7a22-9b0c-1d2e3f405162", "status": "PAID", "amount": 3750000, "currency": "VND", "ticketCount": 5,
+      { "orderId": "0199b1c2-8d15-7a22-9b0c-1d2e3f405162", "status": "PAID", "refundReason": null, "amount": 3750000, "currency": "VND", "ticketCount": 5,
         "createdAt": "2026-11-10T03:00:01Z", "event": { "eventId": "0199b1c2-7a3e-7c40-8f11-2d5e9a6b0c35", "name": "Hòa nhạc Giao Mùa", "startsAt": "2026-11-12T12:00:00Z", "timezone": "Asia/Ho_Chi_Minh", "imageUrl": "/media/0199b1c2-1111-7aaa-8bbb-ccccddddeeee" } }
     ],
     "nextCursor": null
@@ -660,7 +664,7 @@ Mọi endpoint (trừ ghi chú) có thể trả: 401 `UNAUTHENTICATED` (endpoint
   {
     "items": [
       { "ticketId": "0199b1c2-9f01-7000-8000-000000000001", "orderId": "0199b1c2-8d15-7a22-9b0c-1d2e3f405162", "code": "GM-4K7P-92XD",
-        "status": "ISSUED", "ticketTypeName": "Hạng A", "unitPrice": 1200000,
+        "status": "ISSUED", "orderStatus": "PAID", "refundReason": null, "ticketTypeName": "Hạng A", "unitPrice": 1200000,
         "label": { "section": "Khán đài A", "row": "C", "seat": "9" }, "issuedAt": "2026-11-10T03:04:12Z",
         "event": { "eventId": "0199b1c2-7a3e-7c40-8f11-2d5e9a6b0c35", "name": "Hòa nhạc Giao Mùa", "venue": "Nhà hát Hòa Bình, TP.HCM",
                    "startsAt": "2026-11-12T12:00:00Z", "endsAt": "2026-11-12T15:00:00Z", "timezone": "Asia/Ho_Chi_Minh", "imageUrl": null },
@@ -780,7 +784,7 @@ Mọi endpoint nhóm này (trừ E-23) nằm dưới `/organizer/**`: lấy `org
 
   `capacity = sold + held + available` (không tính `REMOVED`); sự kiện `DRAFT` chưa có unit nên cả bốn số là 0.
 - **Lỗi:** 400 `BAD_REQUEST` (`invalid_cursor`); 422 `VALIDATION_FAILED` (`limit`, `status`).
-- **Nguồn dữ liệu:** trang `event` theo `event_organizer_idx`; một truy vấn gộp cho ≤ 20 event của trang: `SELECT event_id, status, count(*) FROM inventory_unit WHERE event_id = ANY(:ids) AND status <> 'REMOVED' GROUP BY 1, 2` (`unit_event_idx`; DR-71).
+- **Nguồn dữ liệu:** trang `event` theo `event_organizer_idx`; một truy vấn gộp cho ≤ 20 event của trang: `SELECT event_id, status, count(*) FROM inventory_unit WHERE event_id = ANY(:ids) AND status <> 'REMOVED' GROUP BY 1, 2` (`unit_event_idx`, DR-155; DR-71).
 - **Cache:** không. **Hiệu năng:** p95 < 40 ms (20 event, mỗi event ≤ 100.000 unit: đọc theo chỉ mục, kế hoạch; đo ở S-03).
 
 ### E-25 `POST /organizer/events` · `createEvent`
@@ -801,7 +805,7 @@ Mọi endpoint nhóm này (trừ E-23) nằm dưới `/organizer/**`: lấy `org
 - **Tham số:** `eventId` (path).
 - **Response 200:** `OrganizerEventView` (ví dụ ở đầu mục 7). `ticketTypes` không gồm loại vé đã xóa (`deleted_at IS NOT NULL`), sắp theo `sortOrder`; `used` = số unit `HELD` + `SOLD` (DR-30).
 - **Lỗi:** chỉ lỗi chung.
-- **Nguồn dữ liệu:** `event` (PK, `organizer_id` khớp), `ticket_type` (`ticket_type_event_idx`), `seat_map` (`event_id` UNIQUE), `seat_map_version`; `used` bằng `SELECT ticket_type_id, count(*) FROM inventory_unit WHERE event_id = :e AND status IN ('HELD','SOLD') GROUP BY 1`. `…Local` suy ra bằng `at time zone event.timezone`.
+- **Nguồn dữ liệu:** `event` (PK, `organizer_id` khớp), `ticket_type` (`ticket_type_name_uq` theo tiền tố `event_id`), `seat_map` (`event_id` UNIQUE), `seat_map_version`; `used` bằng `SELECT ticket_type_id, count(*) FROM inventory_unit WHERE event_id = :e AND status IN ('HELD','SOLD') GROUP BY 1`. `…Local` suy ra bằng `at time zone event.timezone`.
 - **Cache:** không. **Hiệu năng:** p95 < 20 ms.
 
 ### E-27 `PATCH /organizer/events/{eventId}` · `updateEvent`
@@ -827,7 +831,7 @@ Mọi endpoint nhóm này (trừ E-23) nằm dưới `/organizer/**`: lấy `org
   - `DRAFT`: chỉ `name` phải hợp lệ; trường khác kiểm tra theo kiểu (độ dài, múi giờ) nhưng không bắt buộc đủ (DR-25).
   - `PUBLISHED`/`PAUSED`: mọi quy tắc DR-25 áp dụng cho bộ giá trị sau khi sửa (422 với `rule` tương ứng, `field` theo tên trường trong body, vd `saleEndsAtLocal`); `saleStartsAtLocal` bị khóa khi `now() >= saleStartsAt` (422 `locked_after_sale_start`, DR-143) để khóa sơ đồ (DR-37) không bị mở lại.
   - `ENDED`, `CANCELLED`: 409 `EVENT_STATE_CONFLICT`.
-- **Lỗi:** 409 `STALE_EVENT_VERSION` (kèm `currentRowVersion`); 409 `EVENT_STATE_CONFLICT`; 422 `VALIDATION_FAILED` (`rule` ∈ `required`, `too_long`, `invalid_timezone`, `locked_after_publish`, `locked_after_sale_start`, `must_be_future`, `must_be_after_start`, `too_long_event`, `must_be_after_sale_start`, `after_event_start`, `invalid_media`, `invalid_prefix`).
+- **Lỗi:** 409 `STALE_EVENT_VERSION` (kèm `currentRowVersion`); 409 `EVENT_STATE_CONFLICT`; 422 `VALIDATION_FAILED` (`rule` ∈ `required`, `too_long`, `invalid_timezone`, `locked_after_publish`, `locked_after_sale_start`, `must_be_future`, `must_be_after_start`, `too_long_event`, `must_be_after_sale_start`, `after_event_start`, `invalid_media`, `invalid_prefix`, `nonexistent_local_time` (DR-162), `locked_after_sale_end` (DR-163)). Sau xuất bản `must_be_future` chỉ áp cho trường có trong request (DR-163).
 - **Nguồn dữ liệu:** một transaction: `UPDATE event SET …, row_version = row_version + 1, updated_at = now() WHERE event_id = :e AND organizer_id = :org AND row_version = :v RETURNING *` (0 dòng → đọc lại để phân biệt 404 và 409); nếu `status <> 'DRAFT'` và `starts_at`, `ends_at` hoặc `venue` đổi: `INSERT INTO outbox (kind, payload) SELECT 'EMAIL_EVENT_CHANGED', … FROM orders WHERE event_id = :e AND status = 'PAID'` (`orders_event_idx`; payload `before`/`after`/`changed` theo DOC-15 §7.2). `CHECK event_schedule_ck` là lớp bảo vệ cuối.
 - **Cache:** không. Hiệu năng: p95 < 25 ms; thêm ~1 ms mỗi 100 đơn `PAID` khi fan-out email đổi lịch (kế hoạch).
 
@@ -874,7 +878,7 @@ Mọi endpoint nhóm này (trừ E-23) nằm dưới `/organizer/**`: lấy `org
     "publishedAt": "2026-10-21T09:45:00Z", "inventory": { "seatUnits": 180, "pools": 1, "poolUnits": 40 } }
   ```
 
-- **Lỗi:** 409 `EVENT_STATE_CONFLICT` (không phải `DRAFT`); 409 `STALE_EVENT_VERSION`; 422 `PUBLISH_PRECONDITIONS_FAILED` (kèm `checks` các mục chưa đạt, cùng dạng E-28); 503 `OVERLOADED` khi quá `statement_timeout` 30 giây (rollback, thử lại được).
+- **Lỗi:** 409 `EVENT_STATE_CONFLICT` (không phải `DRAFT`); 409 `STALE_EVENT_VERSION`; 422 `PUBLISH_PRECONDITIONS_FAILED` (kèm `checks` các mục chưa đạt, cùng dạng E-28, và `errors[]` theo ô như `VALIDATION_FAILED` cho các trường DR-25 sai; DOC-20 §6.2); 503 `OVERLOADED` khi quá `statement_timeout` 30 giây (rollback, thử lại được).
 - **Nguồn dữ liệu:** các bước DR-27: `SELECT … FROM event … FOR UPDATE` (kèm `organizer_id`); kiểm tra điều kiện; `INSERT INTO inventory_unit … SELECT … FROM jsonb_path_query(document, …)` cho ghế (bỏ `blocked`), `INSERT INTO inventory_pool` rồi `CROSS JOIN generate_series(1, capacity)` cho zone và GA; `UPDATE event SET status = 'PUBLISHED', published_at = now(), seat_map_version_id = :v, row_version = row_version + 1`. Hết hạn nginx 60 giây cho route này.
 - **Cache:** không. **Hiệu năng:** mục tiêu < 5 giây cho 20.000 ghế + 80.000 unit pool (kế hoạch, S-03); GA 5.000 vé < 1 giây.
 
@@ -985,7 +989,7 @@ Mọi endpoint nhóm này (trừ E-23) nằm dưới `/organizer/**`: lấy `org
 
   `orders.paid` và `orders.refundPending` để hộp thoại hủy (Studio 06) báo trước số đơn sẽ chuyển sang chờ hoàn tiền (DR-28).
 - **Lỗi:** chỉ lỗi chung.
-- **Nguồn dữ liệu:** `SELECT ticket_type_id, status, count(*) FROM inventory_unit WHERE event_id = :e AND status <> 'REMOVED' GROUP BY 1, 2` (`unit_event_idx`); `SELECT status, count(*) FROM orders WHERE event_id = :e AND status IN ('PAID','REFUND_PENDING') GROUP BY 1` (`orders_event_idx`).
+- **Nguồn dữ liệu:** `SELECT ticket_type_id, status, count(*) FROM inventory_unit WHERE event_id = :e AND status <> 'REMOVED' GROUP BY 1, 2` (`unit_event_idx`, DR-155); `SELECT status, count(*) FROM orders WHERE event_id = :e AND status IN ('PAID','REFUND_PENDING') GROUP BY 1` (`orders_event_idx`).
 - **Cache:** Redis `sales:event:{eventId}` TTL 5 giây (DR-71; tên key chốt ở DOC-17); response `no-store`. Giao diện tự làm mới mỗi 15 giây và khi bấm "Làm mới".
 - **Hiệu năng:** p95 < 15 ms khi trúng cache; < 150 ms khi dựng với 100.000 unit (kế hoạch; S-03).
 

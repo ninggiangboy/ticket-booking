@@ -1,6 +1,6 @@
 # Kiến trúc code
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-14 · DOC-12
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-153; DR-165, 167, 168, 173, 174) · DOC-12
 > Phụ thuộc: SDD gốc §4, §13.2, phụ lục, [DOC-07](system-context-and-containers.md), [DOC-11](tech-stack-and-versions.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 03, 05, 06, 10, 11, 39, 41, 67, 76, 79, 81, 153), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P1-01, P1-05 (khung module và test kiến trúc); mọi task backend và frontend; người review PR
 
@@ -66,7 +66,7 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 | Module | `allowedDependencies` |
 | --- | --- |
 | `auth`, `media`, `notification`, `inventory` | (không có; chỉ `common`) |
-| `event` | `inventory` |
+| `event` | `inventory`, `auth` (*Sửa 2026-10-14 (DR-165):* `AuthApi.organizerPublicInfo` cho E-07; `mapVersion` qua SPI `event.SeatMapVersionLookup` do `map` cài từ P5) |
 | `ticket` | `event` |
 | `order` | `event`, `ticket` |
 | `map` | `event`, `inventory`, `media` |
@@ -92,8 +92,10 @@ io.ticket.reservation
 │   └── ReleaseExpiredHoldsJob.java         # @Scheduled(fixedDelayString = "${reservation.expiry.interval}")
 ├── listener/                               # (module này chưa nghe event nào)
 ├── service/
-│   ├── HoldService.java                    # điều phối transaction giữ vé (DR-41)
-│   ├── ReleaseService.java                 # thủ tục trả vé dùng chung cho job và đường nhanh (DR-43)
+│   ├── HoldService.java                    # điều phối giữ vé, không transaction: kiểm tra hình thức, bulkhead, Redis (DR-41, DR-167)
+│   ├── HoldTxService.java                  # transaction giữ vé T0…T8 (DOC-24 §4.1)
+│   ├── ReleaseService.java                 # thủ tục trả vé dùng chung cho job và đường nhanh, không transaction (DR-43, DR-167)
+│   ├── ReleaseTxService.java               # các transaction ngắn của trả vé (DOC-24 §4.4)
 │   ├── IdempotencyService.java             # cài đặt IdempotencyApi
 │   ├── ReservationService.java             # cài đặt ReservationApi
 │   └── ReservationMapper.java
@@ -170,7 +172,7 @@ Hệ quả cần chấp nhận:
 
 1. **Không bao giờ đổi `status` bằng `save()`.** Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng; service kiểm tra số dòng và quyết định (SDD gốc 4.2). `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
 2. **ID gán trước bằng UUIDv7** (DR-11): chèn bằng `JdbcAggregateTemplate.insert(model)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
-3. **`Reservation` chỉ `save()` một lần lúc chèn:** aggregate có `@MappedCollection` bị xóa-chèn lại toàn bộ con khi `save()`.
+3. **`Reservation` không bao giờ `save()`.** *Sửa 2026-10-14 (DR-168):* dòng `reservation` chèn bằng `@Modifying @Query` `INSERT … ON CONFLICT … DO NOTHING RETURNING expires_at` (DR-41 bước 3 cần `ON CONFLICT`), `reservation_item` chèn theo lô bằng `ReservationItemWriter` (`JdbcTemplate.batchUpdate`) sau claim; aggregate chỉ để đọc (DOC-24 §4.1.1). Lý do cũ vẫn đúng: `save()` trên aggregate có `@MappedCollection` xóa-chèn lại toàn bộ con.
 4. **SQL phức tạp** (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt `generate_series`, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment dùng `JdbcClient`; vẫn là SQL viết tay, ở trong module sở hữu bảng.
 5. **Cột `jsonb`** (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
 6. **Khóa lạc quan:** `Event.rowVersion` dùng `@Version`; `PATCH` so `rowVersion` của client với model đã đọc, lệch → `StaleEventVersionException` (409 `STALE_EVENT_VERSION`); `OptimisticLockingFailureException` do đua cũng ánh xạ về mã này (DR-70).
@@ -230,30 +232,36 @@ class MapToJsonb implements Converter<Map<String, Object>, PGobject> {
 
 ### 3.3 `…Api` và nơi mở transaction (ví dụ)
 
+*Sửa 2026-10-14 (DR-167, DR-173, DR-174):* chữ ký đầy đủ của `InventoryApi` ở DOC-24 §3.2; ví dụ dưới chỉ minh họa nơi mở transaction.
+
 ```java
-// io.ticket.inventory.InventoryApi (package gốc)
+// io.ticket.inventory.InventoryApi (package gốc), rút gọn
 public interface InventoryApi {
-  /** Bên trong transaction của HoldService. Trả số unit đã claim; bên gọi so với số yêu cầu. */
-  ClaimResult claim(UUID eventId, UUID reservationId, List<ClaimRequest> items);
-
-  /** Xác nhận: HELD → SOLD cho mọi unit của reservation. */
-  int confirmSold(UUID reservationId);
-
-  /** Trả vé: HELD → AVAILABLE cho mọi unit của reservation. */
-  int release(UUID reservationId);
-
-  AvailabilitySnapshot snapshot(UUID eventId);           // đọc độc lập, cache Caffeine 2 giây
-  int createSeatUnits(UUID eventId, Map<UUID, UUID> ticketTypeBySeat, String documentJson);
+  @Transactional(propagation = Propagation.MANDATORY)
+  ClaimResult claim(UUID eventId, UUID reservationId, List<ClaimItem> items);
+  @Transactional(propagation = Propagation.MANDATORY)
+  int confirmSold(UUID reservationId, List<PoolQuantity> poolItems);   // poolItems cho CounterClaimer
+  @Transactional(propagation = Propagation.MANDATORY)
+  Set<UUID> release(UUID reservationId, List<PoolQuantity> poolItems);
+  Map<UUID, AvailabilitySummary> availabilityOf(Collection<UUID> eventIds);  // đọc độc lập, Caffeine
 }
 
-// io.ticket.reservation.service.HoldService
+// io.ticket.reservation.service.HoldService: điều phối, KHÔNG @Transactional
 @Service
-class HoldService {
+public class HoldService {
+  public HoldOutcome hold(UUID userId, UUID eventId, IdempotencyRequest idem, CreateReservationRequest req) {
+    // kiểm tra hình thức → bulkhead → cờ hết vé (Redis) → holdTx.holdInTransaction(cmd)
+  }
+}
+
+// io.ticket.reservation.service.HoldTxService
+@Service
+public class HoldTxService {
   @Transactional
-  public ReservationResponse hold(UUID userId, UUID eventId, UUID idemKey, String rawBody, HoldCommand cmd) {
+  public HoldOutcome holdInTransaction(HoldCommand cmd) {
     // SET LOCAL statement_timeout = '2s'; lock_timeout = '1s'
     // 1. idempotency  2. eventApi.requireOnSale  3. insert reservation
-    // 4. inventoryApi.claim  5. orderApi.createPending  6. idempotency.complete(…)
+    // 4. inventoryApi.claim  5. items + orderApi.createPending  6. idempotency.complete(…)
   }
 }
 ```

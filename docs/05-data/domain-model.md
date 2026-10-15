@@ -1,6 +1,6 @@
 # Mô hình miền
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-14
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-155: index `unit_event_idx`; DR-169: thứ tự trả vé; DR-184: cột `event.cancelled_with_refunds`) · DOC-14
 > Phụ thuộc: SDD gốc §6, §7.8, §8, §9, §11, [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md), [Sổ quyết định](../00-decision-register.md) (DR-05, 11, 12, 13, 14, 15, 16, 17, 18, 20, 24, 27, 28, 38, 40, 41, 43, 44, 52), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md), [ADR-0018](../04-adr/0018-uuidv7-primary-keys.md)
 > Người dùng chính: P1-03 (Flyway migration đầu tiên), P1-05 (ArchUnit sở hữu bảng), mọi task của module `event`, `map`, `inventory`, `reservation`, `order`, `ticket`, `media`, `auth`; [DOC-24](../06-design/inventory-and-reservation.md), [DOC-26](../06-design/checkout-and-payment.md), [DOC-30](../06-design/invariant-checker.md)
 
@@ -166,6 +166,7 @@ CREATE TABLE event (
   row_version           int  NOT NULL DEFAULT 0,                    -- khóa lạc quan cho PATCH, DR-70
   published_at          timestamptz,
   cancelled_at          timestamptz,
+  cancelled_with_refunds boolean,                                   -- đặt khi hủy: có đơn PAID chuyển chờ hoàn tiền (DR-184)
   ended_at              timestamptz,
   created_at            timestamptz NOT NULL DEFAULT now(),
   updated_at            timestamptz NOT NULL DEFAULT now(),
@@ -304,6 +305,7 @@ CREATE INDEX unit_pool_available_idx   ON inventory_unit (pool_id) WHERE status 
 CREATE INDEX unit_reservation_idx      ON inventory_unit (reservation_id) WHERE reservation_id IS NOT NULL;
 CREATE INDEX unit_seat_taken_idx       ON inventory_unit (event_id, seat_index) WHERE seat_id IS NOT NULL AND status IN ('HELD','SOLD');
 CREATE INDEX unit_ticket_type_idx      ON inventory_unit (ticket_type_id);
+CREATE INDEX unit_event_idx            ON inventory_unit (event_id, ticket_type_id, status);  -- số liệu theo event, DR-155
 
 -- Dòng giữ vé: bản chụp duy nhất của tên loại vé, giá và nhãn (DR-20).
 CREATE TABLE reservation_item (
@@ -399,6 +401,7 @@ Cột "Truy vấn" nêu câu hoặc luồng dùng index. Index khóa ngoại th�
 | `unit_reservation_idx` (một phần) | `inventory_unit` | Xác nhận, trả vé: `WHERE reservation_id = :rid AND status = 'HELD'` | `reservation_id IS NOT NULL` nên chỉ unit HELD/SOLD |
 | `unit_seat_taken_idx` (một phần) | `inventory_unit` | Dựng bitmap tình trạng chỗ: `(event_id, seat_index)` của unit HELD/SOLD (DR-62) | |
 | `unit_ticket_type_idx` | `inventory_unit` | FK; đổi giá/sức chứa loại vé (DR-30) | Ghi vào bảng 100.000 dòng mỗi event; chấp nhận chi phí chèn khi xuất bản |
+| `unit_event_idx` | `inventory_unit` | Đếm unit theo `(ticket_type_id, status)` của một event: E-24, E-26 (`used`), E-37, `displayStatus` (DOC-20) | *Sửa 2026-10-14 (DR-155):* thêm vì E-24/E-37 đã dẫn mà DDL chưa có. Index thứ ba bị cập nhật ở mỗi claim/trả vé (claim vốn đã không HOT vì `unit_pool_available_idx`); S-03 đo chi phí |
 | `reservation_item_res_idx` | `reservation_item` | `itemsOf(reservationId)` | |
 | `reservation_item_pool_idx`, `reservation_item_type_idx` | `reservation_item` | FK | |
 | `orders_user_idx` | `orders` | `GET /me/orders` mới nhất trước | |
@@ -602,13 +605,13 @@ WHERE u.reservation_id = :rid;
 
 Ở bước 4, `:code_for_unit` minh họa một mã; code Java chèn theo lô với mã đã sinh. Với item pool có `quantity = 3` thì ba unit cùng ghép với item đó và nhận ba mã khác nhau.
 
-**Trả vé** (sau khi PaymentIntent đã hủy được hoặc chưa từng có):
+**Trả vé** (sau khi PaymentIntent đã hủy được hoặc chưa từng có). *Sửa 2026-10-14 (DR-169):* reservation trước, unit sau, cùng thứ tự khóa với xác nhận; reservation 0 dòng thì dừng:
 
 ```sql
+UPDATE reservation SET status = :final, closed_at = now()                  -- 'EXPIRED' nếu TIMEOUT, ngược lại 'CANCELLED'
+ WHERE reservation_id = :rid AND status = 'EXPIRING';                      -- 0 dòng: đã xử lý, dừng
 UPDATE inventory_unit SET status = 'AVAILABLE', reservation_id = NULL, updated_at = now()
  WHERE reservation_id = :rid AND status = 'HELD';                          -- số dòng = số unit đã giữ
-UPDATE reservation SET status = :final, closed_at = now()                  -- 'EXPIRED' nếu TIMEOUT, ngược lại 'CANCELLED'
- WHERE reservation_id = :rid AND status = 'EXPIRING';
 UPDATE orders SET status = :order_final, updated_at = now()                -- 'EXPIRED' / 'CANCELLED'
  WHERE reservation_id = :rid AND status = 'PENDING_PAYMENT';
 ```

@@ -1,6 +1,6 @@
 # Nguyên tắc UX và kiến trúc thông tin
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-38
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-183, DR-186) · DOC-38
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 24, 36, 41, 44, 57, 66, 67, 68, 69, 70), [DOC-02](../01-product/personas-and-journeys.md), [DOC-04](../01-product/use-cases.md), [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md) §6, [DOC-39](design-system.md), [DOC-40](ui-states-and-copy.md)
 > Người dùng chính: P1-01 (khung frontend), mọi task màn hình P1–P5, DOC-41…60 (đặc tả từng màn hình), người review PR frontend
 
@@ -20,7 +20,7 @@ Mỗi nguyên tắc có số `UXP-xx` để màn hình và PR dẫn lại. Nguy�
 | UXP-04 | **Đồng hồ về 0 thì hỏi lại server, không tự kết luận** (DR-66). Hết giờ → gọi `GET /reservations/{id}`; trả `EXPIRED` mới hiện màn hết hạn | Job trả vé có thể chậm tới 30 giây (NFR-03); thanh toán có thể đã thành công | UX-04 |
 | UXP-05 | **Tự thử lại khi quá tải, người dùng không bấm lại.** 503 `OVERLOADED` và 429 `RATE_LIMITED` hiện thanh tiến trình "Tự thử lại sau N giây", dùng `Retry-After` (mục 8.2). Vé đã giữ không bị ảnh hưởng và được nói rõ | Bấm lại liên tục làm tải tăng đúng lúc hệ thống yếu nhất | UX-05 |
 | UXP-06 | **Mọi thông báo lỗi nói điều đã xảy ra và việc làm tiếp** (canvas `ComponentsStudio` mục L). Không "Có lỗi xảy ra" trơ trọi. Mã `code` không bao giờ hiện cho người dùng, trừ `requestId` ở lỗi 500 | Người mua mất ghế cần biết làm gì ngay | UX-06 |
-| UXP-07 | **Trạng thái rỗng luôn mời một bước kế tiếp** ("Tạo sự kiện đầu tiên", "Xem sự kiện"). Trạng thái đang tải dùng khung giữ đúng hình nội dung sắp hiện, không spinner toàn trang | Giữ bố cục ổn định, tránh nhảy layout | UX-07 |
+| UXP-07 | **Trạng thái rỗng luôn mời một bước kế tiếp** ("Tạo sự kiện đầu tiên", "Xem sự kiện"); ngoại lệ: danh sách sự kiện `/` không có nút vì không còn nơi nào khác để đi (DR-183). Trạng thái đang tải dùng khung giữ đúng hình nội dung sắp hiện, không spinner toàn trang | Giữ bố cục ổn định, tránh nhảy layout | UX-07 |
 | UXP-08 | **Không dựa vào màu một mình.** Trạng thái ghế, trạng thái sự kiện, lỗi đều có chữ, hình khối hoặc biểu tượng đi kèm; phân biệt được khi in đen trắng (DOC-39 §5) | Tiếp cận; màu `type-3` chỉ đạt tỉ lệ 2,21 trên nền trắng | UX-08 |
 | UXP-09 | **Vùng chạm tối thiểu 44 px, tương phản chữ tối thiểu 4,5:1** (3:1 từ 24 px trở lên). Ghế trên sơ đồ là ngoại lệ có điều kiện (mục 7.3) | WCAG 2.2 AA; PS-1 dùng điện thoại | UX-09 |
 | UXP-10 | **Giữ lựa chọn qua đăng nhập** (mục 5) và **quay lại đúng trang** sau đăng nhập hoặc hết phiên | Người mua thường mở magic link ở tab khác (SDD gốc 5.3) | UX-10 |
@@ -87,7 +87,7 @@ Nguồn: DR-67. Mọi đường dẫn là route của SPA (React Router 7, `crea
 | `/login?returnTo=` | Đăng nhập (7 biến thể) | DOC-44 | Khách | `main` |
 | `/auth/callback?token=` | Xác minh đường dẫn đăng nhập (gọi `POST /auth/verify`) | DOC-44 | Khách | `main` |
 | `/events/:eventId/queue` | Phòng chờ | DOC-45 | Đã đăng nhập | `queue` |
-| `/events/:eventId/seats` | Chọn chỗ hoặc Chọn số lượng | DOC-46, DOC-47 | Đã đăng nhập | `seat-picker` (Konva); `quantity-picker` cho GA |
+| `/events/:eventId/seats` | Chọn chỗ hoặc Chọn số lượng | DOC-46, DOC-47 | Khách (xem, chọn); giữ vé cần đăng nhập (*Sửa 2026-10-14 (DR-186):* trước ghi "Đã đăng nhập") | `seat-picker` (Konva); `quantity-picker` cho GA |
 | `/checkout/:reservationId` | Thanh toán | DOC-48 | Đã đăng nhập, chủ reservation | `checkout` (Stripe.js) |
 | `/orders/:orderId` | Kết quả | DOC-49 | Đã đăng nhập, chủ đơn | `main` |
 | `/me/tickets` | Vé của tôi | DOC-50 | Đã đăng nhập | `main` |

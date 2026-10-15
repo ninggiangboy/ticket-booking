@@ -1,6 +1,6 @@
 # Thuật ngữ
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-06
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (thuật ngữ của gate P2) · DOC-06
 > Phụ thuộc: SDD gốc §1–§17, [Sổ quyết định](00-decision-register.md) (DR-01…151), [Master plan](00-master-plan.md) §0.4, §3.2
 > Người dùng chính: mọi tài liệu khác; P0-08; mọi task `Pn-xx` khi đặt tên class, bảng, key cấu hình, chuỗi giao diện
 
@@ -24,6 +24,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | publish | xuất bản | Chuyển event `DRAFT → PUBLISHED`; trong cùng một transaction tạo `inventory_pool` và `inventory_unit` từ loại vé và sơ đồ | DR-27, DOC-20 |
 | sale window | khung mở bán | Khoảng `sale_starts_at` … `sale_ends_at` của event; chỉ trong khung này `reservation` mới được tạo. `sale_ends_at` không muộn hơn `starts_at` | DR-25, DR-41 |
 | displayStatus | trạng thái hiển thị của sự kiện | Giá trị suy ra ở server, không lưu: `DRAFT`, `UPCOMING`, `ON_SALE`, `SOLD_OUT`, `SALE_CLOSED`, `PAUSED`, `ENDED`, `CANCELLED`. Chỉ là gợi ý cho giao diện; kết quả thật là kết quả của lệnh giữ vé | DR-24, DOC-20, DOC-40 |
+| sale phase | pha bán | `SalePhase` tính trong SQL bằng `now()`: `NOT_PUBLISHED`, `BEFORE_SALE`, `IN_SALE`, `AFTER_SALE`; cùng với tình trạng còn vé cho ra `displayStatus` | DR-24, DOC-20 §3 |
 | pause / resume | tạm dừng / mở lại bán | `PUBLISHED ↔ PAUSED`. Chặn lệnh giữ vé mới (`EVENT_NOT_ON_SALE`); reservation đang `ACTIVE` vẫn thanh toán được | DR-24 |
 | close sale | đóng bán sớm | `POST …/close-sale` đặt `sale_ends_at = now()`; event thành `SALE_CLOSED`, không mở lại được. Không có trạng thái lưu mới | DR-24 |
 | cancel event | hủy sự kiện | Chuyển `CANCELLED` từ `PUBLISHED`/`PAUSED`, kể cả khi đã có đơn `PAID`: mọi đơn `PAID` sang `REFUND_PENDING` (lý do `EVENT_CANCELLED`), vé `VOID` | DR-28, DOC-20 |
@@ -77,7 +78,8 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | EXPIRING | EXPIRING | Trạng thái trung gian: unit vẫn `HELD`, job đang hủy PaymentIntent. Dòng reservation là trọng tài giữa xác nhận và trả vé; lease 30 giây | ADR-0004, DR-42 |
 | release | trả vé | Thủ tục đưa unit `HELD → AVAILABLE`, reservation `EXPIRING → EXPIRED/CANCELLED`, order `→ EXPIRED/CANCELLED`; dùng chung cho job và đường nhanh | DR-43, DOC-24 |
 | fast cancel path | đường nhanh hủy giữ vé | `DELETE /reservations/{id}` chạy luôn thủ tục trả vé trong request; Stripe lỗi thì trả 202 và job hoàn tất sau | DR-43 |
-| release job | job trả vé | Job `fixedDelay` 5 giây, lô 200, `FOR UPDATE SKIP LOCKED`, lease 30 giây; đưa reservation quá hạn qua `EXPIRING` rồi trả vé | DR-42, DOC-24 |
+| release job | job trả vé | `reservation.job.ReleaseExpiredHoldsJob` (DR-154): `fixedDelay` 5 giây, lô 200, `FOR UPDATE SKIP LOCKED`, lease 30 giây, ngân sách 20 giây mỗi vòng; đưa reservation quá hạn qua `EXPIRING` rồi trả vé | DR-42, DR-170, DOC-24 |
+| bulkhead permit | lượt bulkhead | Một trong `hold.bulkhead.permits` (24) chỗ dùng chung cho E-14 và E-16, lấy trước khi lấy connection, không chờ | DR-61, DOC-24 §4.1 |
 | lease | lease | Thời hạn một worker được xử lý dòng `EXPIRING` hoặc `outbox`; hết lease thì dòng được lấy lại | DR-42, DR-53 |
 | max units per hold | giới hạn unit mỗi lệnh giữ | `reservation.max-units-per-hold` = 50: giới hạn kỹ thuật, không phải tính năng bán. Không có giới hạn theo đơn hay theo người | DR-41 |
 | InventoryClaimer | InventoryClaimer | Interface claim với ba bản: `SkipLockedClaimer` (mặc định), `CounterClaimer`, `NaiveClaimer`; chọn bằng `inventory.strategy` | DR-76 |
@@ -106,6 +108,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | late payment | thanh toán đến trễ | `payment_intent.succeeded` đến khi reservation đã `EXPIRED`/`CANCELLED`: không phát hành vé, đơn sang `REFUND_PENDING` lý do `LATE_PAYMENT`; luồng hiếm, khác 0 là dấu hiệu cần điều tra | DR-44, UC-15 |
 | reconciliation | đối chiếu | `PaymentReconcileJob` mỗi 60 giây hỏi Stripe các PaymentIntent của đơn quá 15 phút hoặc reservation `EXPIRING` quá 2 phút và gọi đúng handler của webhook | DR-49, UC-16 |
 | idempotency key | idempotency key | Header `Idempotency-Key` (UUID); dòng `(user_id, idem_key)` chèn đầu transaction, response lưu trước commit; chỉ lưu 2xx; dọn sau 24 giờ | DR-45, DOC-25 |
+| idempotent replay | phát lại idempotent | Request cùng `Idempotency-Key` và cùng hash sau khi lần đầu đã commit: trả lại response đã lưu kèm `Idempotent-Replayed: true`, bằng nhau theo JSON; riêng hủy giữ vé tính từ trạng thái hiện tại | DR-45, DR-175, DR-176, DOC-25 |
 | outbox | outbox | Bảng `outbox`: email phát sinh từ nghiệp vụ (`EMAIL_TICKETS`, `EMAIL_EVENT_CHANGED`, `EMAIL_REFUND_PENDING`) ghi cùng transaction với thay đổi, `OutboxRelay` gửi ít nhất một lần. Không chứa magic link và không chứa lệnh hủy PaymentIntent | DR-53, DR-21, ADR-0006 |
 | PaymentGateway | cổng thanh toán | Port trong module `payment` với `createIntent`, `retrieveIntent`, `cancelIntent`; adapter `StripePaymentGateway` và `FakePaymentGateway` | DR-51, ADR-0017 |
 | fake payment gateway | cổng thanh toán giả | Adapter profile `fake-payments`: mô phỏng trạng thái, lỗi hủy, ký webhook HMAC giống Stripe, có endpoint điều khiển; dùng cho test và thực nghiệm. `PAYMENTS_MODE=fake` là mặc định | DR-51, DR-72 |
@@ -150,6 +153,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | bulkhead | bulkhead | Giới hạn 24 lệnh giữ và hủy giữ đồng thời (nhỏ hơn pool 40); hết permit → 503 `OVERLOADED` với `Retry-After` 1–3 giây, không chờ | DR-61 |
 | token bucket | token bucket | `token_bucket.lua` theo người dùng: `rl:hold:{userId}` (5, nạp 1/2 giây), `rl:pi:{userId}` (5, 1/5 giây), `rl:queue:{userId}` (10, 1/giây). Mất Redis thì bỏ qua, không có limiter dự phòng | DR-56 |
 | availability snapshot | snapshot tình trạng chỗ | Kết quả `GET /events/{id}/availability`: bitmap base64 `held`/`sold` theo `seat_index`, số `available` theo pool và loại vé; cache Caffeine trong tiến trình, hết hạn 2 giây | DR-62, ADR-0013 |
+| availability summary | tóm tắt còn vé | `AvailabilitySummary`: loại vé nào của sự kiện còn unit `AVAILABLE`; nguồn của `SOLD_OUT` và `soldOut` ở P2 trước khi có bitmap; cache Caffeine | DR-161, DOC-20 §3.2 |
 | display status (of a seat) | trạng thái hiển thị của chỗ | Bốn trạng thái ghế trong trình xem: còn trống (màu theo loại vé), đang được giữ, đã bán, đang chọn; mã hóa không chỉ bằng màu | DR-62, DOC-39 |
 | server time offset | độ lệch giờ server | `X-Server-Time` (epoch ms) trên mọi response; client lấy trung vị 5 mẫu để đồng hồ đếm ngược không tin đồng hồ máy | DR-66 |
 
@@ -169,6 +173,8 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | cursor pagination | phân trang cursor | `?limit=` (mặc định 20, tối đa 100) và `?cursor=`; response `{ items, nextCursor }` | DR-63 |
 | object storage | object storage | Kho tương thích S3 cho ảnh (SeaweedFS trong compose); bucket private, API phục vụ `GET /media/{id}` qua cache nginx | DR-38, ADR-0015 |
 | media | media | Bảng `media` chỉ giữ metadata ảnh (`EVENT_IMAGE`, `FLOOR_PLAN`); byte nằm ở object storage; bất biến | DR-38 |
+| unreferenced image | ảnh không còn tham chiếu | Dòng `media` quá 24 giờ không được `event.image_media_id` hay tài liệu sơ đồ nào trỏ tới; `RetentionJob` xóa dòng rồi object | DR-74, DR-159, DOC-18 §4 |
+| RetentionContributor | RetentionContributor | SPI ở `common`: mỗi module cài đặt để `RetentionJob` xóa dữ liệu quá hạn của bảng mình theo lô | DR-74, DR-79, DR-159, DOC-18 |
 | profile | profile cấu hình | `dev`, `fake-payments`, `experiment`, `invariants`, `obs`, `stripe` (Spring) và profile compose `stripe`, `obs` | DR-72, DOC-34 |
 | Mailpit | Mailpit | Hộp thư SMTP của môi trường dev; E2E đọc magic link qua API của nó | DR-72, DR-77 |
 | stripe-cli | stripe-cli | Container chuyển tiếp webhook của Stripe test mode về `api` (profile `stripe`) | DR-72 |
@@ -191,6 +197,7 @@ Hai thuật ngữ có hai nghĩa trong dự án được tách rõ: `displayStat
 | --- | --- | --- | --- |
 | NEVER OVERSELL | không bao giờ bán vượt | Yêu cầu đúng đắn đứng trên mọi yêu cầu khác: mỗi ghế tối đa một chủ, mỗi pool không bao giờ âm, mỗi đơn thu tiền đúng một lần. Ép ở database | NFR-01, DOC-01 |
 | invariant check | kiểm tra bất biến | `InvariantChecker`: các truy vấn `INV-xx` chạy mỗi 5 phút và bằng `make invariants` (JSON, thoát 0 khi sạch, 1 khi có sai lệch); chỉ báo cáo, không tự sửa | DR-73, DOC-30 |
+| invariant report | mục báo cáo bất biến | Kết quả mức REPORT của `InvariantChecker` (đơn `REFUND_PENDING` theo lý do, tiền về trễ 24 giờ): nằm ở `reports[]`, không đổi mã thoát | DR-178, DOC-30 |
 | naive implementation | bản cài đặt ngây thơ | `NaiveClaimer`: đọc rồi ghi không điều kiện trạng thái; chỉ chạy được với profile `experiment`, để chứng minh lỗi bán vượt xuất hiện khi thiếu cơ chế | DR-76 |
 | counter implementation | bản bộ đếm | `CounterClaimer` (phương án A của SDD gốc 10.3): một dòng bộ đếm mỗi pool, bảng `inventory_pool_counter`; baseline của EXP-10 | DR-76, DOC-80 |
 | virtual user | người dùng ảo | Một người dùng mô phỏng trong k6; một VU quản lý nhóm người dùng ảo và tôn trọng `retryAfterSeconds`. "Đồng thời" nghĩa là có mặt trong cùng cửa sổ mở bán | DR-75 |

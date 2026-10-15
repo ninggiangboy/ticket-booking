@@ -1,6 +1,6 @@
 # Mục lục luồng chi tiết
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-82
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-154: tên job trả vé) · DOC-82
 > Phụ thuộc: [DOC-04](../../01-product/use-cases.md) (22 UC), [DOC-12](../../03-architecture/code-architecture.md) §2 (module và layer), [DOC-07](../../03-architecture/system-context-and-containers.md), [DOC-06](../../02-glossary.md), [Sổ quyết định](../../00-decision-register.md) (DR-06, 10, 21, 41, 57, 58, 62, 63, 65, 67), master plan §3.2, §3.4
 > Người dùng chính: tác giả DOC-83…90; tác giả màn hình DOC-42…60 (cột "Luồng"); mọi task `Pn-xx` có tham chiếu `FL-xx`
 
@@ -18,7 +18,7 @@ Mọi sơ đồ `sequenceDiagram` trong `flows/` khai báo `participant` bằng 
 | Edge | `nginx` | `ops/nginx/` | Rate limit (DR-55), cache `/media/`, proxy `/api` |
 | API | `api` | `io.ticket.<module>.controller.<Name>Controller.<method>` | Ghi cả module, ví dụ `reservation.ReservationController.create` |
 | Service | tên class service, ví dụ `ReservationService`, `OrderService`, `PublishService` | `io.ticket.<module>.service.<Name>` | Ranh giới transaction (DOC-12 §2). Gọi chéo module qua `…Api` |
-| Job | `OutboxRelay`, `ReservationExpiryJob`, `PaymentReconcileJob`, `AdmissionTicker`, `EventLifecycleJob`, `InvariantChecker`, `RetentionJob` | `io.ticket.<module>.job.<Name>` | `ReservationExpiryJob` là "job trả vé" trong plan; `InvariantChecker` thuộc module `invariant` |
+| Job | `OutboxRelay`, `ReleaseExpiredHoldsJob`, `PaymentReconcileJob`, `AdmissionTicker`, `EventLifecycleJob`, `InvariantChecker`, `RetentionJob` | `io.ticket.<module>.job.<Name>` | `ReleaseExpiredHoldsJob` là "job trả vé" trong plan (*Sửa 2026-10-14 (DR-154):* trước ghi `ReservationExpiryJob`, lệch DOC-07, DOC-12); `InvariantChecker` thuộc module `invariant` |
 | Database | `db` | PostgreSQL 18 | Ghi tên bảng ở mũi tên, ví dụ `db: inventory_unit` |
 | Redis | `redis` | Redis 8 | Ghi tên key hoặc script Lua (`admit.lua`) ở mũi tên |
 | Object storage | `s3` | SeaweedFS (S3) | Ảnh sự kiện, ảnh nền sơ đồ |
@@ -56,7 +56,7 @@ Cột "Màn hình" dùng tên component ở §3. "Endpoint" bỏ tiền tố `/a
 | FL-13 | Giữ vé GA | UC-03 | `QuantityPicker` (DOC-47) | `POST /events/{id}/reservations` | DOC-85 | P2 |
 | FL-14 | Nhận vé đơn 0 đồng | UC-04, UC-05 | `Checkout` (DOC-48), `OrderResult` (DOC-49) | `POST /orders/{id}/confirm-free`, `GET /orders/{id}` | DOC-85 | P2 |
 | FL-15 | Hủy giữ vé (đường nhanh) | UC-06 | `Checkout` (DOC-48) | `DELETE /reservations/{id}` | DOC-85 | P2 |
-| FL-16 | Job trả vé khi hết hạn | UC-11 | — (job); `Checkout` thấy `RESERVATION_NOT_ACTIVE` | không có (job `ReservationExpiryJob`) | DOC-85 | P2 |
+| FL-16 | Job trả vé khi hết hạn | UC-11 | — (job); `Checkout` thấy `RESERVATION_NOT_ACTIVE` | không có (job `ReleaseExpiredHoldsJob`) | DOC-85 | P2 |
 | FL-17 | Xem vé của tôi | UC-05 | `MyTickets` (DOC-50), `OrderResult` (DOC-49) | `GET /me/tickets`, `GET /me/orders`, `GET /orders/{id}` | DOC-85 | P2 |
 | FL-18 | Kiểm tra bất biến định kỳ và chạy tay | UC-18 | — | không có (`InvariantChecker`, `make invariants`) | `operations.md` (DOC-86) | P2 |
 | FL-19 | Chạy một thực nghiệm | UC-21 | — | không có (`make exp EXP=xx`) | DOC-86 | P2 |

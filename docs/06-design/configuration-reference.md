@@ -1,6 +1,6 @@
 # Tham chiếu cấu hình
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-34
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (khóa và điều kiện khởi động của gate P2: DR-158, 166, 170, 179–181, 187, 189) · DOC-34
 > Phụ thuộc: SDD gốc §14, [Sổ quyết định](../00-decision-register.md) (DR-09, 12, 13, 21, 22, 38, 41, 42, 44, 47–49, 51, 53–63, 66, 72, 74–76, 80), [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md), [DOC-15](../05-data/ops-model.md) §9, [DOC-19](auth-and-sessions.md) §12, [DOC-27](tickets-and-notifications.md) §13, [DOC-33](observability.md) §6, [DOC-36](../07-api/api-guidelines.md) §10.4, [DOC-62](../09-operations/deploy-compose.md) §2, §6
 > Người dùng chính: P1-01 (`application.yml`, `*Properties`), P1-02 (`.env.example`, compose), mọi task thêm khóa cấu hình; mọi tài liệu thiết kế khi trích khóa
 
@@ -26,7 +26,7 @@ Hai loại profile, không nhầm (DOC-62 §2): **profile Spring** (đặt bằn
 | `fake-payments` | Spring | mặc định cùng `PAYMENTS_MODE=fake` | `FakePaymentGateway`, `db/migration-fake` thêm vào `spring.flyway.locations`, endpoint `/fake-payments/**` (DR-51) |
 | `stripe` | Spring | `make up-stripe` (`PAYMENTS_MODE=stripe`) | `StripePaymentGateway`; đòi `payment.stripe.secret-key`, `payment.stripe.webhook-secret` |
 | `experiment` | Spring | `make exp` | Cho phép `inventory.strategy` ≠ `skip-locked`; `db/migration-experiment`; nạp 100.000 người dùng (DR-75, DR-76); `logging.level.io.ticket=WARN` |
-| `invariants` | Spring | `make invariants` | Chạy `InvariantChecker` một lần, in JSON, thoát 0/1 (DR-73) |
+| `invariants` | Spring | `make invariants` | Chạy `InvariantChecker` một lần, in JSON ra stdout, thoát 0 (sạch) / 1 (sai lệch) / 2 (không chạy hết) (DR-73, DR-180); `spring.main.web-application-type=none`, `spring.flyway.enabled=false`, không `@Scheduled`, log ra stderr (DR-179); `spring.datasource.hikari.maximum-pool-size=2` (DR-158) |
 | `seed` | Spring | `make seed` | Nạp dữ liệu demo rồi thoát (DOC-61 §5, DR-78) |
 | `obs` | Spring | cùng compose `obs` | Mở `prometheus` trên cổng quản trị 9090 (DR-09) |
 | (mặc định) | compose | `make up` | `nginx`, `api`, `postgres`, `redis`, `storage`, `mailpit` |
@@ -99,10 +99,12 @@ Nguồn: DOC-19 §12.1, DOC-27.
 | Khóa | Kiểu | Mặc định | Biến | Profile | Mô tả |
 | --- | --- | --- | --- | --- | --- |
 | `reservation.hold-duration` | duration | `PT10M` | — | mọi | Thời hạn giữ, một giá trị toàn nền tảng; giao diện nhận qua `holdMinutes` ở `GET /events/{id}` (DR-42) |
-| `reservation.max-units-per-hold` | int | `50` | — | mọi | Số unit tối đa mỗi lệnh giữ; giới hạn kỹ thuật, không theo sự kiện (DR-41) |
+| `reservation.max-units-per-hold` | int | `50` | — | mọi | Số unit tối đa mỗi lệnh giữ; giới hạn kỹ thuật, không theo sự kiện (DR-41); giao diện nhận qua `maxUnitsPerHold` ở E-07 (DR-187) |
 | `reservation.expiry.interval` | duration | `PT5S` | — | mọi | Nhịp job trả vé (`fixedDelay`) |
 | `reservation.expiry.batch-size` | int | `200` | — | mọi | Số reservation mỗi vòng |
 | `reservation.expiry.lease` | duration | `PT30S` | — | mọi | `EXPIRING` được lấy lại khi `expiring_since` cũ hơn mức này |
+| `reservation.expiry.batch-budget` | duration | `PT20S` | — | mọi | Ngân sách thời gian một vòng job; phần còn lại trả cho vòng sau (DR-170) |
+| `reservation.fast-cancel.timeout` | duration | `PT3S` | — | mọi | Timeout hủy PaymentIntent trong `DELETE /reservations/{id}` (DR-43; job dùng `payment.stripe.cancel-timeout`) |
 | `reservation.payment-min-remaining` | duration | `PT30S` | — | mọi | Tạo PaymentIntent bị từ chối nếu còn ít hơn (DR-47) |
 | `hold.bulkhead.permits` | int | `24` | `HOLD_BULKHEAD_PERMITS` | mọi | Số lệnh giữ/hủy giữ đồng thời; < `maximum-pool-size` (DR-61) |
 | `hold.bulkhead.wait` | duration | `PT0S` | — | mọi | Chờ permit; 0 = thử lấy, không chờ |
@@ -112,6 +114,7 @@ Nguồn: DOC-19 §12.1, DOC-27.
 | `invariant.interval` | duration | `PT5M` | — | mọi | Nhịp `InvariantChecker` (DR-73) |
 | `invariant.active-overdue` | duration | `PT60S` | — | mọi | `ACTIVE` quá `expires_at` hơn mức này là sai lệch (DR-42) |
 | `invariant.expiring-stuck` | duration | `PT2M` | — | mọi | `EXPIRING` kẹt hơn mức này là sai lệch (DR-42) |
+| `invariant.statement-timeout` | duration | `PT30S` | — | mọi | `statement_timeout` của transaction `READ ONLY`, `REPEATABLE READ` của `InvariantChecker` (DR-181) |
 | `inventory.strategy` | enum | `skip-locked` | `INVENTORY_STRATEGY` | `experiment` cho `counter`, `naive` | Bản cài đặt `InventoryClaimer`; khác `skip-locked` mà không có `experiment` thì `api` không khởi động (DR-76) |
 
 ### 3.5 Thanh toán
@@ -177,6 +180,9 @@ Tham số của PostgreSQL (`shared_buffers`, `work_mem`, …) không phải kh�
 | Khóa | Kiểu | Mặc định | Biến | Profile | Mô tả |
 | --- | --- | --- | --- | --- | --- |
 | `event.lifecycle.interval` | duration | `PT60S` | — | mọi | Nhịp `EventLifecycleJob`: `PUBLISHED`/`PAUSED → ENDED` khi `ends_at ≤ now()` (DR-24) |
+| `studio.publish.statement-timeout` | duration | `PT30S` | — | mọi | `SET LOCAL statement_timeout` của transaction xuất bản (DR-27, DR-166) |
+| `studio.cancel.statement-timeout` | duration | `PT60S` | — | mọi | Transaction hủy sự kiện (DR-28, DR-166) |
+| `studio.event-change.statement-timeout` | duration | `PT60S` | — | mọi | Transaction `PATCH` sự kiện có fan-out email đổi lịch (DR-29, DR-106, DR-166) |
 | `media.max-event-image-bytes` | int | `2097152` | — | mọi | Ảnh sự kiện ≤ 2 MB (DR-38) |
 | `media.max-map-image-bytes` | int | `5242880` | — | mọi | Ảnh mặt bằng ≤ 5 MB; khớp `CHECK (size_bytes <= 5242880)` của DOC-14 |
 | `media.max-dimension` | int (px) | `8000` | — | mọi | Từ chối ảnh quá mỗi cạnh |
@@ -267,7 +273,7 @@ Giá trị đã chốt, đổi bằng sửa code và DR mới, không bằng kh�
 | `reservation.*`, `hold.*`, `inventory.*` | `reservation`, `inventory` | DOC-24 |
 | `payment.*` | `payment` | DOC-26 |
 | `admission.*`, `ratelimit.*`, `availability.*` | `admission`, `inventory` | DOC-28, DOC-29 |
-| `outbox.*`, `support.*` | `notification` | DOC-27 |
+| `outbox.*`, `support.*` | `notification`; `support.*` còn ở `order` cho trường `support` của E-19 (DR-189) | DOC-27, DOC-49 |
 | `retention.*`, `event.lifecycle.*`, `media.*`, `storage.*` | `common`, `event`, `media` | DOC-18, DOC-20 |
 | `invariant.*` | `invariant` | DOC-30 |
 | `logging.*`, `management.*`, `ticket.metrics.*` | `common` | DOC-33 |
@@ -300,6 +306,8 @@ Giá trị đã chốt, đổi bằng sửa code và DR mới, không bằng kh�
 | 8 | `platform.timezone` không phải tên IANA hợp lệ | DR-12 |
 | 9 | `auth.cookie-secure=true` mà `app.base-url` là `http://` không phải `localhost` | Cookie không bao giờ được gửi lại |
 | 10 | `payment.mode=stripe` mà thiếu `payment.stripe.secret-key` hoặc `webhook-secret` | |
+| 11 | `reservation.expiry.batch-budget + payment.stripe.cancel-timeout ≥ reservation.expiry.lease` | Bản khác lấy lại reservation đang xử lý (DR-170) |
+| 12 | `invariant.active-overdue ≤ reservation.expiry.interval` hoặc `invariant.expiring-stuck ≤ reservation.expiry.lease` | Ngưỡng bất biến nhỏ hơn nhịp job thì báo sai lệch giả (DR-181) |
 
 ## 7. Mâu thuẫn giữa các tài liệu đã phát hiện
 

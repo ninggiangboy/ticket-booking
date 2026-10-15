@@ -1,6 +1,6 @@
 # Xác thực và session
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-19
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-165: `AuthApi.organizerPublicInfo`) · DOC-19
 > Phụ thuộc: SDD gốc §5, [Sổ quyết định](../00-decision-register.md) (DR-14, 21, 22, 23, 64, 67), [DOC-06](../02-glossary.md), [DOC-07](../03-architecture/system-context-and-containers.md) §4, [DOC-12](../03-architecture/code-architecture.md) §2–§3, [DOC-14](../05-data/domain-model.md) (`app_user`, `organizer`), [DOC-15](../05-data/ops-model.md) §3–§4 (`login_token`, `session`), [DOC-31](i18n.md), [DOC-35](error-handling.md), [DOC-36](../07-api/api-guidelines.md), [DOC-82](flows/README.md) (FL-01…04), [ADR-0007](../04-adr/0007-magic-link-server-sessions.md)
 > Người dùng chính: P1-07 (auth), P1-08 (khung frontend), [DOC-32](security.md), [DOC-37](../07-api/api-endpoints.md), DOC-44 (màn Đăng nhập), DOC-53 (hồ sơ tổ chức), DOC-83 (luồng FL-01…04)
 
@@ -408,7 +408,11 @@ public interface AuthApi {
   /** Email liên hệ của tổ chức: contact_email, nếu NULL thì email của chủ tổ chức. */
   String organizerContactEmail(UUID organizerId);
 
+  /** Tên và email liên hệ công khai của tổ chức cho E-07 (DR-165). */
+  OrganizerPublicInfo organizerPublicInfo(UUID organizerId);
+
   record Recipient(UUID userId, String email, String locale) {}
+  record OrganizerPublicInfo(String name, String contactEmail) {}
 }
 ```
 
