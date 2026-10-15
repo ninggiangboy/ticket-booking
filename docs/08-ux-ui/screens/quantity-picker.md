@@ -231,4 +231,4 @@ Playwright; API thật trên `make seed` (sự kiện "Hội thảo Nghề Thi�
 
 ## 11. Câu hỏi còn mở
 
-Không có. Quyết định phát sinh: DR-185…3 (mục trên).
+Không có. Quyết định phát sinh: DR-185…187 (mục trên).

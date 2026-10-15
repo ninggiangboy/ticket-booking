@@ -284,6 +284,14 @@ Nguồn: quét `docs/` ngày 2026-10-06 (`grep` các ô đầu bảng `| PREFIX-
 | `CHK-` | [DOC-48](../08-ux-ui/screens/checkout.md) | AC-01…23, 01…08 | U, E | Không (đăng ký ở đây) |
 | `ORS-` | [DOC-49](../08-ux-ui/screens/order-result.md) | AC-01…18, 01…08 | U, E | Không (đăng ký ở đây) |
 | `MYT-` | [DOC-50](../08-ux-ui/screens/my-tickets.md) | AC-01…16, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SOP-` | [DOC-53](../08-ux-ui/screens/studio-organizer-profile.md) | AC-01…17, 01…08 | U, E | Không (đăng ký ở đây) |
+| `SOV-` | [DOC-54](../08-ux-ui/screens/studio-overview.md) | AC-01…18, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SEI-` | [DOC-55](../08-ux-ui/screens/studio-event-info.md) | AC-01…27, 01…10 | U, E | Không (đăng ký ở đây) |
+| `STT-` | [DOC-56](../08-ux-ui/screens/studio-ticket-types.md) | AC-01…22, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SPV-` | [DOC-58](../08-ux-ui/screens/studio-preview.md) | AC-01…14, 01…05 | U, E | Không (đăng ký ở đây) |
+| `SPB-` | [DOC-59](../08-ux-ui/screens/studio-publish.md) | AC-01…24, 01…09 | U, E | Không (đăng ký ở đây) |
+| `FLG-` | [DOC-85](../06-design/flows/ga-purchase.md) | 01…08, 10…21, 30…38, 40…46, 50…54, 60…66 | I, E | Có |
+| `FLO-` | [DOC-86](../06-design/flows/operations.md) | 01…20 | I | Có |
 
 ### 12.2 Tiền tố đã dành, tài liệu chưa viết
 
@@ -295,7 +303,7 @@ Nguồn: quét `docs/` ngày 2026-10-06 (`grep` các ô đầu bảng `| PREFIX-
 | `PAY-` | DOC-26 (P3) | `requirements.md` dẫn PAY-01…14 |
 | `ADM-` | DOC-28 (P6) | `requirements.md` dẫn ADM-01…13 |
 | `AV-` | DOC-29 (P5) | — |
-| `FLS-`, `FLG-`, `FLO-`, `FLP-`, `FLM-`, `FLV-`, `FLW-` | DOC-84…90 | `FLG-01` đã xuất hiện trong bảng của master plan |
+| `FLS-`, `FLP-`, `FLM-`, `FLV-`, `FLW-` | DOC-84, DOC-87…90 | `FLG-01` đã xuất hiện trong bảng của master plan |
 
 Khi viết DOC-20, 24, 25, 26, 28, các dải đã dẫn ở cột phải là **cam kết**: tài liệu đó phải có đúng các ID này (hoặc sửa `requirements.md` cùng PR).
 

@@ -6,7 +6,7 @@
 
 Tài liệu định nghĩa danh mục kiểm tra bất biến `INV-xx`, câu SQL chạy được của từng mục, ngưỡng, lịch chạy, chế độ dòng lệnh `make invariants` với JSON đầu ra và mã thoát, và cách thực nghiệm gọi lệnh. Cách điều tra và xử lý từng sai lệch nằm ở RB-02 (DOC-66); luồng qua từng tầng ở FL-18, FL-19 (DOC-86); DDL ở DOC-14, DOC-15. Lệnh chỉ báo cáo, không tự sửa (SDD gốc §14.3).
 
-Mọi quyết định mới phát sinh khi viết tài liệu này được đánh dấu `DR-NEW-DOC30-n` và tóm tắt ở §11.
+Mọi quyết định mới phát sinh khi viết tài liệu này được ghi thành DR-178…181 và tóm tắt ở §11.
 
 ## 1. Mục đích và phạm vi
 
@@ -568,4 +568,4 @@ Tiền tố `IC-`. Mức theo DOC-69 §2. Mỗi ca "cố ý hỏng" chèn dữ l
 
 ## Câu hỏi còn mở
 
-Không có. Quyết định phát sinh: DR-178…4 (§11), chờ đánh số khi hợp nhất. INV-11 cho phép rộng với đơn `AMOUNT_MISMATCH` và `EVENT_CANCELLED`; DOC-26 (P3) siết lại khi chốt đường đi của webhook.
+Không có. Quyết định phát sinh: DR-178…181 (§11). INV-11 cho phép rộng với đơn `AMOUNT_MISMATCH` và `EVENT_CANCELLED`; DOC-26 (P3) siết lại khi chốt đường đi của webhook.

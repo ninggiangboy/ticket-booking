@@ -584,4 +584,4 @@ Quy tắc chung kiểm được bằng review (DOC-12 §7): không mũi tên `[X
 
 ## Câu hỏi còn mở
 
-Không còn. Hai quyết định phát sinh ở §16 chờ đánh số trong sổ quyết định.
+Không còn. Quyết định phát sinh: DR-156, DR-157 (§16).

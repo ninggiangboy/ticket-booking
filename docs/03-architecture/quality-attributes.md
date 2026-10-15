@@ -212,4 +212,4 @@ Trần CPU cộng 13 nhân lớn hơn số nhân của máy: trần là mức ch
 
 ## Câu hỏi còn mở
 
-Không còn. Tài liệu không có tiền tố test riêng: mỗi chỉ tiêu được kiểm ở test hoặc EXP ghi trong cột "Kiểm chứng" (§1) và bảng số đo (§8). Một quyết định phát sinh ở §9 chờ đánh số trong sổ quyết định.
+Không còn. Tài liệu không có tiền tố test riêng: mỗi chỉ tiêu được kiểm ở test hoặc EXP ghi trong cột "Kiểm chứng" (§1) và bảng số đo (§8). Quyết định phát sinh: DR-158 (§9).

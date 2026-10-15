@@ -6,7 +6,7 @@
 
 Tài liệu này mô tả vòng đời của sự kiện và loại vé: trạng thái lưu và trạng thái hiển thị, quy tắc trường và múi giờ, transaction xuất bản tạo kho vé, tạm dừng, đóng bán sớm, hủy sự kiện, đổi lịch và job chuyển `ENDED`. DDL nằm ở DOC-14 §4.3; schema request/response ở DOC-37; câu claim, trả vé và câu đổi sức chứa ở mức kho vé ở DOC-24; email đổi lịch và chờ hoàn tiền (mẫu, relay) ở DOC-27 và DOC-51; luồng từng tầng ở DOC-84 (FL-05…11) và DOC-85 (FL-12). Xuất bản phiên bản sơ đồ trước giờ mở bán thuộc DOC-23.
 
-Mọi quyết định mới phát sinh khi viết tài liệu này được ghi `DR-NEW-DOC20-n` và tóm tắt ở §12.
+Mọi quyết định mới phát sinh khi viết tài liệu này được ghi thành DR-161…166 và tóm tắt ở §12.
 
 ## 1. Mục đích và phạm vi
 

@@ -6,7 +6,7 @@
 
 Tài liệu mô tả kho vé (`inventory_pool`, `inventory_unit`) và vòng giữ vé: transaction giữ vé từng câu, câu claim ghế và pool, mã lỗi 409, thủ tục trả vé dùng chung cho job và hủy giữ đường nhanh, job trả vé, đổi sức chứa, ba bản cài đặt `InventoryClaimer` và tác động của index một phần lên bảng nóng. Nó không định nghĩa DDL (DOC-14 §4.4), giao thức idempotency (DOC-25), transaction xác nhận thanh toán và hủy PaymentIntent (DOC-26), transaction xuất bản sự kiện (DOC-20; tài liệu này chỉ cung cấp câu SQL tạo pool của `inventory`), cờ hết vé và kiểm tra lượt vào (DOC-28, DOC-17) hay snapshot tình trạng chỗ (DOC-29). Payload endpoint ở DOC-37.
 
-Mọi quyết định mới phát sinh khi viết tài liệu này đánh dấu `DR-NEW-DOC24-n` và tóm tắt ở §13; DR-155 (index `unit_event_idx`) do Claude chốt trước khi viết.
+Mọi quyết định mới phát sinh khi viết tài liệu này được ghi thành DR-167…173, DR-182 và tóm tắt ở §13; DR-155 (index `unit_event_idx`) do Claude chốt trước khi viết.
 
 ## 1. Mục đích và phạm vi
 

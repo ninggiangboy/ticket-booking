@@ -6,7 +6,7 @@
 
 Tài liệu mô tả cách bốn lệnh ghi của người mua trở nên an toàn khi gửi lại: header `Idempotency-Key`, băm request, giao thức chèn key ở đầu transaction nghiệp vụ, phát lại response và hành vi khi hai request cùng key chạy song song. DDL của bảng `idempotency_key` ở DOC-15 §5; schema request/response của từng endpoint ở DOC-37; quy tắc retry phía client ở DOC-35 §6; thứ tự câu của transaction giữ vé ở DOC-24. Tài liệu không lặp các phần đó.
 
-Mọi quyết định mới phát sinh khi viết tài liệu này được đánh dấu `DR-NEW-DOC25-n` và tóm tắt ở §10.
+Mọi quyết định mới phát sinh khi viết tài liệu này được ghi thành DR-174…177 và tóm tắt ở §10.
 
 ## 1. Mục đích và phạm vi
 
@@ -379,4 +379,4 @@ Tiền tố `IDEM-`. IDEM-01…06 là số đã cam kết ở DOC-03 (FR-08.1…
 
 ## 11. Câu hỏi còn mở
 
-Không có. Quyết định phát sinh: DR-174…4 (§10), chờ đánh số khi hợp nhất.
+Không có. Quyết định phát sinh: DR-174…177 (§10).

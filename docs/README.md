@@ -67,13 +67,13 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-50 | Màn: Vé của tôi ([08-ux-ui/screens/my-tickets.md](08-ux-ui/screens/my-tickets.md)) | P2 | Review |
 | DOC-51 | Email ([08-ux-ui/screens/emails.md](08-ux-ui/screens/emails.md)) | P1 | Approved |
 | DOC-52 | Trang lỗi ([08-ux-ui/screens/error-pages.md](08-ux-ui/screens/error-pages.md)) | P1 | Approved |
-| DOC-53 | Màn Studio: Lập hồ sơ tổ chức (`08-ux-ui/screens/studio-organizer-profile.md`) | P2 | Chưa viết |
-| DOC-54 | Màn Studio: Tổng quan (`08-ux-ui/screens/studio-overview.md`) | P2 | Chưa viết |
-| DOC-55 | Màn Studio: Thông tin sự kiện (`08-ux-ui/screens/studio-event-info.md`) | P2 | Chưa viết |
-| DOC-56 | Màn Studio: Loại vé và giá (`08-ux-ui/screens/studio-ticket-types.md`) | P2 | Chưa viết |
+| DOC-53 | Màn Studio: Lập hồ sơ tổ chức ([08-ux-ui/screens/studio-organizer-profile.md](08-ux-ui/screens/studio-organizer-profile.md)) | P2 | Review |
+| DOC-54 | Màn Studio: Tổng quan ([08-ux-ui/screens/studio-overview.md](08-ux-ui/screens/studio-overview.md)) | P2 | Review |
+| DOC-55 | Màn Studio: Thông tin sự kiện ([08-ux-ui/screens/studio-event-info.md](08-ux-ui/screens/studio-event-info.md)) | P2 | Review |
+| DOC-56 | Màn Studio: Loại vé và giá ([08-ux-ui/screens/studio-ticket-types.md](08-ux-ui/screens/studio-ticket-types.md)) | P2 | Review |
 | DOC-57 | Màn Studio: Seat map editor (`08-ux-ui/screens/studio-map-editor.md`) | P4 | Chưa viết |
-| DOC-58 | Màn Studio: Xem trước (`08-ux-ui/screens/studio-preview.md`) | P2 | Chưa viết |
-| DOC-59 | Màn Studio: Xuất bản và mở bán (`08-ux-ui/screens/studio-publish.md`) | P2 | Chưa viết |
+| DOC-58 | Màn Studio: Xem trước ([08-ux-ui/screens/studio-preview.md](08-ux-ui/screens/studio-preview.md)) | P2 | Review |
+| DOC-59 | Màn Studio: Xuất bản và mở bán ([08-ux-ui/screens/studio-publish.md](08-ux-ui/screens/studio-publish.md)) | P2 | Review |
 | DOC-60 | Màn Studio: Theo dõi bán vé (`08-ux-ui/screens/studio-sales.md`) | P5 | Chưa viết |
 | DOC-61 | Môi trường dev ([09-operations/local-dev.md](09-operations/local-dev.md)) | P1 | Approved |
 | DOC-62 | Triển khai compose ([09-operations/deploy-compose.md](09-operations/deploy-compose.md)) | P1 | Approved |
@@ -84,23 +84,23 @@ Cột Gate là phase cần tài liệu ở trạng thái `Approved` trước khi
 | DOC-67 | RB-03 Reservation kẹt và webhook thất lạc (`09-operations/runbooks/RB-03-stuck-reservations-and-webhooks.md`) | P3 | Chưa viết |
 | DOC-68 | RB-04 Đặt lại dữ liệu demo (`09-operations/runbooks/RB-04-reset-demo-data.md`) | P7 | Chưa viết |
 | DOC-69 | Chiến lược kiểm thử ([10-testing/test-strategy.md](10-testing/test-strategy.md)) | P1 | Approved |
-| DOC-70 | Thực nghiệm: giao thức chung (`10-testing/experiments/README.md`) | P2 | Chưa viết |
+| DOC-70 | Thực nghiệm: giao thức chung ([10-testing/experiments/README.md](10-testing/experiments/README.md)) | P2 | Review |
 | DOC-71 | EXP-01 Tranh một ghế (`10-testing/experiments/EXP-01-single-seat-contention.md`) | P5 | Chưa viết |
-| DOC-72 | EXP-02 Tranh một pool (`10-testing/experiments/EXP-02-pool-contention.md`) | P2 | Chưa viết |
-| DOC-73 | EXP-03 Idempotency (`10-testing/experiments/EXP-03-idempotency.md`) | P2 | Chưa viết |
-| DOC-74 | EXP-04 Hết hạn dưới tải (`10-testing/experiments/EXP-04-expiry-under-load.md`) | P2 | Chưa viết |
+| DOC-72 | EXP-02 Tranh một pool ([10-testing/experiments/EXP-02-pool-contention.md](10-testing/experiments/EXP-02-pool-contention.md)) | P2 | Review |
+| DOC-73 | EXP-03 Idempotency ([10-testing/experiments/EXP-03-idempotency.md](10-testing/experiments/EXP-03-idempotency.md)) | P2 | Review |
+| DOC-74 | EXP-04 Hết hạn dưới tải ([10-testing/experiments/EXP-04-expiry-under-load.md](10-testing/experiments/EXP-04-expiry-under-load.md)) | P2 | Review |
 | DOC-75 | EXP-05 Kiểm soát tiếp nhận và connection pool (`10-testing/experiments/EXP-05-admission-and-connection-pool.md`) | P6 | Chưa viết |
 | DOC-76 | EXP-06 Confirm đua với expire (`10-testing/experiments/EXP-06-confirm-vs-expire-race.md`) | P3 | Chưa viết |
 | DOC-77 | EXP-07 Webhook trùng và sai thứ tự (`10-testing/experiments/EXP-07-duplicate-out-of-order-webhooks.md`) | P3 | Chưa viết |
 | DOC-78 | EXP-08 Sự cố (`10-testing/experiments/EXP-08-fault-injection.md`) | P6 | Chưa viết |
 | DOC-79 | EXP-09 Hiệu năng editor (`10-testing/experiments/EXP-09-editor-performance.md`) | P4 | Chưa viết |
-| DOC-80 | EXP-10 Một dòng mỗi vé và bộ đếm (`10-testing/experiments/EXP-10-unit-rows-vs-counter.md`) | P2 | Chưa viết |
+| DOC-80 | EXP-10 Một dòng mỗi vé và bộ đếm ([10-testing/experiments/EXP-10-unit-rows-vs-counter.md](10-testing/experiments/EXP-10-unit-rows-vs-counter.md)) | P2 | Review |
 | DOC-81 | Kịch bản demo (`10-testing/demo-script.md`) | P7 | Chưa viết |
 | DOC-82 | Mục lục luồng chi tiết ([06-design/flows/README.md](06-design/flows/README.md)) | P1 | Approved |
 | DOC-83 | Luồng: Đăng nhập và tài khoản ([06-design/flows/auth-and-account.md](06-design/flows/auth-and-account.md)) | P1 | Approved |
 | DOC-84 | Luồng: Studio sự kiện (`06-design/flows/studio-events.md`) | P2 | Chưa viết |
-| DOC-85 | Luồng: Mua vé GA (`06-design/flows/ga-purchase.md`) | P2 | Chưa viết |
-| DOC-86 | Luồng: Vận hành và thực nghiệm (`06-design/flows/operations.md`) | P2 | Chưa viết |
+| DOC-85 | Luồng: Mua vé GA ([06-design/flows/ga-purchase.md](06-design/flows/ga-purchase.md)) | P2 | Review |
+| DOC-86 | Luồng: Vận hành và thực nghiệm ([06-design/flows/operations.md](06-design/flows/operations.md)) | P2 | Review |
 | DOC-87 | Luồng: Thanh toán (`06-design/flows/payment.md`) | P3 | Chưa viết |
 | DOC-88 | Luồng: Soạn sơ đồ chỗ ngồi (`06-design/flows/seat-map-editing.md`) | P4 | Chưa viết |
 | DOC-89 | Luồng: Bán theo ghế và khu vực (`06-design/flows/seat-sales.md`) | P5 | Chưa viết |

@@ -6,7 +6,7 @@
 
 Tài liệu nói dữ liệu nào được giữ bao lâu, ai xóa, bằng câu SQL nào, và dữ liệu cá nhân nằm ở đâu. DDL và index nằm ở DOC-14, DOC-15 (tài liệu này chỉ dẫn tên); khóa cấu hình chuẩn ở DOC-34 §3.8; quy tắc log ở DOC-33 §2.5. Xóa dữ liệu demo bằng `make reset` thuộc DOC-61.
 
-Mọi quyết định mới phát sinh khi viết tài liệu này được ghi `DR-NEW-DOC18-n` và tóm tắt ở §9.
+Mọi quyết định mới phát sinh khi viết tài liệu này được ghi thành DR-159, DR-160 và tóm tắt ở §9.
 
 ## 1. Bảng lưu giữ
 
