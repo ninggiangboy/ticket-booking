@@ -45,7 +45,7 @@ Run `make fmt lint test` before finishing; run `make it` when touching persisten
 
 ## Backend rules (summary; full text in code-architecture.md)
 
-- Per module `io.ticket.<module>`: root package = public API (`…Api`, DTO records, events); sub-packages `controller | job | listener | service | repository | client | entity | dto | config` are internal.
+- Per module `io.ticket.<module>`: root package = public API (`…Api`, DTO records, events); sub-packages `controller | job | listener | service | repository | client | model | dto | config` are internal.
 - Calls go downward only: controller/job/listener → service → repository/client. `@Transactional` only in `service`. Entities never leave the service layer; map to DTO records by hand (no MapStruct).
 - Other modules may use only a module's root package. No dependency cycles; allowed dependencies are declared in each `package-info.java` via `@ApplicationModule(allowedDependencies = …)`. Each table/Redis key family has exactly one owning module.
 - Spring Data JDBC + `JdbcClient` with hand-written SQL. No JPA. Never `save()` to change an entity's `status`; use conditional updates.

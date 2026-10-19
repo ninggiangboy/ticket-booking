@@ -1,6 +1,6 @@
 # Hướng dẫn API
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-36
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-175, DR-176; cache `/media` theo DR-38) · DOC-36
 > Phụ thuộc: SDD gốc §12, §10.5, [DOC-06](../02-glossary.md), [DOC-35](../06-design/error-handling.md), [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-12](../03-architecture/code-architecture.md) §4, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 22, 45, 55, 62, 63, 64, 66, 67, 77)
 > Người dùng chính: P1-01 (khung `common`), P1-04, P1-06 (sinh `schema.d.ts`); [DOC-37](api-endpoints.md) khi viết từng `E-xx`; mọi task backend và frontend gọi API
 
@@ -161,7 +161,7 @@ Idempotent-Replayed: true
 Location: /api/v1/reservations/0199b1c2-8d14-7e50-a1b3-4c5d6e7f8091
 ```
 
-Cùng key, body khác → 422 `IDEMPOTENCY_KEY_REUSED`. Chỉ response 2xx được lưu (DR-45), nên gửi lại sau 409 chạy thật.
+Cùng key, body khác → 422 `IDEMPOTENCY_KEY_REUSED`. Chỉ response 2xx được lưu (DR-45), nên gửi lại sau 409 chạy thật. Header không được lưu: `Location` dựng lại từ `reservationId`; body phát lại bằng body lần đầu theo nghĩa JSON, không từng byte (`jsonb` đổi thứ tự key), và là ảnh chụp lúc commit lần đầu (DR-176). Ngoại lệ: hủy giữ vé (E-16) tính response phát lại từ trạng thái hiện tại (DR-175, DOC-25 §3.5).
 
 ### 6.3 Đồng hồ server
 
@@ -208,7 +208,7 @@ Mặc định mọi response API: `Cache-Control: no-store`. Chỉ các endpoint
 | `GET /events/{id}` | `public, max-age=5` | 5 giây | `Vary: Accept-Language` |
 | `GET /events` | `public, max-age=5` (DR-86) | 5 giây | `Vary: Accept-Language`; khóa cache gồm cả query |
 | `GET /events/{id}/availability` | `no-store` | Không | Cache ở tiến trình `api` 2 giây (DR-62), không ở nginx |
-| `GET /media/{id}` | `public, max-age=86400` | 1 ngày | Tên file theo `media_id` bất biến |
+| `GET /media/{id}` | `public, max-age=31536000, immutable` | 1 ngày (`proxy_cache` của nginx) | `media_id` bất biến (DR-38). *Sửa 2026-10-14:* trước ghi `max-age=86400`, lệch DR-38 và ADR-0015 |
 
 Quy tắc:
 
@@ -229,7 +229,7 @@ Quy tắc:
 
 - springdoc-openapi sinh **OpenAPI 3.1** tại `/v3/api-docs` (DR-63, DOC-11). Chỉ truy cập được trong mạng nội bộ compose và profile `dev`; nginx không proxy `/v3/` và không bật Swagger UI ở compose.
 - Mỗi module một **tag** (`auth`, `catalog`, `inventory`, `reservation`, `payment`, `seatmap`, `studio`, `media`, `queue`, `webhooks`), mỗi nhóm một `GroupedOpenApi`.
-- Hợp đồng chỉ gồm class ở `controller` và `dto` của module; entity không bao giờ xuất hiện trong schema (DOC-12 §2.1).
+- Hợp đồng chỉ gồm class ở `controller` và `dto` của module; model không bao giờ xuất hiện trong schema (DOC-12 §2.1).
 
 ### 10.2 Quy ước mô tả
 
@@ -246,9 +246,9 @@ Quy tắc:
 ### 10.3 Sinh client frontend
 
 1. `make contract` (và CI) chạy test tích hợp `OpenApiExportTest` dựng ứng dụng, tải `/v3/api-docs` và ghi `backend/build/openapi.json` (DR-87); không cần chạy server riêng.
-2. `pnpm gen:api` chạy `openapi-typescript` đọc `backend/build/openapi.json` và ghi `frontend/src/api/schema.d.ts`; file được commit.
+2. `pnpm gen:api` chạy `openapi-typescript` đọc hợp đồng `api/openapi.yaml` (master plan §7.4; `make contract` bảo đảm `backend/build/openapi.json` khớp tệp này cho các endpoint đã cài) và ghi `frontend/src/api/schema.d.ts`; file được commit.
 3. Client là `openapi-fetch` gõ kiểu bằng `schema.d.ts`; **mọi** lời gọi đi qua `frontend/src/api/` (DOC-12 §6), interceptor ở đó: thêm `X-CSRF-Token`, sinh `Idempotency-Key`, đo `X-Server-Time`, tra `error.<code>`, backoff theo DOC-35 §6.
-4. CI bước (4) của DR-08: chạy lại bước 1–2 rồi `git diff --exit-code frontend/src/api/schema.d.ts`; lệch thì chặn merge.
+4. CI bước (4) của DR-08: `make lint` chạy lại bước 2 rồi `git diff --exit-code frontend/src/api/schema.d.ts`; lệch thì chặn merge.
 5. `oasdiff breaking backend/build/openapi.json <openapi của dev>` chạy ở CI (DR-77); thay đổi phá vỡ chỉ được vào khi PR có nhãn `api-breaking` và giải thích.
 
 Thay đổi **phá vỡ** gồm: xóa/đổi tên đường dẫn, trường, enum value hoặc `operationId`; thêm trường request bắt buộc; đổi kiểu; thu hẹp giá trị; đổi mã trạng thái thành công. **Không** phá vỡ: thêm endpoint, thêm trường response, thêm giá trị enum ở **response** (client phải chịu được giá trị lạ, DOC-35 §7: mã lạ → `error.UNKNOWN`), thêm mã lỗi.

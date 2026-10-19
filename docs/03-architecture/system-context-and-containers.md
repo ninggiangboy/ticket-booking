@@ -1,6 +1,6 @@
 # Bối cảnh hệ thống và container
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-07
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-159, 165, 167) · DOC-07
 > Phụ thuộc: SDD gốc §4, §10, §14, [DOC-01](../01-product/vision-and-scope.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 05, 06, 09, 38, 51, 53, 55, 56, 61, 62, 72, 79), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md)
 > Người dùng chính: P0-12; P1-02 (compose), P1-05 (khung module, test kiến trúc), DOC-12, DOC-14, DOC-15, DOC-17, DOC-62
 
@@ -152,9 +152,10 @@ flowchart LR
     admission --> event
     admission --> inventory
     event --> inventory
+    event --> auth
 ```
 
-`auth`, `media`, `notification`, `inventory` và `common` không gọi module nghiệp vụ nào (`event → inventory` để tính `displayStatus` và snapshot). Hai chỗ đảo chiều phụ thuộc bằng interface đặt ở package gốc của module thấp hơn: `reservation` định nghĩa `PaymentIntentCanceller` (job trả vé cần hủy PaymentIntent mà `payment` đã phụ thuộc `reservation`); `common` định nghĩa `RetentionContributor` (mỗi module dọn bảng của mình khi `RetentionJob` gọi). `invariant` đọc mọi bảng bằng SQL chỉ đọc (ngoại lệ có chủ đích của luật sở hữu bảng, §4.3).
+`auth`, `media`, `notification`, `inventory` và `common` không gọi module nghiệp vụ nào (`event → inventory` để tính `displayStatus` và snapshot; `event → auth` để lấy tên và email liên hệ của tổ chức cho E-07, *Sửa 2026-10-14 (DR-165)*; `mapVersion` đi qua SPI `event.SeatMapVersionLookup` do `map` cài đặt từ P5). Hai chỗ đảo chiều phụ thuộc bằng interface đặt ở package gốc của module thấp hơn: `reservation` định nghĩa `PaymentIntentCanceller` (job trả vé cần hủy PaymentIntent mà `payment` đã phụ thuộc `reservation`); `common` định nghĩa `RetentionContributor` (mỗi module dọn bảng của mình khi `RetentionJob` gọi). `invariant` đọc mọi bảng bằng SQL chỉ đọc (ngoại lệ có chủ đích của luật sở hữu bảng, §4.3).
 
 ## 4. Bảng sở hữu dữ liệu
 
@@ -176,7 +177,7 @@ Luật (DR-05, DR-06): mỗi bảng PostgreSQL và mỗi họ key Redis có **đ
 | `inventory_pool` | `inventory` | `InventoryService` (xuất bản, đổi sức chứa) | `InventoryApi.poolsOf(eventId)`, `snapshot(eventId)` |
 | `inventory_unit` | `inventory` | `InventoryService`, `InventoryClaimer` (không phải aggregate có `save()`, DR-05) | `InventoryApi.claim/confirmSold/release(reservationId)`, `snapshot`, `sales` |
 | `inventory_pool_counter` | `inventory` (profile `experiment`) | `CounterClaimer` | — |
-| `reservation` | `reservation` | `HoldService`, `ReleaseService`, `ReleaseExpiredHoldsJob` | `ReservationApi.get/confirm/beginExpiry/expireAllForEvent` |
+| `reservation` | `reservation` | `HoldTxService`, `ReleaseTxService` (gọi từ `HoldService`, `ReleaseService`, `ReleaseExpiredHoldsJob`; DR-167) | `ReservationApi.get/confirm/beginExpiry/expireAllForEvent` |
 | `reservation_item` | `reservation` | `HoldService` (chèn một lần, DR-05) | `ReservationApi.itemsOf(reservationId)` |
 | `idempotency_key` | `reservation` | `IdempotencyService` | `IdempotencyApi` (`payment` cho `confirm-free`) |
 | `orders` | `order` | `OrderService` | `OrderApi.createPending/markPaid/markRefundPending/close/paymentIntentIdOf` |
@@ -211,8 +212,8 @@ Một số transaction chạm bảng của nhiều module. Quy tắc (DR-05): tr
 
 | Transaction | Điều phối ở | Module tham gia (qua `…Api`) |
 | --- | --- | --- |
-| Giữ vé (DR-41) | `reservation.service.HoldService` | `event` (đọc), `reservation` (idempotency, reservation, item), `inventory` (claim), `order` (chèn đơn) |
-| Trả vé (job và đường nhanh, DR-42, DR-43) | `reservation.service.ReleaseService` | `order` (đọc `payment_intent_id`, đóng đơn), `inventory` (trả unit), `admission` (xóa cờ hết vé, sau commit); hủy PaymentIntent qua `PaymentIntentCanceller` (ngoài transaction) |
+| Giữ vé (DR-41) | `reservation.service.HoldTxService` (gọi từ `HoldService` không transaction, DR-167) | `event` (đọc), `reservation` (idempotency, reservation, item), `inventory` (claim), `order` (chèn đơn) |
+| Trả vé (job và đường nhanh, DR-42, DR-43) | `reservation.service.ReleaseTxService` (gọi từ `ReleaseService` không transaction, DR-167) | `order` (đọc `payment_intent_id`, đóng đơn), `inventory` (trả unit), `admission` (xóa cờ hết vé, sau commit); hủy PaymentIntent qua `PaymentIntentCanceller` (ngoài transaction) |
 | Xác nhận thanh toán (webhook, đối chiếu, `confirm-free`) | `payment.service.ConfirmationService` | `event` (`FOR SHARE`), `reservation` (`CONFIRMED`), `inventory` (`SOLD`), `order` (`PAID`), `ticket` (phát hành), `notification` (outbox) |
 | Xuất bản event, tạo kho vé (DR-27) | `studio.service.PublishService` | `event` (khóa, đổi trạng thái), `map` (đọc tài liệu), `inventory` (tạo pool và unit) |
 | Hủy event (DR-28) | `studio.service.CancelEventService` | `event`, `order` (`PAID → REFUND_PENDING`), `ticket` (`VOID`), `reservation` (`ACTIVE → EXPIRING`), `notification` (outbox) |
@@ -224,7 +225,7 @@ Một số transaction chạm bảng của nhiều module. Quy tắc (DR-05): tr
 
 **Ngoại lệ chỉ đọc của `invariant` (DR-79).** `InvariantChecker` chạy các truy vấn `SELECT` nối nhiều bảng (DOC-30). Luật sở hữu bảng miễn riêng package `io.ticket.invariant` với điều kiện chỉ `SELECT`; ArchUnit kiểm tra không có `INSERT/UPDATE/DELETE` trong package này. Lệnh dùng cùng role database nhưng chỉ chạy truy vấn đọc.
 
-**`RetentionJob`.** Do `common` lên lịch (03:00 theo `PLATFORM_TIMEZONE`, DR-74) và gọi `RetentionContributor` của từng module (`auth`, `reservation`, `payment`, `notification`, `media`); mỗi module tự xóa bảng của mình theo lô 5.000 dòng.
+**`RetentionJob`.** Do `common` lên lịch (03:00 theo `PLATFORM_TIMEZONE`, DR-74) và gọi `RetentionContributor` của từng module (`auth`, `reservation`, `payment`, `notification`); mỗi module tự xóa bảng của mình theo lô 5.000 dòng. *Sửa 2026-10-14 (DR-159):* ảnh không còn tham chiếu do `studio.service.MediaRetention` dọn (cần biết tham chiếu ở `event` và `map`), xóa dòng `media` qua `MediaApi` rồi `DeleteObject` sau commit (DOC-18 §4).
 
 ## 5. Ranh giới tin cậy
 

@@ -1,6 +1,6 @@
 # Danh mục màn hình
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-41
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (link spec DOC-42, 43, 47…50) · DOC-41
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../../00-decision-register.md) (DR-10, 24, 37, 41, 67, 68, 69, 70), [DOC-06](../../02-glossary.md), [DOC-38](../ux-principles-and-ia.md) §3 (bản đồ URL), [DOC-39](../design-system.md), [DOC-40](../ui-states-and-copy.md), [DOC-82](../../06-design/flows/README.md) §3–§4, [DOC-44](login.md), [DOC-51](emails.md), [DOC-52](error-pages.md)
 > Người dùng chính: tác giả DOC-42…60 (mẫu A.5 và tên component), mọi task `Pn-xx.2` (frontend) khi tìm màn hình cần dựng, người viết sơ đồ luồng DOC-83…90
 
@@ -14,16 +14,16 @@ Cột "Artboard" là tên artboard trong canvas "Ticket — Design system & lu�
 
 | Component | Màn | URL | Artboard | Spec | Luồng | Phase |
 | --- | --- | --- | --- | --- | --- | --- |
-| `EventList` | Danh sách sự kiện | `/` | `00`, `M00` | DOC-42 (`event-list.md`) | FL-12 | P2 |
-| `EventDetail` | Sự kiện | `/events/:eventId` | `01`, `M01` | DOC-43 (`event-detail.md`) | FL-12, FL-33 (nút vào phòng chờ), FL-04 | P2 |
+| `EventList` | Danh sách sự kiện | `/` | `00`, `M00` | [DOC-42](event-list.md) | FL-12 | P2 |
+| `EventDetail` | Sự kiện | `/events/:eventId` | `01`, `M01` | [DOC-43](event-detail.md) | FL-12, FL-33 (nút vào phòng chờ), FL-04 | P2 |
 | `Login` | Đăng nhập (7 biến thể) | `/login?returnTo=&reason=` | `02`, `02b`, `E2`, `M02` | [DOC-44](login.md) | FL-01, FL-03, FL-04 | P1 |
 | `AuthCallback` | Xác minh đường dẫn đăng nhập | `/auth/callback?token=` | `03` (email), biến thể "đang xác minh" của `02` | [DOC-44](login.md) | FL-02 | P1 |
 | `WaitingRoom` | Phòng chờ | `/events/:eventId/queue` | `04`, `M04` | DOC-45 (`waiting-room.md`) | FL-33, FL-34, FL-35 | P6 |
 | `SeatPicker` | Chọn chỗ | `/events/:eventId/seats` (sự kiện có `SEAT`/`ZONE`) | `05`, `M05` | DOC-46 (`seat-picker.md`) | FL-29, FL-30, FL-34 | P5 |
-| `QuantityPicker` | Chọn số lượng | `/events/:eventId/seats` (sự kiện chỉ GA) | `05b`, `M05b` | DOC-47 (`quantity-picker.md`) | FL-13, FL-34 | P2 |
-| `Checkout` | Thanh toán | `/checkout/:reservationId` | `06`, `M06` | DOC-48 (`checkout.md`) | FL-14, FL-15, FL-20 | P2 (đơn 0 đồng), P3 (thẻ) |
-| `OrderResult` | Kết quả | `/orders/:orderId` | `07`, `M07` | DOC-49 (`order-result.md`) | FL-14, FL-17, FL-20, FL-21, FL-23 | P2 |
-| `MyTickets` | Vé của tôi | `/me/tickets` | `08`, `M08` | DOC-50 (`my-tickets.md`) | FL-17 | P2 |
+| `QuantityPicker` | Chọn số lượng | `/events/:eventId/seats` (sự kiện chỉ GA) | `05b`, `M05b` | [DOC-47](quantity-picker.md) | FL-13, FL-34 | P2 |
+| `Checkout` | Thanh toán | `/checkout/:reservationId` | `06`, `M06` | [DOC-48](checkout.md) | FL-14, FL-15, FL-20 | P2 (đơn 0 đồng), P3 (thẻ) |
+| `OrderResult` | Kết quả | `/orders/:orderId` | `07`, `M07` | [DOC-49](order-result.md) | FL-14, FL-17, FL-20, FL-21, FL-23 | P2 |
+| `MyTickets` | Vé của tôi | `/me/tickets` | `08`, `M08` | [DOC-50](my-tickets.md) | FL-17 | P2 |
 | `NotFoundPage`, `ForbiddenPage`, `UnavailablePage`, `ServerErrorPage` | Trang lỗi E1, E3, E4, E5 | theo ngữ cảnh (E1 là route `*`) | `E1`, `E3`, `E4`, `E5` | [DOC-52](error-pages.md) | FL-03 (tham chiếu khi 401), mọi luồng khi lỗi toàn trang | P1 |
 
 E2 (hết phiên) **không có trang riêng**: là biến thể thứ 7 của `Login` với `reason=session_expired` ([DOC-52](error-pages.md) §1, [DOC-44](login.md) §6.5).

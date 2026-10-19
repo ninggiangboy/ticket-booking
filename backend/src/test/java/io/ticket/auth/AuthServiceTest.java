@@ -3,16 +3,19 @@ package io.ticket.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
+import io.ticket.auth.model.LoginToken;
 import io.ticket.auth.repository.AppUserRepository;
 import io.ticket.auth.repository.LoginTokenRepository;
 import io.ticket.auth.repository.SessionRepository;
 import io.ticket.auth.service.LoginService;
 import io.ticket.auth.service.MagicLinkService;
+import io.ticket.auth.service.MagicLinkTxService;
 import io.ticket.auth.service.ReturnToSanitizer;
 import io.ticket.common.error.ErrorCode;
 import io.ticket.common.error.ProviderUnavailableException;
@@ -23,6 +26,7 @@ import io.ticket.common.mail.EmailDeliveryException;
 import io.ticket.common.mail.EmailRenderer;
 import io.ticket.common.mail.MailSender;
 import io.ticket.common.mail.RenderedEmail;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,9 +34,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.support.SimpleTransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -42,7 +43,6 @@ class AuthServiceTest {
   @Mock private SessionRepository sessionRepository;
   @Mock private MailSender mailSender;
   @Mock private EmailRenderer emailRenderer;
-  @Mock private TransactionTemplate transactionTemplate;
 
   private final AppProperties appProperties =
       new AppProperties("ticket", "http://localhost:8080", "ticket.localhost");
@@ -53,32 +53,17 @@ class AuthServiceTest {
 
   @BeforeEach
   void setUp() {
-    // Make transactionTemplate execute callback directly
-    org.mockito.Mockito.lenient()
-        .doAnswer(
-            invocation -> {
-              TransactionCallback<?> callback = invocation.getArgument(0);
-              return callback.doInTransaction(new SimpleTransactionStatus());
-            })
-        .when(transactionTemplate)
-        .execute(any());
-
     magicLinkService =
         new MagicLinkService(
-            loginTokenRepository,
+            new MagicLinkTxService(loginTokenRepository),
             mailSender,
             emailRenderer,
             appProperties,
-            returnToSanitizer,
-            transactionTemplate);
+            returnToSanitizer);
 
     loginService =
         new LoginService(
-            loginTokenRepository,
-            appUserRepository,
-            sessionRepository,
-            returnToSanitizer,
-            transactionTemplate);
+            loginTokenRepository, appUserRepository, sessionRepository, returnToSanitizer);
   }
 
   @Test
@@ -91,16 +76,16 @@ class AuthServiceTest {
 
     assertThat(result.isThrottled()).isFalse();
 
-    verify(loginTokenRepository).markSuperseded("alice@example.com");
+    verify(loginTokenRepository).supersedeUnused("alice@example.com");
     verify(loginTokenRepository)
-        .insertToken(
-            any(), eq("alice@example.com"), eq("/checkout"), eq("vi"), eq("127.0.0.1"), any());
+        .insert(
+            any(), eq("alice@example.com"), eq("/checkout"), eq("vi"), eq("127.0.0.1"), anyInt());
     verify(mailSender).send(any());
   }
 
   @Test
   void requestMagicLinkEmailRateLimitReached() { // AU-05, FLA-03
-    given(loginTokenRepository.countByEmailSince(eq("alice@example.com"), any())).willReturn(3L);
+    given(loginTokenRepository.countByEmailSince(eq("alice@example.com"), anyInt())).willReturn(3);
 
     var result =
         magicLinkService.requestMagicLink("alice@example.com", "/checkout", "vi", "127.0.0.1");
@@ -111,8 +96,8 @@ class AuthServiceTest {
 
   @Test
   void requestMagicLinkIpRateLimitReached() { // AU-05, FLA-04
-    given(loginTokenRepository.countByEmailSince(eq("bob@example.com"), any())).willReturn(0L);
-    given(loginTokenRepository.countByIpSince(eq("203.0.113.9"), any())).willReturn(10L);
+    given(loginTokenRepository.countByEmailSince(eq("bob@example.com"), anyInt())).willReturn(0);
+    given(loginTokenRepository.countByIpSince(eq("203.0.113.9"), anyInt())).willReturn(10);
 
     var result =
         magicLinkService.requestMagicLink("bob@example.com", "/checkout", "vi", "203.0.113.9");
@@ -147,10 +132,18 @@ class AuthServiceTest {
 
   @Test
   void verifySuccessCreatesUserAndSession() { // FLA-10, FLA-14
-    given(loginTokenRepository.consumeToken(any()))
+    given(loginTokenRepository.consume(any()))
         .willReturn(
             Optional.of(
-                new LoginTokenRepository.ConsumedToken("alice@example.com", "/checkout", "vi")));
+                new LoginToken(
+                    new byte[32],
+                    "alice@example.com",
+                    "/checkout",
+                    "vi",
+                    Instant.now(),
+                    Instant.now(),
+                    Instant.now(),
+                    null)));
     UUID userId = UUID.randomUUID();
     given(appUserRepository.upsertUserOnLogin("alice@example.com", "vi"))
         .willReturn(new AppUserRepository.UserRecord(userId, "vi"));
@@ -166,7 +159,7 @@ class AuthServiceTest {
 
   @Test
   void verifyInvalidTokenThrowsUnauthenticated() { // FLA-11, FLA-12, FLA-13
-    given(loginTokenRepository.consumeToken(any())).willReturn(Optional.empty());
+    given(loginTokenRepository.consume(any())).willReturn(Optional.empty());
 
     assertThatThrownBy(() -> loginService.verify("invalid_or_expired_token"))
         .isInstanceOf(UnauthenticatedException.class)

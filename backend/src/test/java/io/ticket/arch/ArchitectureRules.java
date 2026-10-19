@@ -102,7 +102,7 @@ final class ArchitectureRules {
         .resideInAPackage(root + "..controller..")
         .should()
         .dependOnClassesThat()
-        .resideInAPackage(root + "..entity..")
+        .resideInAPackage(root + "..model..")
         .allowEmptyShould(true);
   }
 
@@ -121,6 +121,24 @@ final class ArchitectureRules {
         .resideInAPackage(root + "..")
         .should()
         .resideInAPackage("..service..")
+        .allowEmptyShould(true);
+  }
+
+  /** ARC-03, second half: transactions are declared, never driven by hand (DOC-12 §2.5, DR-153). */
+  static ArchRule noProgrammaticTransactions(String root) {
+    return noClasses()
+        .that()
+        .resideInAPackage(root + "..")
+        .should()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName("org.springframework.transaction.support.TransactionTemplate")
+        .orShould()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName("org.springframework.transaction.PlatformTransactionManager")
+        .orShould()
+        .dependOnClassesThat()
+        .haveFullyQualifiedName(
+            "org.springframework.transaction.support.TransactionSynchronizationManager")
         .allowEmptyShould(true);
   }
 

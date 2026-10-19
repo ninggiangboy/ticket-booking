@@ -1,0 +1,18 @@
+{
+  "common.retry": "Try again",
+  "common.retryNow": "Try again now",
+  "common.retry.auto": "Retrying in {seconds} s",
+  "common.retry.running": "Retrying…",
+  "common.nav.skipToContent": "Skip to content",
+  "common.nav.myTickets": "My tickets",
+  "common.nav.studio": "Your Studio",
+  "common.nav.account": "Account",
+  "common.nav.signedInAs": "Signed in as",
+  "common.nav.signOut": "Sign out",
+  "common.nav.signIn": "Sign in",
+  "common.nav.createOrganizer": "Create organizer profile",
+  "common.nav.toEvents": "Back to events",
+  "common.lang.label": "Language",
+  "common.lang.vi": "Tiếng Việt",
+  "common.lang.en": "English"
+}

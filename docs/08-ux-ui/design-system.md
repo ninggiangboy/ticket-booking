@@ -1,6 +1,6 @@
 # Design system "Vé giấy"
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-39
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-187) · DOC-39
 > Phụ thuộc: SDD gốc §13, [Sổ quyết định](../00-decision-register.md) (DR-03, 10, 26, 54, 68, 69), [DOC-06](../02-glossary.md), [DOC-38](ux-principles-and-ia.md) (UXP-01, 08, 09), [DOC-11](../03-architecture/tech-stack-and-versions.md), [DOC-12](../03-architecture/code-architecture.md) §6
 > Người dùng chính: P1-01 (khung frontend), mọi task frontend; DOC-41…60 (màn hình dẫn component theo tên ở đây); DOC-51 (email dùng cùng token)
 
@@ -193,7 +193,7 @@ export interface SeatTheme {
 
 ## 7. Catalog component
 
-Mỗi component có tên React (thư mục `frontend/src/shared/ui/`), nguồn canvas và quy tắc. Tên là thống nhất để DOC-41…60 dẫn lại. "Biến thể" là prop.
+Mỗi component có tên React (thư mục `frontend/src/components/`, DOC-12 §6), nguồn canvas và quy tắc. Tên là thống nhất để DOC-41…60 dẫn lại. "Biến thể" là prop.
 
 ### 7.1 Button (`Button`) — canvas `Components` mục A
 
@@ -215,7 +215,7 @@ Nhãn luôn nhìn thấy phía trên (14 px 600), cao 52 px, viền 1 px `--line
 
 ### 7.3 Bộ tăng giảm số lượng (`QuantityStepper`) — mục B ("Số lượng · khu đứng, vé GA")
 
-Hai nút `icon` (44 px) `−` và `+` với `aria-label` "Bớt một vé <tên>" / "Thêm một vé <tên>", giữa là số mono 18 px `role="status"`. Giá trị tối thiểu 0; nút `−` vô hiệu ở 0; nút `+` vô hiệu khi hết vé hoặc chạm trần 50 vé mỗi lần giữ (DR-41), trần có chú thích `checkout.limit.tooManyUnits`.
+Hai nút `icon` (44 px) `−` và `+` với `aria-label` "Bớt một vé <tên>" / "Thêm một vé <tên>", giữa là số mono 18 px `role="status"`. Giá trị tối thiểu 0; nút `−` vô hiệu ở 0; nút `+` vô hiệu khi hết vé hoặc chạm trần `maxUnitsPerHold` vé mỗi lần giữ (50 mặc định, lấy từ E-07; DR-41, DR-187), trần có chú thích `checkout.limit.tooManyUnits`.
 
 ### 7.4 Công tắc chế độ xem (`ViewToggle`) — mục B ("Sơ đồ | Danh sách")
 

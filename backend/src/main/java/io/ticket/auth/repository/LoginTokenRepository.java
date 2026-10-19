@@ -1,96 +1,71 @@
 package io.ticket.auth.repository;
 
-import java.time.Instant;
+import io.ticket.auth.model.LoginToken;
 import java.util.Optional;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.ListCrudRepository;
 
-/** SQL for the {@code login_token} table (DOC-15 §3, DOC-19 §3-§4). */
-@Repository
-public class LoginTokenRepository {
+/**
+ * SQL of the {@code login_token} table (DOC-15 §3, DOC-19 §3.3 and §4.2). Time is compared with
+ * {@code now()} in SQL (DR-12). A row is created by {@link #insert} and changed by conditional
+ * UPDATEs; {@code save()} is not used (DOC-12 §3.2).
+ */
+public interface LoginTokenRepository extends ListCrudRepository<LoginToken, byte[]> {
 
-  private final JdbcClient jdbc;
+  /** Serializes magic link requests of one email until the transaction ends (DR-97). */
+  @Query("SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(:email, 0))) AS locked")
+  int lockEmail(String email);
 
-  public LoginTokenRepository(JdbcClient jdbc) {
-    this.jdbc = jdbc;
-  }
+  @Query(
+      """
+      SELECT count(*) FROM login_token
+       WHERE email = :email AND created_at > now() - make_interval(secs => :windowSeconds)
+      """)
+  int countByEmailSince(String email, int windowSeconds);
 
-  public void lockEmail(String email) {
-    jdbc.sql("SELECT pg_advisory_xact_lock(hashtextextended(:email, 0))")
-        .param("email", email)
-        .query()
-        .singleRow();
-  }
+  @Query(
+      """
+      SELECT count(*) FROM login_token
+       WHERE requested_ip = CAST(:ip AS inet)
+         AND created_at > now() - make_interval(secs => :windowSeconds)
+      """)
+  int countByIpSince(String ip, int windowSeconds);
 
-  public long countByEmailSince(String email, Instant since) {
-    Long count =
-        jdbc.sql("SELECT count(*) FROM login_token WHERE email = :email AND created_at > :since")
-            .param("email", email)
-            .param("since", since)
-            .query(Long.class)
-            .single();
-    return count != null ? count : 0;
-  }
+  /** Marks every unused token of the email as replaced by a newer request (FR-01.4). */
+  @Modifying
+  @Query(
+      """
+      UPDATE login_token SET superseded_at = now()
+       WHERE email = :email AND used_at IS NULL AND superseded_at IS NULL
+      """)
+  int supersedeUnused(String email);
 
-  public long countByIpSince(String ip, Instant since) {
-    if (ip == null || ip.isBlank()) {
-      return 0;
-    }
-    Long count =
-        jdbc.sql(
-                "SELECT count(*) FROM login_token WHERE requested_ip = :ip::inet AND created_at > :since")
-            .param("ip", ip)
-            .param("since", since)
-            .query(Long.class)
-            .single();
-    return count != null ? count : 0;
-  }
+  @Modifying
+  @Query(
+      """
+      INSERT INTO login_token (token_hash, email, return_to, locale, requested_ip, expires_at)
+      VALUES (:tokenHash, :email, :returnTo, :locale, CAST(:ip AS inet),
+              now() + make_interval(secs => :ttlSeconds))
+      """)
+  int insert(
+      byte[] tokenHash, String email, String returnTo, String locale, String ip, int ttlSeconds);
 
-  public void markSuperseded(String email) {
-    jdbc.sql(
-            """
-            UPDATE login_token SET superseded_at = now()
-             WHERE email = :email AND used_at IS NULL AND superseded_at IS NULL
-            """)
-        .param("email", email)
-        .update();
-  }
+  /**
+   * Spends a token once. Empty means it is unknown, used, replaced or expired; the caller answers
+   * 401 for all of them alike (DR-21).
+   */
+  @Query(
+      """
+      UPDATE login_token SET used_at = now()
+       WHERE token_hash = :tokenHash AND used_at IS NULL AND superseded_at IS NULL
+         AND expires_at > now()
+      RETURNING token_hash, email, return_to, locale, created_at, expires_at, used_at, superseded_at
+      """)
+  Optional<LoginToken> consume(byte[] tokenHash);
 
-  public void insertToken(
-      byte[] tokenHash,
-      String email,
-      String returnTo,
-      String locale,
-      String requestedIp,
-      Instant expiresAt) {
-    jdbc.sql(
-            """
-            INSERT INTO login_token (token_hash, email, return_to, locale, requested_ip, expires_at)
-            VALUES (:tokenHash, :email, :returnTo, :locale, :ip::inet, :expiresAt)
-            """)
-        .param("tokenHash", tokenHash)
-        .param("email", email)
-        .param("returnTo", returnTo)
-        .param("locale", locale)
-        .param("ip", requestedIp)
-        .param("expiresAt", expiresAt)
-        .update();
-  }
-
-  public record ConsumedToken(String email, String returnTo, String locale) {}
-
-  public Optional<ConsumedToken> consumeToken(byte[] tokenHash) {
-    return jdbc.sql(
-            """
-            UPDATE login_token SET used_at = now()
-             WHERE token_hash = :tokenHash AND used_at IS NULL AND superseded_at IS NULL AND expires_at > now()
-            RETURNING email, return_to, locale
-            """)
-        .param("tokenHash", tokenHash)
-        .query(
-            (rs, rowNum) ->
-                new ConsumedToken(
-                    rs.getString("email"), rs.getString("return_to"), rs.getString("locale")))
-        .optional();
-  }
+  /** Retention: rows are removed 24 hours after they expire (DR-74). */
+  @Modifying
+  @Query("DELETE FROM login_token WHERE expires_at < now() - interval '24 hours'")
+  int deleteExpired();
 }

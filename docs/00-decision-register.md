@@ -1,6 +1,6 @@
 # Sổ quyết định mở
 
-> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-07 (mọi DR-01…152 đã Chốt hoặc Đổi; Owner hoãn spike S-02…S-06 (DR-152); Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
+> Trạng thái: **Approved v1.1** · Cập nhật: 2026-10-14 (thêm DR-154…191 khi viết gate P2, DR-192…235 ngày 2026-10-15; DR-182, DR-224, DR-231 Đề xuất; mọi DR-01…153 đã Chốt hoặc Đổi; Owner hoãn spike S-02…S-06 (DR-152); Owner chốt DR-153 (cú pháp dễ đọc, 2026-10-14); Owner chốt DR-123…130 (ops) theo đề xuất; Owner đổi DR-05, 06, 10, 12, 13, 21, 24, 28, 37, 31, 38, 41, 44, 45, 52, 56, 58, 60, 62, 74; các mục nhỏ do Claude chốt theo ủy quyền) · Nguồn: phân tích `event-ticket-booking-sdd.md` (**SDD gốc**) và canvas thiết kế màn hình "Ticket — Design system & luồng mua vé" (50 artboard)
 
 SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu claim `SKIP LOCKED`, trạng thái `EXPIRING` làm trọng tài giữa confirm và expire, idempotency và webhook đều được lập luận kỹ và có thực nghiệm đi kèm. Phần còn thiếu là "chính xác làm thế nào": SDD tự hoãn DDL (SDD gốc mục 2.3, 11), không chốt phiên bản thư viện, không nêu tham số của rate limit, token vào cửa, outbox, và có vài chỗ mâu thuẫn nội tại (trạng thái `REMOVED` của unit, chuyển trạng thái của thanh toán đến trễ, sơ đồ "dùng lại cho nhiều sự kiện" trong khi tài liệu sơ đồ chứa ID loại vé của một sự kiện). Canvas màn hình thêm yêu cầu mà SDD chưa có endpoint hay dữ liệu cho: danh sách sự kiện của studio kèm số vé, sơ đồ tô theo trạng thái ở màn Bán vé, nút "Rời hàng", ảnh sự kiện, email báo đổi lịch, đồng hồ lượt vào 5 phút. Owner chọn giao diện đa ngôn ngữ, điều SDD gốc không đề cập. Các mục chặn P1 và P2 cố định schema, hợp đồng API và bố cục repo; đoán sai ở tầng này tốn kém nhất khi sửa, nên phải chốt trước khi viết code.
 
@@ -37,7 +37,7 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Owner | Đổi: mở ô chọn múi giờ IANA ở form studio (mặc định `Asia/Ho_Chi_Minh`, khóa sau khi xuất bản); tiền tệ giữ chỉ VND | DR-12, DR-25, DOC-20, DOC-31, DOC-40, DOC-55 |
 | 2026-10-06 | Owner | Đổi: chỉ VND, gán cứng; bỏ `PLATFORM_CURRENCY`, bảng `minorUnitDigits` và kiểm tra tiền tệ khi khởi động; `orders.currency` CHECK `= 'VND'`; phương án dự phòng của S-02 là nâng `payment.min-amount`, không đổi tiền tệ | DR-13, DR-18, DOC-14, DOC-26, DOC-34 |
 | 2026-10-06 | Owner | Cập nhật master plan theo template mới của skill: thêm nhóm luồng chi tiết `06-design/flows/` (DOC-82…90, FL-01…35, mẫu A.8), gate và task tương ứng; không đổi DR nào | Master plan §0.4, §1.3, §3, §5, §6, Phụ lục A; README |
-| 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
+| 2026-10-06 | Owner | Đổi: bên trong mỗi module chia theo layer (n-layer): điểm vào `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `model`, `dto`; thay cho gốc/`web`/`internal`, vì dự án để học và người làm là dev backend thiếu kinh nghiệm. Giữ luật modular monolith: module khác chỉ dùng package gốc (`…Api`, DTO, event), mỗi bảng một module sở hữu, không vòng phụ thuộc | DR-06, DR-05, ADR-0002, DOC-07, DOC-12, P1-05 |
 | 2026-10-06 | Owner | Đổi theo đề xuất đơn giản hóa của Claude (dự án để học): magic link gửi trực tiếp sau commit, bỏ mã hóa token trong outbox; bỏ token vào cửa, kiểm tra `ZSCORE admitted` theo session; `admit_rate` cố định, bỏ AIMD; bỏ rate limiter dự phòng khi mất Redis; cache tình trạng chỗ bằng Caffeine trong tiến trình; idempotency băm body thô; tiền tố mã vé do người tổ chức nhập; bỏ quét bucket | DR-21, DR-19, DR-38, DR-45, DR-52, DR-56, DR-57, DR-58, DR-60, DR-62, DR-64, DR-74, ADR-0007, ADR-0013, DOC-17, DOC-18, DOC-19, DOC-28, DOC-29, DOC-32, DOC-36, DOC-83, DOC-90, P1-07, P5-03, P6-02, P6-05, P6-06 |
 | 2026-10-06 | Owner | Đổi: sơ đồ khóa toàn bộ từ giờ mở bán, kể cả khi chưa ai mua; trước giờ mở bán xuất bản phiên bản mới thì dựng lại kho vé; bỏ diff và `MAP_VERSION_CONFLICT`. Thêm đóng bán sớm (`close-sale`). DR-36 (tự lưu, IndexedDB) giữ nguyên | DR-37, DR-24, DR-40, DR-64, FR-15, UC-09, UC-14, DOC-20, DOC-22, DOC-23, DOC-57, DOC-59, DOC-84, DOC-89, P2-05.1, P5-05.1 |
 | 2026-10-06 | Claude (Owner ủy quyền) | Thêm DR-79 (đồ thị phụ thuộc module, module `studio`), DR-80 (cổng `api` 8081), DR-81 (thư viện bổ sung) khi viết DOC-07, 11, 12 | DR-79, DR-80, DR-81, DOC-07, DOC-11, DOC-12, ADR-0002 |
@@ -51,6 +51,11 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 | 2026-10-06 | Claude (Owner yêu cầu chạy) | Chốt qua spike S-01: giữ Java 25 + Spring Boot 4.0.8, không lùi Java 21; 9 kịch bản tích hợp xanh trên PostgreSQL 18 và SeaweedFS 4.48. Phát hiện: Boot 4 dùng Jackson 3 nên networknt đổi từ 1.5.x sang 3.0.8; SeaweedFS cần `-s3.config` | DR-02, DR-81, ADR-0011, DOC-11 |
 | 2026-10-07 | Owner | Chốt theo đề xuất DR-123–130 (ops): profile `seed` và target `make` bổ sung, ba file compose, `PAYMENTS_MODE` khớp profile, khóa công khai Stripe bằng build arg, body 429 của nginx và CSP cho Stripe Elements, `e2e.yml` riêng, job `audit` và `breaking-ok`, branch protection `dev`/`main`. Sổ quyết định và master plan lên `Approved v1.0` (P0-01) | DR-123–130, DOC-61, DOC-62, DOC-63, master plan P0-00, P0-01 |
 | 2026-10-07 | Owner | Hoãn spike S-02…S-06 tới gate của phase cần kết quả; M0 chỉ cần S-01 | DR-152, master plan §4.1, §5, §9, P0-03…07, P0-18, P2-00, P3-00, P4-00 |
+| 2026-10-14 | Owner | Ưu tiên cú pháp khai báo, dễ đọc: transaction chỉ bằng `@Transactional` (không `TransactionTemplate`), chấp nhận transaction rộng hơn mức tối thiểu; `outbox` không là aggregate; batch bằng `JdbcTemplate.batchUpdate` | DR-153, DR-05, DR-106, DOC-12, DOC-27 |
+| 2026-10-14 | Claude (Owner ủy quyền) | Thêm DR-154–181 và DR-183–191 khi viết tài liệu gate P2: tên job trả vé, index `unit_event_idx`; phát lại gia hạn lượt, lưu `payment_intent_id` theo metadata, pool của profile `invariants`; dọn ảnh do `studio` điều phối; nguồn `SOLD_OUT` ở P2, giờ địa phương khi đổi giờ mùa hè, khóa giờ đóng bán, phụ thuộc `event → auth`, khóa timeout studio; tách service điều phối/transaction, chèn reservation bằng SQL, thứ tự trả vé, ngân sách job, `poolItems`; body thô, key hủy giữ ở transaction đầu, mức VIOLATION/REPORT, mã thoát 2; màn hình người mua (E-07 thêm `maxUnitsPerHold`, `cancelledWithRefunds`, E-09 GA ở P2, khách chọn trước khi đăng nhập, E-19 `support`) | DR-154–191, DOC-08, DOC-10, DOC-14, DOC-18, DOC-20, DOC-24, DOC-25, DOC-30, DOC-37, DOC-82 |
+| 2026-10-14 | Claude (đề xuất, chờ Owner) | DR-182: job trả vé chạy lại ngay khi vòng trước đầy lô để giữ NFR-03 khi 5.000 reservation hết hạn cùng lúc | DR-182, DR-42, DOC-24, NFR-03 |
+| 2026-10-15 | Claude (Owner ủy quyền) | Thêm DR-192–223, DR-225–230, DR-232–235 khi viết phần còn lại của gate P2: màn Studio (`StudioGate`, E-24/E-26 thêm trường, lưu loại vé từng loại, xem trước bằng container query, E-37 ở P2, gộp `publish-checks`, xác nhận đổi lịch, ảnh, múi giờ, `VITE_PLATFORM_TIMEZONE`); giao thức thực nghiệm (EXP-02 hai lần, k6 trong compose, Prometheus ở P2-13, session suy ra, quy tắc hợp lệ, bất biến chế độ bộ đếm, lưu kết quả, S-06, `VARIANT` và hook); EXP-02/03/04/10; luồng FL-12…19 (`confirm-free` chỉ nhận `ACTIVE` chưa hết hạn, timeout, `invariant.interval` ở profile `experiment`, công thức `make invariants`, khóa `run.sh`) | DR-192–235, DOC-53…56, DOC-58, DOC-59, DOC-70, DOC-72…74, DOC-80, DOC-85, DOC-86 |
+| 2026-10-15 | Claude (đề xuất, chờ Owner) | DR-224: module phục vụ E-19…21 (`order`/`ticket` theo DOC-11, hay `payment`); DR-231: khóa `reservation.expiry.drain-max`, đi cùng DR-182 | DR-224, DR-231, DOC-11, DOC-37, DOC-74, DOC-85 |
 
 ---
 
@@ -123,9 +128,9 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 ### DR-05 · Truy cập dữ liệu và kiểm tra ranh giới module — **Đổi: Spring Data JDBC**
 - **Vấn đề:** SDD gốc mục 4.3 chọn Spring JDBC; mục 4.1 yêu cầu module "chỉ gọi nhau qua interface công khai, không truy vấn bảng của nhau" nhưng không nói ép bằng gì. Transaction giữ vé lại phải chạm `idempotency_key`, `inventory_unit`, `reservation`, `orders` của bốn module trong một transaction. Mọi đổi trạng thái phải là câu ghi có điều kiện (SDD gốc 4.2), trong khi `save()` của Spring Data ghi đè cả dòng không điều kiện.
 - **Quyết định (Owner chốt):** Spring Data JDBC (dòng đi kèm Spring Boot 4, kiểm tra trong S-01); không JPA.
-  - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng.
+  - Mỗi module có repository `ListCrudRepository` cho aggregate của mình. Aggregate: `AppUser`; `Organizer`; `Event` (có `@Version` trên `row_version`, dùng cho `PATCH` và lỗi `STALE_EVENT_VERSION`); `TicketType`; `SeatMap`; `SeatMapVersion`; `Reservation` kèm `reservation_item` qua `@MappedCollection`; `Order`; `Ticket`; `OutboxMessage`; `Media`. `inventory_unit` và `inventory_pool` không là aggregate có `save()`: chỉ đọc bằng repository, ghi bằng câu SQL riêng. *Đổi (DR-153):* `outbox` không là aggregate; `OutboxRepository` là class dùng `JdbcClient`, `OutboxMessage` chỉ là `record` của dòng đã claim.
   - **Luật đổi trạng thái:** không bao giờ đổi `status` bằng `save()`. Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng, service kiểm tra số dòng. `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
-  - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
+  - ID gán trước bằng UUIDv7 (DR-11): chèn bằng `JdbcAggregateTemplate.insert(…)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
   - Câu lệnh mà `@Query` không diễn đạt gọn (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt bằng `generate_series`, diff phiên bản sơ đồ, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment (`InventoryUnitClaims` + `…Impl`) dùng `JdbcClient`. Vẫn là SQL viết tay, ở trong module sở hữu bảng.
   - Cột `jsonb` (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
   - Transaction mở ở service của module điều phối (`reservation.service.HoldService`), module khác tham gia qua interface `…Api` của mình, chạy trong cùng transaction (DR-06) (propagation `MANDATORY` cho method chỉ được gọi trong transaction).
@@ -144,10 +149,10 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   | `<module>.controller` | Điểm vào | `@RestController`, webhook endpoint: nhận request, validate hình thức (`@Valid`), gọi service, trả response | Không ai (HTTP) |
   | `<module>.job` | Điểm vào | `@Scheduled` (`…Job`): đọc lịch/cấu hình, gọi service | Không ai (lịch) |
   | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Không ai (event) |
-  | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay entity ↔ DTO (`…Mapper`) | Điểm vào cùng module |
+  | `<module>.service` | Service | `@Service` chứa logic nghiệp vụ và ranh giới transaction (`@Transactional` chỉ đặt ở đây); cài đặt `…Api` của module; mapper viết tay model ↔ DTO (`…Mapper`) | Điểm vào cùng module |
   | `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `JdbcClient` (DR-05), truy cập Redis (`…RedisRepository`) | Service cùng module |
   | `<module>.client` | Truy cập hệ thống ngoài | Stripe (`PaymentGateway` và hai bản cài đặt, DR-51), S3 (DR-38), SMTP; chỉ module nào cần mới có | Service cùng module |
-  | `<module>.entity` | (dữ liệu) | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module |
+  | `<module>.model` | (dữ liệu) | Model ánh xạ bảng, enum trạng thái | Repository, service cùng module |
   | `<module>.dto` | (dữ liệu) | `record` request/response của REST API | Controller, service cùng module |
 
   Không phải module nào cũng có đủ package; tạo package khi có class đầu tiên. Ví dụ module `inventory`: `InventoryApi`, `ClaimResult` (gốc); `controller/AvailabilityController`; `job/ReleaseExpiredHoldsJob`; `listener/EventPublishedListener`; `service/InventoryService implements InventoryApi`, `service/InventoryMapper`; `repository/InventoryUnitRepository` + `InventoryUnitClaims` + `InventoryUnitClaimsImpl`; `entity/InventoryUnit`; `dto/AvailabilityResponse`.
@@ -155,11 +160,11 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
   **Luật layer (trong một module):**
   - Chiều gọi chỉ đi xuống: điểm vào (`controller`, `job`, `listener`) → `service` → `repository`/`client`. Điểm vào không gọi repository hay client và không gọi lẫn nhau; repository và client không gọi service.
   - `@Transactional` chỉ ở `service`; điểm vào không tự mở transaction.
-  - Entity không ra khỏi layer service: controller nhận và trả DTO, service đổi entity ↔ DTO bằng mapper.
+  - Model không ra khỏi layer service: controller nhận và trả DTO, service đổi model ↔ DTO bằng mapper.
 
   **Luật modular monolith (giữa các module), giữ như SDD gốc 4.1 và DR-05:**
   - Mỗi bảng PostgreSQL và họ key Redis có đúng một module sở hữu (DOC-07); chỉ repository của module đó được đọc/ghi. Không module nào truy vấn bảng của module khác, kể cả bằng SQL thuần hay join.
-  - Module khác chỉ được dùng package gốc (`…Api`, DTO, event); mọi package con (`controller`, `job`, `listener`, `service`, `repository`, `client`, `entity`, `dto`) là nội bộ. Đây là mặc định của Spring Modulith, không cần `@NamedInterface`.
+  - Module khác chỉ được dùng package gốc (`…Api`, DTO, event); mọi package con (`controller`, `job`, `listener`, `service`, `repository`, `client`, `model`, `dto`) là nội bộ. Đây là mặc định của Spring Modulith, không cần `@NamedInterface`.
   - Gọi đồng bộ: service của module A gọi `BApi` của module B (inject interface, không inject class cài đặt). Báo ngược chiều hoặc báo cho nhiều module: publish event của module, module nhận xử lý ở `listener`. Không có vòng phụ thuộc giữa các module.
   - `common` (cấu hình, xử lý lỗi `@RestControllerAdvice`, i18n, bảo mật, tiện ích) là module dùng chung, không phụ thuộc module nghiệp vụ. Module bổ sung so với SDD gốc: `media` (DR-38); `i18n` không phải module (chỉ là cấu hình trong `common`).
 
@@ -218,6 +223,12 @@ SDD gốc mạnh ở phần cốt lõi: bất biến chống bán vượt, câu 
 - **Quyết định:** Hoãn S-02…S-06; mỗi spike chạy trước gate của phase đầu tiên cần kết quả: S-03 (P0-04) và S-06 (P0-07) trước P2-00; S-02 (P0-03) trước P3-00; S-04 (P0-05) và S-05 (P0-06) trước P4-00. Giữ nguyên ID task; M0 chỉ cần S-01.
 - **Hệ quả:** P1 bắt đầu được ngay sau P0-18. DR-13, DR-27, DR-35, DR-39, DR-75 giữ phương án đã chốt tới khi spike tương ứng chạy; kết quả xấu ghi thành dòng mới trong nhật ký chốt như cũ.
 - **Ghi vào:** Master plan §4.1, §5 (Phase 0, gate P2-00, P3-00, P4-00), §9.
+
+### DR-153 · Cú pháp khai báo, dễ đọc trước — **Chốt** (Owner)
+- **Vấn đề:** Spring có nhiều cách làm cùng một việc (`@Transactional` hay `TransactionTemplate`, `@Query` hay `JdbcClient`, `@ConfigurationProperties` hay `@Value`). Cách lập trình (callback, API cấp thấp) cho kiểm soát chặt hơn nhưng làm code khó đối chiếu với tài liệu, trong khi người làm là dev backend còn ít kinh nghiệm (DR-06).
+- **Quyết định:** khi hai cách cùng đúng, chọn cách khai báo. Transaction chỉ mở bằng `@Transactional` trên method `public` của `service`; mã chính không dùng `TransactionTemplate`, `PlatformTransactionManager`, `TransactionSynchronizationManager`. Luồng cần nhiều transaction ngắn xen với gọi ra ngoài tách thành service điều phối không transaction gọi service có method `@Transactional`. Transaction rộng hơn mức tối thiểu được chấp nhận, miễn không bọc lời gọi ra ngoài. Bảng chỉ đổi bằng câu có điều kiện và không cần `save()` (như `outbox`) không tạo aggregate: repository là class `@Repository` dùng `JdbcClient`. Bảng đầy đủ ở DOC-12 §2.5.
+- **Hệ quả:** code đọc từ trên xuống khớp sơ đồ trong tài liệu; đôi khi giữ connection lâu hơn vài câu `SELECT`. ARC-03 thêm điều kiện cấm API transaction lập trình trong mã chính; test vẫn được dùng `TransactionTemplate` để commit dữ liệu chuẩn bị.
+- **Ghi vào:** DOC-12, DOC-27, DR-05, DR-106.
 
 ---
 
@@ -1496,6 +1507,7 @@ Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-1
 #### DR-106 · Fan-out theo lô JDBC 500 — **Chốt**
 - **Vấn đề:** đổi lịch và hủy sự kiện ghi một dòng cho mỗi đơn `PAID` trong một transaction; một event 5.000 đơn không nên gọi `enqueue` 5.000 lần qua 5.000 round-trip.
 - **Quyết định:** `NotificationApi.enqueueAll` dùng `JdbcClient.batchUpdate` theo lô `outbox.enqueue-batch-size` = 500, vẫn trong transaction của người gọi.
+- *Đổi (DR-153):* `JdbcClient` không có API batch; cài đặt dùng `JdbcTemplate.batchUpdate`.
 - **Hệ quả:** transaction `PATCH` và hủy sự kiện giữ lâu hơn một chút với event lớn (`statement_timeout` 60 giây của DR-28 đủ).
 - **Nguồn:** `06-design/tickets-and-notifications.md`
 
@@ -1760,6 +1772,465 @@ Các mục dưới đây phát sinh khi viết DOC-14…83 của gate P1 (2026-1
 
 ---
 
+## O. Quyết định phát sinh khi viết tài liệu gate P2
+
+Các mục dưới đây phát sinh khi viết tài liệu gate P2 (2026-10-14). Mỗi mục có nguồn đầy đủ ở tài liệu ghi trong dòng *Nguồn*; sổ chỉ tóm tắt. Người chốt là Claude (Owner ủy quyền), trừ mục ghi **Đề xuất**.
+
+### Tên, index và luồng dữ liệu
+
+#### DR-154 · Tên job trả vé là `ReleaseExpiredHoldsJob` — **Chốt**
+- **Vấn đề:** DOC-07, DOC-12 và sổ dùng `ReleaseExpiredHoldsJob`; DOC-82 và DOC-37 E-16 ghi `ReservationExpiryJob`.
+- **Quyết định:** dùng `reservation.job.ReleaseExpiredHoldsJob` ở mọi nơi; sửa DOC-82 §1, §2 và DOC-37 E-16.
+- **Hệ quả:** một tên duy nhất cho người viết sơ đồ và code.
+- **Nguồn:** `06-design/flows/README.md`
+
+#### DR-155 · Index `unit_event_idx` trên `inventory_unit` — **Chốt**
+- **Vấn đề:** E-24, E-26 (`used`), E-37 và `displayStatus` đếm unit theo `event_id`, `status <> 'REMOVED'`, gom theo loại vé; DOC-14 không có index bắt đầu bằng `event_id` cho unit pool, và DOC-37 dẫn một `unit_event_idx` chưa tồn tại.
+- **Quyết định:** `CREATE INDEX unit_event_idx ON inventory_unit (event_id, ticket_type_id, status);` cho index-only scan; kế hoạch < 150 ms với 100.000 unit.
+- **Hệ quả:** mỗi lần đổi trạng thái unit cập nhật thêm một index (3 → 4, ~+33% chi phí ghi index trên bảng nóng; claim vốn đã không HOT). S-03 đo có và không có index.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §4.9, §6.1; DOC-14 §4.4, §5; DOC-37 E-24, E-37
+
+#### DR-156 · Phát lại idempotent của lệnh giữ vé gia hạn lại lượt vào — **Chốt**
+- **Vấn đề:** `ZADD admitted` gia hạn lượt chạy sau commit; tiến trình chết giữa hai bước thì lượt hết sau 5 phút dù reservation còn hạn.
+- **Quyết định:** E-14 phát lại (`Idempotent-Replayed: true`) với `status = ACTIVE` chạy lại `ZADD admitted:{e} GT <userId> <expiresAtMs>`; lỗi Redis bỏ qua.
+- **Hệ quả:** thêm một lệnh Redis ở đường phát lại; `GT` không bao giờ rút ngắn lượt. Ghi vào DOC-28 khi viết (P6).
+- **Nguồn:** `03-architecture/data-flows.md`
+
+#### DR-157 · Webhook tìm đơn qua `metadata.order_id` thì lưu `payment_intent_id` nếu còn NULL — **Chốt**
+- **Vấn đề:** DR-48 cho tìm đơn theo metadata nhưng không nói lưu ID; thiếu ID thì job trả vé, `PaymentReconcileJob`, RB-03 không thấy PaymentIntent.
+- **Quyết định:** trong transaction webhook `UPDATE orders SET payment_intent_id = :pi WHERE order_id = :o AND payment_intent_id IS NULL`; đơn đã có ID khác → log ERROR, `outcome = IGNORED`, không đổi trạng thái.
+- **Hệ quả:** `UNIQUE` của cột bắt hai đơn dùng chung một PaymentIntent. Ghi vào DOC-26, DOC-09 khi viết (P3).
+- **Nguồn:** `03-architecture/data-flows.md`
+
+#### DR-158 · Profile `invariants` dùng pool 2 connection — **Chốt**
+- **Vấn đề:** `make invariants` chạy JVM thứ hai với Hikari 40 connection; cộng `api`, `psql`, seed thì gần `max_connections` 100 giữa thực nghiệm.
+- **Quyết định:** profile `invariants` đặt `spring.datasource.hikari.maximum-pool-size=2`.
+- **Hệ quả:** tổng xấu nhất 47/100 (DOC-10 §5).
+- **Nguồn:** `03-architecture/quality-attributes.md`
+
+### Vòng đời dữ liệu, sự kiện và loại vé
+
+#### DR-159 · Dọn ảnh không còn tham chiếu do `studio` điều phối; xóa dòng trước object — **Chốt**
+- **Vấn đề:** `media` không thấy tham chiếu ảnh (nằm ở `event` và JSON sơ đồ); thứ tự "DeleteObject rồi xóa dòng" của DR-74 có thể để sự kiện trỏ tới ảnh mất byte.
+- **Quyết định:** `studio.service.MediaRetention` lấy ứng viên `MediaApi.candidatesOlderThan`, lọc bằng `EventApi.referencedMediaIds` (và `MapApi.referencedMediaIds` từ P4), xóa dòng bằng `MediaApi.deleteRows` (khóa ngoại `event.image_media_id` là lưới an toàn), `DeleteObject` sau commit; object xóa lỗi nằm lại bucket. SPI đổi thành `RetentionContributor { default void beginRun(); BatchResult purgeBatch(int) }`.
+- **Hệ quả:** đồ thị phụ thuộc không đổi; bốn method API mới. Sửa DR-74 về thứ tự.
+- **Nguồn:** `05-data/data-lifecycle.md`
+
+#### DR-160 · Metric dọn dữ liệu và tiền tố test `RET-` — **Chốt**
+- **Quyết định:** `ticket_retention_deleted_total{table}`, `table` ∈ {`login_token`, `session`, `idempotency_key`, `stripe_event`, `outbox`, `media`}; test DOC-18 dùng `RET-`.
+- **Nguồn:** `05-data/data-lifecycle.md`
+
+#### DR-161 · Nguồn `SOLD_OUT` trước khi có bitmap — **Chốt**
+- **Vấn đề:** DR-24 cần biết sự kiện còn unit `AVAILABLE`; bitmap của DR-62 chỉ có từ P5.
+- **Quyết định:** `InventoryApi.availabilityOf(eventIds)` trả `hasAvailable` theo loại vé bằng một câu `EXISTS` trên `unit_pool_available_idx` cho cả trang; cache Caffeine theo `eventId`, TTL `availability.cache-ttl`; P5 mở rộng cùng cache với bitmap ghế.
+- **Hệ quả:** `ON_SALE` ↔ `SOLD_OUT` hiện trễ tối đa 2 giây; không thêm bảng hay key Redis.
+- **Nguồn:** `06-design/events-and-ticket-types.md` §3.2
+
+#### DR-162 · Giờ địa phương không tồn tại hoặc lặp do đổi giờ mùa hè — **Chốt**
+- **Quyết định:** giờ rơi vào khoảng nhảy → 422 `rule = nonexistent_local_time`; giờ lặp lấy offset sớm hơn.
+- **Hệ quả:** `rule` mới ở DOC-35, DOC-37 E-27, DOC-40 (`validation.nonexistent_local_time`).
+- **Nguồn:** `06-design/events-and-ticket-types.md` §4
+
+#### DR-163 · Quy tắc giờ khi sửa sự kiện đã xuất bản — **Chốt**
+- **Vấn đề:** áp `must_be_future` cho mọi `PATCH` chặn sửa mô tả của sự kiện đang diễn ra; dời `saleEndsAt` sau khi đóng bán sẽ mở lại bán, trái DR-24.
+- **Quyết định:** sau xuất bản mọi quy tắc DR-25 chạy trên bộ giá trị sau khi sửa; `must_be_future` chỉ áp cho trường có trong request; `saleEndsAtLocal` khóa khi `now() >= sale_ends_at` (422 `locked_after_sale_end`), như DR-143.
+- **Hệ quả:** `rule` mới `locked_after_sale_end` (DOC-35, DOC-37, DOC-40).
+- **Nguồn:** `06-design/events-and-ticket-types.md` §4
+
+#### DR-164 · Đổi tên loại vé sau xuất bản chỉ đổi `ticket_type.name` — **Chốt**
+- **Quyết định:** `inventory_pool.name` của pool GA giữ tên lúc xuất bản và không hiện cho người mua; không ghi chéo module.
+- **Nguồn:** `06-design/events-and-ticket-types.md` §5
+
+#### DR-165 · Phụ thuộc đọc của module `event`: `auth` và SPI `SeatMapVersionLookup` — **Chốt**
+- **Vấn đề:** E-07 cần tên và email liên hệ của tổ chức (bảng của `auth`) và `mapVersion` (bảng của `map`); `event` chỉ được phụ thuộc `inventory`, còn `map → event` đã có.
+- **Quyết định:** thêm `auth` vào `allowedDependencies` của `event` qua `AuthApi.organizerPublicInfo(organizerId)`; `mapVersion` qua SPI `event.SeatMapVersionLookup` do `map` cài đặt từ P5 (P2 trả `null`).
+- **Hệ quả:** đồ thị vẫn không vòng. Sửa DOC-07 §3.1, DOC-12 §2.2, DOC-19 §11.
+- **Nguồn:** `06-design/events-and-ticket-types.md` §2
+
+#### DR-166 · Khóa timeout của transaction studio và metric xuất bản — **Chốt**
+- **Quyết định:** `studio.publish.statement-timeout` (`PT30S`), `studio.cancel.statement-timeout` (`PT60S`), `studio.event-change.statement-timeout` (`PT60S`); metric `ticket_event_publish_seconds` (histogram, `PublishService`).
+- **Nguồn:** `06-design/events-and-ticket-types.md` §8, §9
+
+### Kho vé và giữ vé
+
+#### DR-167 · Service điều phối không transaction và service có transaction cho giữ vé, trả vé — **Chốt**
+- **Vấn đề:** bulkhead và kiểm tra Redis phải chạy trước khi lấy connection; trả vé gọi Stripe giữa hai transaction.
+- **Quyết định:** `HoldService` (không transaction) gọi `HoldTxService.holdInTransaction`; `ReleaseService` (không transaction) gọi `ReleaseTxService.{beginCancelByBuyer, claimDue, reclaimStale, makeReclaimable, finish}` (DR-153).
+- **Hệ quả:** thêm hai bean; DOC-07 §4.1/§4.3 và DOC-12 §2.3, §3.3 ghi thêm.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §3
+
+#### DR-168 · `reservation` chèn bằng câu `INSERT … ON CONFLICT`, item chèn theo lô; aggregate chỉ để đọc — **Chốt**
+- **Quyết định:** `ReservationRepository` có `@Modifying @Query` `INSERT … ON CONFLICT … RETURNING expires_at`; `ReservationItemWriter` chèn item bằng `JdbcTemplate.batchUpdate` sau claim; aggregate `Reservation` chỉ đọc.
+- **Hệ quả:** ARC-06 không bị ảnh hưởng. Sửa DOC-12 §3.2 luật 3.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §4.1.1
+
+#### DR-169 · Thứ tự transaction trả vé: reservation → unit → đơn — **Chốt**
+- **Quyết định:** câu đầu là `UPDATE reservation … WHERE status = 'EXPIRING'`; 0 dòng thì dừng, không chạm unit. Cùng thứ tự khóa với xác nhận.
+- **Hệ quả:** chạy trả vé hai lần là no-op. Sửa thứ tự mẫu "Trả vé" ở DOC-14 §7.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §4.4
+
+#### DR-170 · Ngân sách thời gian một vòng job trả vé — **Chốt**
+- **Vấn đề:** 200 reservation × timeout hủy 5 giây vượt lease 30 giây; bản khác lấy lại reservation đang xử lý.
+- **Quyết định:** `reservation.expiry.batch-budget` = `PT20S`; hết ngân sách thì phần còn lại đặt `expiring_since = now() - lease` để vòng sau lấy ngay; `ConfigurationGuard` kiểm `batch-budget + payment.stripe.cancel-timeout < reservation.expiry.lease`.
+- **Hệ quả:** Stripe chậm làm giảm thông lượng thay vì xử lý trùng (như DR-104).
+- **Nguồn:** `06-design/inventory-and-reservation.md` §4.5, §8
+
+#### DR-171 · Nhãn `model` của `ticket_hold_duration_seconds` với lệnh trộn — **Chốt**
+- **Quyết định:** có ghế → `SEAT`; không ghế mà có zone → `ZONE`; còn lại `GA`.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §9
+
+#### DR-172 · `available` của `INSUFFICIENT_CAPACITY` — **Chốt**
+- **Quyết định:** đếm `AVAILABLE` trong cùng transaction trước rollback (ước lượng, unit người khác đang khóa vẫn tính); dừng ở pool thiếu đầu tiên; bị cờ hết vé chặn thì `available = 0`.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §4.2, §4.3
+
+#### DR-173 · `InventoryApi.release` và `confirmSold` nhận `poolItems` — **Chốt**
+- **Vấn đề:** `CounterClaimer` không đổi trạng thái unit nên không trả/xác nhận theo `reservation_id` được; `inventory` không đọc được `reservation_item`.
+- **Quyết định:** bên gọi truyền `List<PoolQuantity>` lấy từ `reservation_item`; `SkipLocked` và `Naive` bỏ qua tham số.
+- **Nguồn:** `06-design/inventory-and-reservation.md` §3.2, §5
+
+#### DR-182 · Job trả vé chạy lại ngay khi vòng trước đầy lô — **Đề xuất**
+- **Vấn đề:** một bản `api`, `fixedDelay` 5 giây, lô 200: 5.000 reservation hết hạn cùng lúc được trả xong sau ~150 giây, trong khi NFR-03 và EXP-04 đòi ≤ 30 giây.
+- **Phương án:** (a) chạy lại ngay khi vòng trước lấy đủ lô, tới khi hết hoặc hết 25 giây (5.000 GA ≈ 25 vòng × ~1 giây); (b) tăng `batch-size` lên 1.000; (c) đổi NFR-03 thành "≤ 30 giây với tải bình thường".
+- **Đề xuất:** (a). Đổi hành vi nhịp cố định của DR-42 và ảnh hưởng chỉ tiêu NFR-03 nên chờ Owner.
+- **Ghi vào:** DOC-24 §4.5, DOC-34 §3.4, DOC-74.
+
+### Idempotency và kiểm tra bất biến
+
+#### DR-174 · Controller đọc body thô bằng `byte[]` — **Chốt**
+- **Quyết định:** E-14, E-16, E-18 nhận `@RequestBody(required = false) byte[]`; `IdempotencyRequestFactory` (package gốc `reservation`) băm, `JsonBodyReader` parse bằng cùng `ObjectMapper` chặt và Bean Validation; service nhận record `IdempotencyRequest`. Không filter, không `ContentCachingRequestWrapper`.
+- **Hệ quả:** ba endpoint không dùng `@Valid` trực tiếp; OpenAPI khai schema bằng annotation. Sửa chữ ký ở DOC-12 §3.3.
+- **Nguồn:** `06-design/idempotency.md` §2.2
+
+#### DR-175 · Key của hủy giữ vé (E-16) nằm ở transaction thứ nhất; phát lại tính từ trạng thái hiện tại — **Chốt**
+- **Vấn đề:** đường nhanh có hai transaction và một lời gọi Stripe ở giữa; lưu 202 thì phát lại mãi `EXPIRING` dù job đã trả vé.
+- **Quyết định:** dòng key ghi ở transaction `ACTIVE → EXPIRING`; transaction trả vé không chạm nó. Phát lại `CANCEL_HOLD` tính từ trạng thái hiện tại: đã đóng → 200, `EXPIRING` → 202, `CONFIRMED` → 409 `PAYMENT_ALREADY_SUCCEEDED`, luôn kèm `Idempotent-Replayed: true`.
+- **Hệ quả:** ngoại lệ có chủ đích của "trả lại response đã lưu" (DR-45), chỉ cho `CANCEL_HOLD`.
+- **Nguồn:** `06-design/idempotency.md` §3.5; DOC-24 §4.6; DOC-37 E-16
+
+#### DR-176 · Không lưu header; phát lại bằng nhau theo JSON — **Chốt**
+- **Quyết định:** `Location` dựng lại từ `reservationId`; phát lại bằng nhau theo nghĩa JSON (không từng byte, vì `jsonb` đổi thứ tự key) và là ảnh chụp ở lần commit đầu.
+- **Nguồn:** `06-design/idempotency.md` §3.4; DOC-36 §6.2
+
+#### DR-177 · Metric `ticket_idempotency_requests_total` — **Chốt**
+- **Quyết định:** counter, `operation` ∈ {`HOLD`, `CANCEL_HOLD`, `CONFIRM_FREE`}, `result` ∈ {`executed`, `replayed`, `reused`}, phát ở `IdempotencyService`.
+- **Nguồn:** `06-design/idempotency.md` §6
+
+#### DR-178 · Hai mức kết quả kiểm tra bất biến: VIOLATION và REPORT — **Chốt**
+- **Vấn đề:** hủy sự kiện tạo đơn `REFUND_PENDING` hợp lệ; tính là sai lệch thì `make invariants` đỏ sau mỗi lần hủy.
+- **Quyết định:** INV-15 (`REFUND_PENDING` theo lý do) và INV-16 (`LATE_PAYMENT_24H`) là báo cáo: mảng `reports[]` mới trong JSON, log INFO, không ảnh hưởng mã thoát; mỗi mục có thêm `id` (`INV-xx`); trường của DR-73 giữ nguyên.
+- **Nguồn:** `06-design/invariant-checker.md` §5
+
+#### DR-179 · Profile `invariants` không có tác dụng phụ — **Chốt**
+- **Quyết định:** `web-application-type: none`, `spring.flyway.enabled: false`, `@EnableScheduling` chỉ dưới `@Profile("!invariants")`, mọi việc lúc khởi động có ghi (tạo bucket) chặn tương tự; log ra stderr, stdout chỉ có JSON.
+- **Hệ quả:** job trả vé không chạy trong tiến trình CLI nên không che INV-08. Sửa DOC-34 §2.
+- **Nguồn:** `06-design/invariant-checker.md` §5
+
+#### DR-180 · Mã thoát 2 khi không chạy hết — **Chốt**
+- **Quyết định:** thoát 2 kèm `error` ∈ {`DATABASE_UNAVAILABLE`, `STATEMENT_TIMEOUT`, `QUERY_FAILED`}; `make exp` loại lần chạy với mọi mã khác 0.
+- **Hệ quả:** sửa DOC-61 (`make invariants`).
+- **Nguồn:** `06-design/invariant-checker.md` §5
+
+#### DR-181 · Transaction của `InvariantChecker` và `invariant.statement-timeout` — **Chốt**
+- **Quyết định:** một transaction `READ ONLY`, `REPEATABLE READ`, `statement_timeout` = `invariant.statement-timeout` (`PT30S`); `ConfigurationGuard` thêm `invariant.active-overdue > reservation.expiry.interval` và `invariant.expiring-stuck > reservation.expiry.lease`.
+- **Nguồn:** `06-design/invariant-checker.md` §4, §7
+
+### Màn hình người mua
+
+#### DR-183 · Trạng thái rỗng của danh sách sự kiện không có nút — **Chốt**
+- **Quyết định:** `EmptyState` ở `/` chỉ có tiêu đề và mô tả (`events.list.empty.*`); ngoại lệ có chủ đích của UXP-07 vì người mua ở `/` không có bước tiếp theo nào khác.
+- **Hệ quả:** DOC-38 UXP-07 ghi ngoại lệ.
+- **Nguồn:** `08-ux-ui/screens/event-list.md`
+
+#### DR-184 · Cột `event.cancelled_with_refunds` và trường `cancelledWithRefunds` của E-07 — **Chốt**
+- **Vấn đề:** DOC-38 §7.1 và DOC-40 §2.3 chọn `events.status.cancelled.noRefund`/`.refund` theo việc sự kiện có đơn đã trả tiền lúc hủy; E-07 không có trường nào cho việc đó và `event` không được phụ thuộc `order`.
+- **Quyết định:** thêm cột `event.cancelled_with_refunds boolean` (NULL tới khi hủy); trong transaction hủy của DR-28, sau bước 3, `CancelEventService` đặt `cancelled_with_refunds = (:refundPendingOrders > 0)` qua `EventApi`; E-07 trả `cancelledWithRefunds` (`null` khi không `CANCELLED`).
+- **Hệ quả:** một cột thêm ở migration P2-01; sửa DOC-14 §4.3, DOC-20, DOC-37 E-07.
+- **Nguồn:** `08-ux-ui/screens/event-detail.md`
+
+#### DR-185 · E-09 phần GA giao ở P2 — **Chốt**
+- **Vấn đề:** màn Chọn số lượng cần "Còn N vé" nhưng E-09 ghi P5.
+- **Quyết định:** P2 giao phần E-09 không phụ thuộc sơ đồ (`ticketTypes[]`, `pools[]`, `seats` rỗng, `mapVersion = null`); bitset ghế giữ ở P5. Client hỏi mỗi 4 ± 0,5 giây, dừng khi tab ẩn.
+- **Hệ quả:** DOC-37 §2 cột Phase của E-09 thành "P2 (GA), P5 (ghế)"; P2-08 thêm E-09 (GA); snapshot Caffeine có từ P2 (cùng cache với DR-161).
+- **Nguồn:** `08-ux-ui/screens/quantity-picker.md`
+
+#### DR-186 · Khách xem và chọn được ở `/events/:eventId/seats`; đăng nhập ở bước giữ vé — **Chốt**
+- **Vấn đề:** DOC-38 §3 ghi route này chỉ cho người đã đăng nhập, mâu thuẫn P2-10, UX-10 và DR-67 ("khách chọn → đăng nhập → lựa chọn còn nguyên").
+- **Quyết định:** khách xem và chọn được; bấm giữ vé khi chưa đăng nhập thì lưu lựa chọn và đi `/login?returnTo=…/seats`; sau đăng nhập không tự gửi lệnh giữ. P2–P5 nút "Mua vé" đi thẳng tới màn chọn; từ P6 DOC-45 quyết định.
+- **Hệ quả:** sửa cột "Quyền vào" của DOC-38 §3; nhánh đăng nhập ở DOC-38 §2.1 áp dụng từ P6.
+- **Nguồn:** `08-ux-ui/screens/quantity-picker.md`
+
+#### DR-187 · E-07 trả `maxUnitsPerHold` — **Chốt**
+- **Quyết định:** E-07 thêm `maxUnitsPerHold` (= `reservation.max-units-per-hold`) cạnh `holdMinutes`; bộ tăng giảm, giỏ ghế và `{max}` dùng giá trị này, không gán cứng 50.
+- **Hệ quả:** sửa DOC-37 E-07, DOC-39 §7.3, DOC-34.
+- **Nguồn:** `08-ux-ui/screens/quantity-picker.md`
+
+#### DR-188 · Màn Thanh toán khi reservation `EXPIRING` — **Chốt**
+- **Quyết định:** E-15 trả `EXPIRING` thì hiện trạng thái "đang kiểm tra" (`checkout.expiring.body`, mọi nút tắt) và hỏi lại E-15 mỗi 2 giây, tối đa 30 lần; `CONFIRMED` → màn Kết quả; `EXPIRED`/`CANCELLED` → biến thể tương ứng; quá 60 giây → hiện hết hạn.
+- **Hệ quả:** tối đa 30 request thêm mỗi lần hết hạn, trong ngân sách `api_ip`.
+- **Nguồn:** `08-ux-ui/screens/checkout.md`
+
+#### DR-189 · E-19 trả thông tin hỗ trợ khi chờ hoàn tiền — **Chốt**
+- **Quyết định:** khi `status = REFUND_PENDING`, E-19 thêm `support: { email | null, refundSlaText }` (`refundSlaText` dịch theo `Accept-Language`), còn lại `null`; không dùng biến `VITE_*`; `email` null thì giao diện dùng `orders.refund.note.noEmail`.
+- **Hệ quả:** sửa DOC-37 E-19; DOC-34 §4 thêm `order` là nơi dùng `support.*`.
+- **Nguồn:** `08-ux-ui/screens/order-result.md`
+
+#### DR-190 · Hết 10 phút hỏi trạng thái thì dừng và báo — **Chốt**
+- **Quyết định:** hết cửa sổ hỏi của DR-50, màn Kết quả dừng hỏi, hiện `orders.confirming.slow` kèm nút "Thử lại".
+- **Nguồn:** `08-ux-ui/screens/order-result.md`
+
+#### DR-191 · Vé của tôi ghép E-21 và E-20 — **Chốt**
+- **Vấn đề:** vé `VOID` cần trạng thái đơn; đơn thanh toán trễ không có vé nên không xuất hiện ở E-21.
+- **Quyết định:** phần tử E-21 thêm `orderStatus`, `refundReason`; phần tử E-20 thêm `refundReason`; màn gọi cả hai với `limit=100` và chỉ lấy từ E-20 đơn `REFUND_PENDING`/`REFUNDED` có `ticketCount = 0`.
+- **Hệ quả:** không thêm endpoint; sửa DOC-37 E-20, E-21.
+- **Nguồn:** `08-ux-ui/screens/my-tickets.md`
+
+### Màn hình Studio
+
+#### DR-192 · `StudioGate`: chưa có hồ sơ thì về màn lập hồ sơ — **Chốt**
+- **Vấn đề:** DOC-41 SCR-06 và DOC-40 §1.5 cho người chưa có `ORGANIZER` vào `/studio/**` thấy E3; DR-140, DOC-52 ERP-06, DOC-40 §4.1 chuyển về `/studio/profile`. Theo DR-23, có `ORGANIZER` nghĩa là có hồ sơ, nên E3 là ngõ cụt. Chưa nói người đã có hồ sơ mở `/studio/profile` thì sao.
+- **Quyết định:** `StudioGate` (phần tử router, như `SeatsRoute`) bọc mọi route `/studio/**`, đọc `organizer` từ cache E-04: khách → đăng nhập kèm `returnTo`; `organizer = null` → `replace` tới `/studio/profile` ở mọi route; `organizer ≠ null` mở `/studio/profile` → `replace` tới `/studio`. E3 chỉ hiện khi API trả 403 `FORBIDDEN`; 403 `ORGANIZER_PROFILE_REQUIRED` chuyển về `/studio/profile`.
+- **Hệ quả:** sửa DOC-41 SCR-06 và §3, DOC-38 §3, DOC-40 §1.5, DOC-35 (dòng `ORGANIZER_PROFILE_REQUIRED`).
+- **Nguồn:** `08-ux-ui/screens/studio-organizer-profile.md`
+
+#### DR-193 · E-24 trả thêm `saleStartsAt` và `steps` cho mỗi sự kiện — **Chốt**
+- **Vấn đề:** thẻ bản nháp ("Đã xong … Còn thiếu …") và thẻ sắp mở bán cần dữ liệu E-24 không có; gọi E-26 cho từng thẻ là 20 request mỗi trang.
+- **Quyết định:** mỗi phần tử E-24 thêm `saleStartsAt` và `steps` (cùng nghĩa với `OrganizerEventView.steps`); một câu gộp trên `ticket_type` cho tối đa 20 id (`count(*)`, `bool_or(model IN ('SEAT','ZONE'))`); trạng thái sơ đồ lấy qua `MapApi` từ P4, trước đó `seatMap = null`.
+- **Hệ quả:** sửa ví dụ và nguồn dữ liệu của E-24 (DOC-37), DOC-20 §4; mục tiêu p95 < 40 ms giữ nguyên.
+- **Nguồn:** `08-ux-ui/screens/studio-overview.md`
+
+#### DR-194 · Tổng quan Studio: đích liên kết trước P5, nhịp làm mới, phân trang — **Chốt**
+- **Quyết định:** P2–P4 mọi liên kết tới `…/sales` đi `…/publish` với nhãn `studio.overview.manage`; P5-06.2 đổi lại. Làm mới 15 giây khi tab hiện, dừng khi ẩn, gọi lại ngay khi hiện lại. "Xem thêm sự kiện" tải trang cursor kế; tổng số sự kiện chỉ hiện khi đã tải hết.
+- **Hệ quả:** master plan P5-06.2 thêm việc đổi đích liên kết.
+- **Nguồn:** `08-ux-ui/screens/studio-overview.md`
+
+#### DR-225 · Chế độ tạo dùng chung biểu mẫu; lần lưu đầu gọi E-25 rồi E-27 — **Chốt**
+- **Vấn đề:** DR-70 cho "Tạo sự kiện" gọi `POST /organizer/events {name}` ngay, nhưng DOC-41 và DOC-38 coi `/studio/events/new` là một chế độ của cùng biểu mẫu và DOC-54 điều hướng tới đó không gọi API.
+- **Quyết định:** `/new` hiện đủ biểu mẫu, không gửi gì tới khi lưu. Lần lưu đầu: E-25 `{name}`, rồi E-27 với `rowVersion 0` và các trường khác mặc định, rồi `replace` tới `…/{id}/info`; E-27 trả 422 thì vẫn sang `…/info` và hiện lỗi. E-25 không tự gửi lại (không idempotent); chấp nhận hiếm khi có bản nháp trùng.
+- **Hệ quả:** không thêm endpoint; DOC-84 FL-06 theo thứ tự này.
+- **Nguồn:** `08-ux-ui/screens/studio-event-info.md`
+
+#### DR-226 · Hộp thoại xác nhận trước khi lưu đổi giờ hoặc địa điểm của sự kiện đã xuất bản — **Chốt**
+- **Quyết định:** sự kiện `PUBLISHED`/`PAUSED` mà `startsAtLocal`, `endsAtLocal` hoặc `venue` đổi thì hiện `ConfirmDialog` ("Chưa lưu" nhận focus, "Lưu và gửi thông báo"), không hiện số người mua (E-26 không trả). Theo UXP-11 cho thao tác không hoàn tác được.
+- **Hệ quả:** 5 key mới ở DOC-40; một dòng "khác canvas" ở DOC-38 §9; DOC-84 FL-11.
+- **Nguồn:** `08-ux-ui/screens/studio-event-info.md`
+
+#### DR-227 · Client kiểm loại và cỡ ảnh trước khi tải lên — **Chốt**
+- **Quyết định:** hằng `EVENT_IMAGE_MAX_BYTES = 2_097_152` và danh sách jpeg/png/webp ở `frontend/src/features/studio/media.ts`; mọi 413 (có hay không body JSON) hiện `errors.payload_too_large`.
+- **Hệ quả:** đổi `media.max-event-image-bytes` thì đổi hằng này trong cùng PR; ghi chú ở DOC-34.
+- **Nguồn:** `08-ux-ui/screens/studio-event-info.md`
+
+#### DR-228 · Danh sách múi giờ của ô chọn — **Chốt**
+- **Quyết định:** danh sách = `Intl.supportedValuesOf('timeZone')` ∪ giá trị hiện tại của sự kiện ∪ `VITE_PLATFORM_TIMEZONE`; gộp tên đồng nghĩa (ví dụ `Asia/Saigon`) qua `resolvedOptions().timeZone`; nhãn "Asia/Tokyo (GMT+9)"; tìm không phân biệt hoa thường, coi `_` và `/` như khoảng trắng.
+- **Hệ quả:** không đổi API; ghi vào DOC-31 §6.
+- **Nguồn:** `08-ux-ui/screens/studio-event-info.md`
+
+#### DR-229 · Biến build `VITE_PLATFORM_TIMEZONE` — **Chốt**
+- **Quyết định:** `VITE_PLATFORM_TIMEZONE` = `PLATFORM_TIMEZONE` (mặc định `Asia/Ho_Chi_Minh`), build như `VITE_PAYMENTS`; dùng cho hậu tố múi giờ (DR-12) và mặc định của chế độ tạo.
+- **Hệ quả:** DOC-34 §3.12 thêm một dòng; đổi múi giờ nền tảng cần build lại frontend.
+- **Nguồn:** `08-ux-ui/screens/studio-event-info.md`
+
+#### DR-195 · Bước loại vé lưu từng loại, không dùng `rowVersion` — **Chốt**
+- **Vấn đề:** DR-70 và DOC-38 §6.3 ghi bước này lưu bằng "PATCH kèm rowVersion", nhưng E-34…36 là endpoint theo từng loại vé, không có `rowVersion`; canvas có một nút lưu cho cả danh sách.
+- **Quyết định:** biểu mẫu giữ cả danh sách; "Lưu" gửi lần lượt PATCH cho thẻ đã đổi rồi POST cho thẻ mới, một request mỗi lần, lỗi một request không dừng các request sau; cuối cùng tải lại E-26 một lần. Xóa loại vé đã lưu gọi E-36 ngay sau hộp thoại xác nhận. Không có `rowVersion` và hộp thoại phiên bản cũ ở bước này; hai tab sửa cùng loại vé thì lần ghi sau thắng theo từng trường.
+- **Hệ quả:** lưu có thể thành công một phần, lỗi hiện theo từng thẻ; sửa DOC-38 §6.3, §8.4, DOC-84 FL-07.
+- **Nguồn:** `08-ux-ui/screens/studio-ticket-types.md`
+
+#### DR-196 · Lỗi `out_of_range` mang `params.min`, `params.max` — **Chốt**
+- **Quyết định:** E-34/E-35: `price` trả `params: {min: payment.min-amount, max: payment.max-amount}`, `gaCapacity` trả `{min: 1, max: 100000}`; client chỉ kiểm số nguyên ≥ 0, không gán cứng mức tối thiểu.
+- **Hệ quả:** sửa DOC-37 E-34, E-35; DOC-20 §5.1 thêm cột `params`.
+- **Nguồn:** `08-ux-ui/screens/studio-ticket-types.md`
+
+#### DR-197 · Xem trước dựng màn người mua trong `div` dùng container query, có chế độ xem trước — **Chốt**
+- **Vấn đề:** `iframe` bị CSP chặn (`frame-ancestors 'none'`); layout người mua đổi theo `@media` nên khung 390 px trong cửa sổ rộng vẫn hiện bản desktop; màn người mua gọi E-07/E-09 (404 với `DRAFT`), ghi `localStorage`; "Mua vé" bị tắt khi `UPCOMING`.
+- **Quyết định:** `PreviewViewport` đặt `container-type: inline-size; container-name: app`; điểm gãy 1024 px của màn người mua viết bằng `@container app`, gốc ứng dụng cũng là container `app`. `EventDetail`, `QuantityPicker`, `SeatPicker` tách thành phần `…View` (chỉ nhận props) và phần route (gọi API). `PreviewModeContext` tắt gọi API, hỏi định kỳ, `localStorage`, tải trước chunk, điều hướng và nút giữ vé. Màn có nút chuyển "Trang sự kiện / Trang chọn vé" và tham số `?device=`, `?page=`.
+- **Hệ quả:** CSP không đổi; sửa DOC-38 §3, §10 (UX-01 bỏ qua phần tử trong `[data-preview-frame]`), DOC-39, DOC-43, DOC-46, DOC-47.
+- **Nguồn:** `08-ux-ui/screens/studio-preview.md`
+
+#### DR-198 · E-26 trả `holdMinutes`, `maxUnitsPerHold`, `organizer`; định nghĩa `steps.preview`, `steps.publish` — **Chốt**
+- **Quyết định:** `OrganizerEventView` thêm `holdMinutes`, `maxUnitsPerHold` (cùng nguồn với E-07) và `organizer: {name, contactEmail}`. `steps.preview = DONE` khi `info` và `ticketTypes` là `DONE` và `seatMap` là `DONE` hoặc `null`; `steps.publish = DONE` khi `status ≠ DRAFT`.
+- **Hệ quả:** sửa DOC-37 §7, DOC-20 §6.7.
+- **Nguồn:** `08-ux-ui/screens/studio-preview.md`
+
+#### DR-199 · Endpoint đọc phiên bản sơ đồ đã xuất bản cho người tổ chức (P5) — **Chốt**
+- **Quyết định:** thêm `GET /organizer/maps/{seatMapId}/versions/{versionNo}`: chỉ chủ sơ đồ, response cùng dạng E-08, `Cache-Control: private, max-age=86400, immutable`, ETag = checksum; giao ở P5.
+- **Hệ quả:** DOC-37 thêm endpoint khi viết phần P5; DOC-57 dùng chung.
+- **Nguồn:** `08-ux-ui/screens/studio-preview.md`
+
+#### DR-200 · E-37 giao ở P2 cho hộp thoại hủy sự kiện — **Chốt**
+- **Vấn đề:** FR-14.5 và P2-05.2 cần hộp thoại hủy hiện số đơn sẽ chờ hoàn tiền; số này là `orders.paid` của E-37, nhưng DOC-37 §2 xếp E-37 ở P5.
+- **Quyết định:** E-37 giao ở P2 với đủ hợp đồng (`totals`, `byTicketType`, `orders`) và cache Redis 5 giây của DR-71; P5 chỉ thêm màn Studio 07 và E-38. Hộp thoại gọi E-37 mỗi lần mở; số có thể trễ tới 5 giây, số chính xác là `refundPendingOrders` trong response E-33.
+- **Hệ quả:** DOC-37 §2 cột Phase của E-37 thành P2; master plan P2-05.1 thêm E-37; P2 dùng khóa Redis `sales:event:{eventId}`.
+- **Nguồn:** `08-ux-ui/screens/studio-publish.md`
+
+#### DR-201 · Giao diện gộp 10 khóa `publish-checks` thành 4 dòng — **Chốt**
+- **Vấn đề:** DOC-20 §6.1 và DOC-37 E-28 nói mỗi khóa có key i18n `publish.check.<key>` nhưng DOC-40 chỉ có 4 dòng gộp.
+- **Quyết định:** client gộp: Thông tin (`name`, `venue`, `timezone`, `ends_at`, `sale_window`), Giờ bắt đầu (`starts_at`), Loại vé (`has_ticket_type`, `ticket_type_capacity`), Sơ đồ (`seat_map_published`, `seat_map_valid`). Dòng Thông tin nêu ô lỗi bằng `studio.publish.check.<key>`. Server giữ nguyên 10 khóa.
+- **Hệ quả:** sửa DOC-20 §6.1, DOC-37 E-28, DOC-40.
+- **Nguồn:** `08-ux-ui/screens/studio-publish.md`
+
+#### DR-202 · Bước "Bán vé" và liên kết "Theo dõi bán vé" chỉ có từ P5 — **Chốt**
+- **Quyết định:** `StudioStepper` và Studio 06 ẩn bước "Bán vé" và `studio.publish.toSales` tới khi route `…/sales` được đăng ký (P5-06.2); ở P2 người tổ chức xem số bán ở Studio 01 (E-24).
+- **Hệ quả:** DOC-39 §7.13 ghi "bước Bán vé có từ P5".
+- **Nguồn:** `08-ux-ui/screens/studio-publish.md`
+
+#### DR-203 · E-26 trả `cancelledWithRefunds` — **Chốt**
+- **Quyết định:** `OrganizerEventView` thêm `cancelledWithRefunds` (đọc cột `event.cancelled_with_refunds` của DR-184; `null` khi chưa hủy). Mở lại màn sau khi hủy dùng câu không có số `studio.publish.cancelled.body.refundNoCount`; câu có số chỉ hiện ngay sau E-33.
+- **Hệ quả:** sửa DOC-37 §7; không đổi DDL.
+- **Nguồn:** `08-ux-ui/screens/studio-publish.md`
+
+### Thực nghiệm
+
+#### DR-204 · EXP-02 chạy hai lần: M-B ở P2, M-Q ở P6 — **Chốt**
+- **Vấn đề:** NFR-02 kiểm chứng bằng "EXP-02 (với phòng chờ)" nhưng phòng chờ chỉ có từ P6.
+- **Quyết định:** P2-14 chạy EXP-02 trên mô hình M-B (mở bán dồn, không phòng chờ) để chứng minh tính đúng; P6 chạy lại trên M-Q, đó là bằng chứng của NFR-02.
+- **Hệ quả:** M2 không đòi p95 < 500 ms; DOC-72 có hai khối kết quả; sửa DOC-03 NFR-02, master plan P6-09.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-205 · k6 chạy trong container của compose thực nghiệm — **Chốt**
+- **Vấn đề:** k6 chạy trên host thì nginx thấy IP gateway (đổi theo máy) và k6 không bị giới hạn CPU.
+- **Quyết định:** service `k6` (profile `exp`, 3 CPU / 4 GB, image `grafana/k6` khóa tag khi chạy S-06), subnet `172.28.0.0/16`, IP `172.28.0.250`, `RATE_LIMIT_ALLOWLIST=172.28.0.250/32`.
+- **Hệ quả:** tổng trần RAM khoảng 14,8 GB trên máy 16 GB (planned); sửa DOC-62 §2, §4, §9, DOC-10 §7, DOC-61 §1.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-206 · Prometheus và `docker-compose.experiment.yml` dựng ở P2-13 — **Chốt**
+- **Vấn đề:** EXP của P2 cần số đo từ Prometheus và giới hạn tài nguyên cố định, nhưng DOC-62 và DOC-11 đặt chúng ở P6-08.
+- **Quyết định:** chỉ dời compose thực nghiệm và Prometheus sang P2-13; Grafana và dashboard vẫn ở P6-08.
+- **Hệ quả:** sửa master plan P2-13, P6-08, DOC-62, DOC-11 §6, DOC-33 §5.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-207 · Session người dùng thực nghiệm suy ra từ số thứ tự — **Chốt**
+- **Vấn đề:** đọc 100.000 cặp cookie/CSRF từ file làm k6 tốn RAM.
+- **Quyết định:** session ID thô = `sha256('exp-session-<n>')`, cookie = base64url của nó, `session_hash` = sha256 của ID thô, CSRF = base64url của `sha256('exp-csrf-<n>')`; `n = 0` là người tổ chức. Chỉ `experiments/seed/users.sql` sinh các dòng này.
+- **Hệ quả:** bí mật đã biết, chỉ sống trên volume của máy thực nghiệm; ghi chú ở DOC-15, DOC-32.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-208 · Fixture tạo qua API, reset volume mỗi lần chạy, có pha khởi động — **Chốt**
+- **Quyết định:** mỗi lần chạy `down -v`; `load/fixture.ts` tạo sự kiện qua E-25, E-34, E-29, mở bán lúc now + 120 giây; một sự kiện riêng nhận 1.000 lệnh giữ rồi hủy trong 60 giây để làm nóng JIT.
+- **Hệ quả:** một lần EXP-02 khoảng 7 phút.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-209 · Quy tắc lần chạy hợp lệ và đạt — **Chốt**
+- **Vấn đề:** "bất biến đỏ → loại lần chạy" mà chạy lại thì che mất lỗi bán vượt thật.
+- **Quyết định:** bất biến đỏ trên `skip-locked`/`counter` vừa loại lần chạy vừa đánh EXP **không đạt** tới khi sửa lỗi; `naive` đỏ là kết quả hợp lệ. Tính đúng phải đạt ở cả 3 lần; hiệu năng xét trung vị.
+- **Hệ quả:** sửa DOC-30 §6, UC-21 E1, DOC-86.
+- **Nguồn:** `10-testing/experiments/README.md` §9
+
+#### DR-210 · Kiểm tra bất biến hiểu chế độ bộ đếm — **Chốt**
+- **Vấn đề:** DOC-15 §8.2 và DOC-24 §5 nói bộ kiểm tra đối chiếu bộ đếm, nhưng DOC-30 không có mục này; INV-05 sẽ đỏ ở mọi lần chạy `counter`.
+- **Quyết định:** INV-05 bỏ qua phần pool của pool có dòng trong `inventory_pool_counter`; thêm mục VIOLATION mới kiểm `available + held + sold = capacity` với `held` = Σ quantity của reservation đang mở, `sold` = Σ quantity của `CONFIRMED`. Mã INV do DOC-30 cấp.
+- **Hệ quả:** sửa DOC-30 §3, DOC-24 §5; DOC-80 dùng mục này.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-211 · Lệnh kiểm tra bất biến không phụ thuộc `INVENTORY_STRATEGY` — **Chốt**
+- **Quyết định:** `make invariants` và `experiments/run.sh` luôn truyền `-e INVENTORY_STRATEGY=skip-locked` khi chạy CLI kiểm tra bất biến, để không thừa hưởng `naive`/`counter` (khởi động bị chặn ngoài profile `experiment`).
+- **Hệ quả:** sửa DOC-61, DOC-30 §5.1.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-212 · Kết quả thực nghiệm lưu trong repo — **Chốt**
+- **Quyết định:** `experiments/results/EXP-NN/<UTC>-<strategy>-s<SCALE>-r<n>/`; commit các file nhỏ (`env.json`, `fixture.json`, `k6-summary.json`, `metrics.json`, `invariants.json`), `raw/` bị gitignore; `experiments/aggregate.sh` (bash + jq) sinh `summary.md`.
+- **Hệ quả:** máy thực nghiệm cần `jq`; sửa DOC-61 §1, DOC-12 §1.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-213 · S-06 đo trên E-06 `GET /events` qua cache nginx — **Chốt**
+- **Vấn đề:** lúc chạy S-06 chưa có endpoint phòng chờ.
+- **Quyết định:** S-06 dùng nhịp hỏi của DOC-10 §4.1 trên E-06; đạt khi độ trễ lịch p95 < 1 giây, nhịp thực ≥ 95 % kế hoạch, CPU k6 < 90 % trần, RSS < 3,5 GB. Code ở `spikes/s06/`.
+- **Hệ quả:** sửa master plan S-06/P0-07, DOC-10 §8.
+- **Nguồn:** `10-testing/experiments/README.md`
+
+#### DR-230 · EXP-04 căn hạn của nhóm reservation về một giây bằng SQL — **Chốt**
+- **Quyết định:** `experiments/exp04/during.sh` đặt `expires_at = T_E` cho đúng N reservation `ACTIVE` của nhóm A và kiểm số dòng; chỉ trên database thực nghiệm. Không có cách qua API để 5.000 reservation hết hạn cùng một giây.
+- **Nguồn:** `10-testing/experiments/EXP-04-expiry-under-load.md`
+
+#### DR-231 · Khóa `reservation.expiry.drain-max` — **Đề xuất** (đi cùng DR-182)
+- **Vấn đề:** phương án (a) của DR-182 ("chạy lại tới khi hết hoặc hết 25 giây") không có khóa cấu hình; EXP-04 cần chạy baseline nhịp cố định DR-42 trên cùng bản build.
+- **Đề xuất:** khóa mới kiểu duration, mặc định `PT25S`, mọi profile; `PT0S` trở về nhịp cố định của DR-42; kiểm khi khởi động `drain-max < lease`. Bỏ nếu Owner chọn (b) hoặc (c) của DR-182.
+- **Ghi vào:** DOC-24 §4.5, §8, DOC-34 §3.4, §6, DOC-74.
+- **Nguồn:** `10-testing/experiments/EXP-04-expiry-under-load.md`
+
+#### DR-232 · `make exp` nhận `VARIANT` và ba hook — **Chốt**
+- **Quyết định:** `VARIANT` đọc `params.<VARIANT>.env` đè lên `params.env`, tên thư mục kết quả và `env.json` có biến thể. `expNN/during.sh` (tùy chọn) chạy nền trong bước 8; `run.sh` tạo `$RESULTS/.k6-done` khi k6 thoát; bước 8 xong khi cả hai thoát; `during.sh` thoát ≠ 0 → lần chạy `ERROR`. `expNN/collect.sql` (tùy chọn) chạy ở bước 10, đầu ra vào `metrics.json` mục `custom`.
+- **Hệ quả:** EXP-10 dùng hook này cho bộ lấy mẫu lock; sửa DOC-70 §6.2, §7, §10, §15, DOC-61.
+- **Nguồn:** `10-testing/experiments/EXP-04-expiry-under-load.md`
+
+#### DR-233 · Kịch bản dừng API của EXP-04 — **Chốt**
+- **Quyết định:** `SIGKILL` khi đã trả ≥ N/2 và còn `EXPIRING > 0`; nằm im 300 giây (FR-07.8); khởi động lại cùng môi trường rồi `nginx -s reload`. Đạt khi hồi phục X5 ≤ 30 giây tính từ lúc `api` sẵn sàng.
+- **Hệ quả:** khởi động lại riêng `api` cần reload nginx (ghi chú DOC-62 §8); DOC-03 FR-07.8 kiểm chứng bằng "EXP-04 `crash`".
+- **Nguồn:** `10-testing/experiments/EXP-04-expiry-under-load.md`
+
+#### DR-234 · EXP-10 chạy `CONFIRM=0` trên cả hai chiến lược — **Chốt**
+- **Vấn đề:** `CounterClaimer` không đổi trạng thái unit pool, mà `ticket.unit_id` là `NOT NULL` và INV-06/07 cần vé gắn unit `SOLD`; phát hành vé ở chế độ bộ đếm chưa được đặc tả.
+- **Quyết định:** cả hai chiến lược chỉ giữ, không xác nhận, để tải giống hệt nhau.
+- **Hệ quả:** không dùng lại lần chạy `skip-locked` của EXP-02; khoảng cách đo được là cận dưới; DOC-24 §5 ghi chế độ bộ đếm không phát hành vé.
+- **Nguồn:** `10-testing/experiments/EXP-10-unit-rows-vs-counter.md`
+
+#### DR-235 · Dòng `inventory_pool_counter` chỉ tạo khi `inventory.strategy=counter` — **Chốt**
+- **Vấn đề:** DOC-15 §8.2 tạo dòng bộ đếm khi xuất bản mỗi khi bật profile `experiment`; DR-210 nhận diện chế độ bộ đếm theo "pool có dòng bộ đếm", nên lần chạy `skip-locked` sẽ bỏ qua INV-05 sai.
+- **Quyết định:** bước xuất bản chỉ tạo dòng bộ đếm khi chiến lược là `counter`.
+- **Hệ quả:** sửa DOC-15 §8.2, DOC-24 §4.8, DOC-30 §3.
+- **Nguồn:** `10-testing/experiments/EXP-10-unit-rows-vs-counter.md`
+
+#### DR-214 · Tham số người dùng ảo là hàm tất định của `n` — **Chốt**
+- **Vấn đề:** dùng `Math.random()` thì 3 lần chạy và các chiến lược nhận tải khác nhau; dùng `n mod 4` thì sai vì `shard()` chia theo `n mod K` với K = 200.
+- **Quyết định:** `uniform(n, salt) = u32(sha256('<salt>-<n>'))/2³²` trong `load/lib/multiuser.ts`; `q_n = 1 + ⌊4·uniform(n,'exp02-qty')⌋`, `a_n = W·uniform(n,'exp02-arrival')`, độ trễ xác nhận dùng salt `exp02-confirm`.
+- **Hệ quả:** EXP-10 dùng lại salt `exp02-*`; DOC-70 §4.1 thêm `uniform()`, `send()`, `sleepS()`.
+- **Nguồn:** `10-testing/experiments/EXP-02-pool-contention.md`
+
+#### DR-215 · Giữ lại sau 409 `INSUFFICIENT_CAPACITY` khi `available ≥ 1` — **Chốt**
+- **Quyết định:** người dùng ảo gửi lệnh giữ mới (key mới) với `quantity = min(q, available)`, tối đa `CAPACITY_RETRIES = 3` lần; `available = 0` thì rời đi. Giống người mua thật bấm lại với số còn lại (QTY-AC-08), để "bán hết" không hỏng vì kịch bản.
+- **Nguồn:** `10-testing/experiments/EXP-02-pool-contention.md`
+
+#### DR-216 · Lần chạy `naive` chỉ giữ vé, không gọi `confirm-free` — **Chốt**
+- **Quyết định:** `run.sh` đặt `CONFIRM=0` khi `STRATEGY=naive`; bằng chứng bán vượt lấy từ M6 và INV-05.
+- **Hệ quả:** `naive` và `skip-locked` không so được về hiệu năng; DOC-70 §6.3 ghi chú dòng `naive`.
+- **Nguồn:** `10-testing/experiments/EXP-02-pool-contention.md`
+
+#### DR-217 · Nhóm người dùng và cách so response của EXP-03 — **Chốt**
+- **Quyết định:** bốn nhóm chọn tất định theo `n`: A 40 % gửi lại tuần tự, B 30 % song song (giữ 20 + 2, hủy 10 + 2), C 20 % mất response (timeout client 20 ms rồi gửi lại), D 10 % dùng sai key (khác body, khác endpoint → 422). `HOLD`, `CONFIRM_FREE`: mọi response 2xx cùng key giống nhau theo JSON; `CANCEL_HOLD`: trạng thái không quay từ `CANCELLED` về `EXPIRING`. Sức chứa = 4 × USERS.
+- **Hệ quả:** `exp_http_outcome` thêm tag `replayed`.
+- **Nguồn:** `10-testing/experiments/EXP-03-idempotency.md`
+
+#### DR-218 · Profile `experiment` đặt `invariant.interval=PT1H` — **Chốt**
+- **Quyết định:** job kiểm tra bất biến định kỳ không chạy giữa tải thực nghiệm; mỗi lần chạy đã có bước CLI ở cuối. Thời gian kiểm tra trên dữ liệu đầy lấy từ `invariants.json.durationMs`.
+- **Hệ quả:** DOC-34 thêm giá trị profile cho `invariant.interval`; DOC-30 §3.4 đổi nguồn số đo.
+- **Nguồn:** `06-design/flows/operations.md`
+
+#### DR-219 · Công thức `make invariants` và cách đọc mã thoát — **Chốt**
+- **Vấn đề:** GNU make luôn thoát 2 khi recipe lỗi nên không phân biệt được 1 và 2; `docker compose run` cấp TTY và khởi động lại `postgres` đã dừng (trái IC-18).
+- **Quyết định:** `@$(COMPOSE) run --rm --no-deps -T -e INVENTORY_STRATEGY=skip-locked api --spring.profiles.active=invariants; code=$$?; echo "invariants: exit=$$code" >&2; exit $$code`. Mã chính xác đọc ở dòng stderr hoặc gọi compose trực tiếp (như `run.sh`). Thoát ≠ 0 mà không có JSON chứa `checkedAt` → "không rõ", như mã 2.
+- **Hệ quả:** sửa DOC-30 §5.1, §5.3, IC-18, DOC-61 §3, RB-02, DOC-70 §7.2.
+- **Nguồn:** `06-design/flows/operations.md`
+
+#### DR-220 · DOC-82 §1 thêm `prometheus` vào thành phần công cụ — **Chốt**
+- **Quyết định:** thêm `prometheus`; thành phần `make` gồm cả `experiments/run.sh`, `lib/*.sh`, `aggregate.sh`.
+- **Nguồn:** `06-design/flows/operations.md`
+
+#### DR-221 · `run.sh` giữ khóa và dọn dẹp khi bị ngắt — **Chốt**
+- **Quyết định:** `flock -n experiments/results/.lock`, bận thì in "another experiment is running" và thoát 2; `trap INT TERM EXIT` dừng bộ lấy mẫu, ghi `status ERROR`/`INTERRUPTED`, bỏ bước tổng hợp, thoát 130 khi bị ngắt; stack giữ nguyên.
+- **Hệ quả:** `.lock` vào gitignore; máy thực nghiệm cần `flock`.
+- **Nguồn:** `06-design/flows/operations.md`
+
+### Luồng mua vé GA
+
+#### DR-222 · `confirm-free` chỉ nhận reservation `ACTIVE` chưa quá hạn — **Chốt**
+- **Quyết định:** câu xác nhận dùng `WHERE status = 'ACTIVE' AND expires_at > now()`; 0 dòng → 409 `RESERVATION_NOT_ACTIVE`. `Checkout` gọi lại E-15; E-15 còn `ACTIVE` mà `expiresAt` ≤ giờ server thì màn coi như `EXPIRING` (DR-188).
+- **Hệ quả:** `confirm-free` luôn thua hết hạn; sửa DOC-27 §4.3, DOC-37 E-18, DOC-48 §6.
+- **Nguồn:** `06-design/flows/ga-purchase.md`
+
+#### DR-223 · Transaction `confirm-free` dùng `hold.statement-timeout` và `hold.lock-timeout` — **Chốt**
+- **Vấn đề:** không có lock timeout thì `FOR SHARE` trên `event` chờ tới 60 giây sau lệnh hủy sự kiện.
+- **Quyết định:** dùng 2 giây / 1 giây như lệnh giữ vé; hết thời gian → 503 `OVERLOADED` kèm `Retry-After`, người mua bấm lại với cùng key.
+- **Hệ quả:** không thêm khóa cấu hình; sửa DOC-27 §4.3, DOC-37 E-18, DOC-34 §3.4.
+- **Nguồn:** `06-design/flows/ga-purchase.md`
+
+#### DR-224 · Module phục vụ E-19, E-20, E-21 — **Đề xuất**
+- **Vấn đề:** DOC-37 §2 xếp E-19…21 vào module `payment`; DOC-11 §4 cho `order` phục vụ `GET /orders/{id}`, `GET /me/orders` và `ticket` phục vụ `GET /me/tickets`. Chưa tài liệu nào nêu class đọc và method `…Api` cần có.
+- **Các phương án:** (1) theo DOC-11: `order.controller` phục vụ E-19, E-20, `ticket.controller` phục vụ E-21, đọc `EventApi.summaries` (đồ thị phụ thuộc hiện có đủ: `order → event, ticket`, `ticket → event`); (2) DOC-85 viết: `payment.controller.OrderController` → `payment.service.OrderQueryService` (`readOnly`) đọc qua `OrderApi.viewOf/listByUser`, `TicketApi.byOrder/listByUser`, `EventApi.summaries`.
+- **Đề xuất:** phương án 1 (khớp DOC-11 đã Approved, không dồn đọc vào `payment`). Khi chốt, sửa DOC-85 (bảng thành phần FL-17) hoặc DOC-11 theo phương án được chọn.
+- **Ghi vào:** DOC-07 §4.1, DOC-11 §4, DOC-27 §2, DOC-37 E-19…21, DOC-85.
+- **Nguồn:** `06-design/flows/ga-purchase.md`
+
+---
+
 ## Tổng hợp theo mức ảnh hưởng
 
 Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu vào của task P0-01 trong master plan.
@@ -1773,9 +2244,10 @@ Mỗi DR được xếp vào phase đầu tiên mà nó chặn. Đây là đầu
 | Chặn P5 | DR-37, DR-62, DR-69, DR-71 | Khóa sơ đồ từ giờ mở bán và dựng lại kho vé trước đó, định dạng tình trạng chỗ, chọn ghế, số liệu bán vé |
 | Chặn P6 | DR-46, DR-55–60 | Tham số rate limit, phòng chờ, kiểm tra lượt vào, nhịp vào |
 | Phát sinh khi viết gate P1 | DR-82–151 | Tóm tắt ở mục N; chi tiết ở tài liệu nguồn của từng mục |
+| Phát sinh khi viết gate P2 | DR-154–235 | Tóm tắt ở mục O; DR-182 và DR-231 còn Đề xuất, chặn P2-09 và EXP-04; DR-224 còn Đề xuất, chặn P2-08 (E-19…21) |
 | Chặn P7 | DR-78 | Dữ liệu và kịch bản demo |
 
 Mục lệch SDD gốc (⚠): DR-02, DR-08, DR-09, DR-10, DR-17, DR-20, DR-21, DR-26, DR-28, DR-31, DR-37, DR-41, DR-43, DR-44, DR-53, DR-56, DR-57, DR-58, DR-60, DR-73.
 Mục cần spike (🔬): DR-02 (S-01), DR-13 (S-02), DR-27 (S-03), DR-39 (S-04), DR-35 (S-05), DR-75 (S-06); S-02…S-06 chạy trước gate của phase cần (DR-152).
 
-Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-07; DR-123–130 do Owner chốt theo đề xuất). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.
+Mọi DR đã ở trạng thái Chốt hoặc Đổi (2026-10-07; DR-123–130 do Owner chốt theo đề xuất), trừ DR-182 (Đề xuất, 2026-10-14), DR-224 và DR-231 (Đề xuất, 2026-10-15). Spike vẫn có thể lật lại mục tương ứng: kết quả xấu được ghi thành dòng mới trong nhật ký chốt và DR được đổi.

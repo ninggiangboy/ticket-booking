@@ -1,6 +1,6 @@
 # Môi trường dev
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-61
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-180; cột `event.name`) · DOC-61
 > Phụ thuộc: SDD gốc §14, [DOC-07](../03-architecture/system-context-and-containers.md) §2, [DOC-11](../03-architecture/tech-stack-and-versions.md) §7, [DOC-12](../03-architecture/code-architecture.md), [DOC-62](deploy-compose.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 04, 07, 22, 51, 72, 73, 77, 78, 80)
 > Người dùng chính: P1-01, P1-02, P1-11 (người mới phải đăng nhập `buyer1@demo.test` trong ≤ 15 phút); mọi task `Pn-xx` khi chạy và kiểm thử cục bộ; DOC-81 (kịch bản demo)
 
@@ -73,7 +73,7 @@ Mỗi target là một dòng trong `Makefile`; CI gọi đúng các target này 
 | `make lint` | Spotless, ESLint, Prettier, `tsc --noEmit`, `i18n:check`, kiểm tra tên migration | `./gradlew -p backend spotlessCheck`; `pnpm --dir frontend lint && pnpm --dir frontend format:check && pnpm --dir frontend typecheck && pnpm --dir frontend i18n:check`; `scripts/check-migrations.sh` | `make fmt` sửa tự động |
 | `make fmt` | Tự định dạng Java và TypeScript | `./gradlew -p backend spotlessApply`; `pnpm --dir frontend format` | |
 | `make contract` | So OpenAPI do springdoc sinh với `api/openapi.yaml` và kiểm tra `schema.d.ts` khớp | `./gradlew -p backend test --tests OpenApiExportTest` (ghi `backend/build/openapi.json`, DR-87), rồi `oasdiff` so với `api/openapi.yaml`; `pnpm --dir frontend gen:api && git diff --exit-code frontend/src/api/schema.d.ts` | Sửa hợp đồng theo quy trình master plan §7.4 |
-| `make invariants` | Kiểm tra bất biến một lần, in JSON, thoát 0 khi sạch, 1 khi có sai lệch (DR-73) | `docker compose … run --rm api --spring.profiles.active=invariants` | |
+| `make invariants` | Kiểm tra bất biến một lần, in JSON, thoát 0 khi sạch, 1 khi có sai lệch, 2 khi không chạy hết (DR-73, DR-180) | `docker compose … run --rm api --spring.profiles.active=invariants` | |
 | `make exp EXP=02` | Chạy một thực nghiệm (DOC-70) | `experiments/run.sh 02` | Dùng `docker-compose.experiment.yml` (DOC-62 §9) |
 | `make up-stripe` | Chạy với Stripe thật: bật profile compose `stripe`, `PAYMENTS_MODE=stripe` | xem §7 | Cần khóa trong `.env` |
 | `make up-obs` | Thêm Prometheus + Grafana (profile `obs`) | `docker compose … --profile obs up -d --wait` | Grafana http://localhost:3000 |
@@ -115,7 +115,7 @@ Cổng bị chiếm: xem §8, mục "bind: address already in use".
 
 Sự kiện mẫu (DR-78): **"Hòa nhạc Giao Mùa"** (180 ghế VIP/Thường/Sinh viên + khu đứng 300 = 480 vé; đang mở bán), **"Hội thảo Nghề Thiết Kế"** (chỉ GA: Đặt sớm đã hết, Phổ thông, Sinh viên), **"Đêm nhạc Sân Thượng"** (sắp mở bán, `high_demand`). Tên sự kiện là dữ liệu của người tổ chức, không dịch (DR-10). Tài khoản demo không có mật khẩu: hệ thống chỉ có magic link (DR-21). Tên miền `demo.test` không tồn tại thật; thư chỉ tới Mailpit.
 
-Kiểm tra seed: `make psql` rồi `SELECT title, status FROM event ORDER BY created_at;` trả 3 dòng (`PUBLISHED`, `PUBLISHED`, `PUBLISHED`).
+Kiểm tra seed: `make psql` rồi `SELECT name, status FROM event ORDER BY created_at;` trả 3 dòng (`PUBLISHED`, `PUBLISHED`, `PUBLISHED`).
 
 ## 6. Đăng nhập qua Mailpit
 

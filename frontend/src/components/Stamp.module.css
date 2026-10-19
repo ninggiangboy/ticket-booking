@@ -1,0 +1,25 @@
+.stamp {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--stamp);
+  border-radius: var(--radius-sm);
+  color: var(--stamp-deep);
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  transform: rotate(4deg);
+  animation: press 240ms ease-out;
+}
+
+.warn {
+  border-color: var(--warn-bd);
+  color: var(--warn-fg);
+}
+
+@keyframes press {
+  from {
+    opacity: 0;
+    transform: rotate(4deg) scale(1.3);
+  }
+}

@@ -1,0 +1,51 @@
+/* Design system "Vé giấy" v0.1 (DOC-39, DR-68, DR-133). The only file allowed to hold colour literals. */
+:root {
+  /* Paper and ink */
+  --paper: #eceef1;
+  --surface: #ffffff;
+  --line: #d3d7de;
+  --line-strong: #868c99;
+  --ink-muted: #5b6272;
+  --ink-2: #2e323c;
+  --ink: #12141a;
+
+  /* Stamp red and semantics */
+  --stamp: #d63312;
+  --stamp-deep: #b5290c;
+  --stamp-tint: #fce9e4;
+  --confirm: #1b7f4b;
+  --confirm-fg: #135c36;
+  --confirm-bg: #e6f3ec;
+  --warn-fg: #6e4a00;
+  --warn-bg: #fbf0d6;
+  --warn-bd: #b8860b;
+  --tear: #b9bec8;
+  --seat-sold: #c9cdd5;
+
+  /* Ticket type colours */
+  --type-1: #bf2a78;
+  --type-2: #2747d9;
+  --type-3: #e5a21a;
+  --type-4: #0b7f6f;
+  --type-5: #6a3fd0;
+
+  /* Type */
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+
+  /* Space, radius */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-pill: 999px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --header-height: 64px;
+}

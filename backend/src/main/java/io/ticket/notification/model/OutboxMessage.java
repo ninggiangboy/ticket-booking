@@ -1,4 +1,4 @@
-package io.ticket.notification.entity;
+package io.ticket.notification.model;
 
 import io.ticket.notification.OutboxKind;
 import java.util.UUID;

@@ -17,7 +17,7 @@ Tính đúng đắn của giữ vé và đơn hàng dựa vào transaction cục
 
 Chọn phương án **3**.
 - Một ứng dụng `api`, job nền cùng tiến trình, PostgreSQL là nguồn chuẩn duy nhất; Redis chỉ giảm tải.
-- Gói gốc `io.ticket`; mỗi module `io.ticket.<module>` chia `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `entity`, `dto` (DR-06).
+- Gói gốc `io.ticket`; mỗi module `io.ticket.<module>` chia `controller`/`job`/`listener` → `service` → `repository`/`client`, cùng `model`, `dto` (DR-06).
 - Mỗi bảng và họ key Redis có đúng một module sở hữu; module khác chỉ dùng package gốc (`…Api`, DTO, event); không vòng phụ thuộc.
 - Đồ thị phụ thuộc cụ thể, module `studio` và `invariant` chỉ đọc theo DR-79; khai báo bằng `@ApplicationModule(allowedDependencies)`.
 - Kiểm tự động: Modulith `verify()` và ArchUnit (DOC-12 §5).

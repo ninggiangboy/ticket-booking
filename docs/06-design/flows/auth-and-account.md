@@ -122,7 +122,7 @@ Mũi tên 6 và 7 gộp thành một khối bằng `alt E5`; khi nginx chặn, `
 | E1 | Email sai định dạng | 2, 7 | client chặn; server 422 `VALIDATION_FAILED` `errors[{field:"email",rule:"invalid_email"}]` | `auth.form.email.error` "Email chưa đúng định dạng." |
 | E2 | Quá 3 link/email/15 phút hoặc 10/IP/giờ | 11 | 202 + `X-Magic-Link-Throttled: 1`, không chèn token, không gửi | Biến thể "gửi quá nhiều": `auth.throttled.title/body` |
 | E3 | SMTP lỗi hoặc quá 5 giây | 15 | 503 `EMAIL_PROVIDER_UNAVAILABLE` + `Retry-After` | `errors.email_provider_unavailable.*`: "Chưa gửi được email"; giữ biểu mẫu, bật lại nút "Gửi đường dẫn đăng nhập" |
-| E4 | Mạng hỏng giữa client và server | 3–4 | không có response | `common.error.network`; giữ biểu mẫu; bấm lại là một lần xin mới |
+| E4 | Mạng hỏng giữa client và server | 3–4 | không có response | `errors.generic.*`; giữ biểu mẫu; bấm lại là một lần xin mới |
 | E5 | nginx `auth_ip` vượt 10 r/phút (burst 5) | 5 | 429 `RATE_LIMITED` + `Retry-After` | `errors.rate_limited.*` "Bạn thao tác quá nhanh. Hãy thử lại sau ít giây." |
 
 Bản 202 của E2 giống 202 thường ngoại trừ header để không lộ việc email đó có tồn tại hay không. Người dùng bị chặn chỉ biết "đã yêu cầu nhiều lần".
@@ -232,7 +232,7 @@ sequenceDiagram
 | --- | --- | --- | --- | --- |
 | E1 | Link đã dùng, hết hạn hoặc bị thay | 7 | 401 `LOGIN_LINK_INVALID` | Biến thể "link hết hạn": `auth.invalid.title/body`, nút `auth.invalid.cta` quay về biểu mẫu email, giữ `returnTo` |
 | E2 | `token` thiếu hoặc sai độ dài (không 43 ký tự base64url) | 4 | 422 `VALIDATION_FAILED` `rule=invalid_token` | Cùng giao diện E1 (không phân biệt với người dùng) |
-| E3 | Mạng hỏng giữa `verify` và response | 4–5 | không có response | `common.error.network` + "Thử lại"; bấm lại gửi cùng token, thường nhận E1 vì token đã dùng ở lần trước: màn hiện E1 và hướng dẫn xin link mới |
+| E3 | Mạng hỏng giữa `verify` và response | 4–5 | không có response | `errors.generic.*` + "Thử lại"; bấm lại gửi cùng token, thường nhận E1 vì token đã dùng ở lần trước: màn hiện E1 và hướng dẫn xin link mới |
 | E4 | `returnTo` hỏng (không bắt đầu bằng một `/`) | 21 | không có | Về `/` |
 | E5 | Cookie bị trình duyệt từ chối (Safari trên `http://localhost`) | 17 | `GET /me` trả 401 ngay sau `verify` | Chỉ xảy ra ở dev; DOC-61 "Lỗi thường gặp": đặt `auth.cookie-secure=false` |
 

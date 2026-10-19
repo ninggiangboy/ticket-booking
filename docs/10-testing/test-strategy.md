@@ -1,6 +1,6 @@
 # Chiến lược kiểm thử
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-06 · DOC-69
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (§12: tiền tố của tài liệu gate P2) · DOC-69
 > Phụ thuộc: SDD gốc §15.1, §15.2, [Sổ quyết định](../00-decision-register.md) (DR-08, 51, 73, 75, 76, 77, 78, 81), [Master plan](../00-master-plan.md) §0.4, §7.2, §7.4, [DOC-06](../02-glossary.md), [DOC-11](../03-architecture/tech-stack-and-versions.md) §4, [DOC-12](../03-architecture/code-architecture.md) §5, §8, [DOC-61](../09-operations/local-dev.md), [DOC-62](../09-operations/deploy-compose.md), [DOC-63](../09-operations/ci-cd.md), [DOC-36](../07-api/api-guidelines.md), [DOC-37](../07-api/api-endpoints.md)
 > Người dùng chính: P1-01 (khung test, JaCoCo, Vitest), P1-05 (test kiến trúc), P1-08 (CI), P1-10 (E2E đầu tiên); mọi task `Pn-xx` khi viết test; người review PR
 
@@ -273,22 +273,37 @@ Nguồn: quét `docs/` ngày 2026-10-06 (`grep` các ô đầu bảng `| PREFIX-
 | `OPS-` | [DOC-61](../09-operations/local-dev.md) (01…08), [DOC-62](../09-operations/deploy-compose.md) (09…19), [DOC-63](../09-operations/ci-cd.md) (20…31) | 01…31 | I, thủ công | Không (đăng ký ở đây; ngoại lệ ba tài liệu chung một tiền tố, dải rời nhau, DR-149) |
 | `FLA-` | [DOC-83](../06-design/flows/auth-and-account.md) | 01…37 | I, E | Có |
 | `TST-` | DOC-69 (tài liệu này) | 01…12 | I | Không (đăng ký ở đây) |
+| `EV-` | [DOC-20](../06-design/events-and-ticket-types.md) | 01…40 (01…27 khớp DOC-03) | I, C | Có |
+| `INVT-` | [DOC-24](../06-design/inventory-and-reservation.md) | 01…32 (01…15 khớp DOC-03) | I, C | Có |
+| `IDEM-` | [DOC-25](../06-design/idempotency.md) | 01…18 (01…06 khớp DOC-03) | I, C | Có |
+| `IC-` | [DOC-30](../06-design/invariant-checker.md) | 01…25 | I | Có |
+| `RET-` | [DOC-18](../05-data/data-lifecycle.md) | 01…10 | I | Không (đăng ký ở đây, DR-160) |
+| `EVL-` | [DOC-42](../08-ux-ui/screens/event-list.md) | AC-01…15, 01…07 | U, E | Không (đăng ký ở đây) |
+| `EVD-` | [DOC-43](../08-ux-ui/screens/event-detail.md) | AC-01…21, 01…07 | U, E | Không (đăng ký ở đây) |
+| `QTY-` | [DOC-47](../08-ux-ui/screens/quantity-picker.md) | AC-01…19, 01…07 | U, E | Không (đăng ký ở đây) |
+| `CHK-` | [DOC-48](../08-ux-ui/screens/checkout.md) | AC-01…23, 01…08 | U, E | Không (đăng ký ở đây) |
+| `ORS-` | [DOC-49](../08-ux-ui/screens/order-result.md) | AC-01…18, 01…08 | U, E | Không (đăng ký ở đây) |
+| `MYT-` | [DOC-50](../08-ux-ui/screens/my-tickets.md) | AC-01…16, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SOP-` | [DOC-53](../08-ux-ui/screens/studio-organizer-profile.md) | AC-01…17, 01…08 | U, E | Không (đăng ký ở đây) |
+| `SOV-` | [DOC-54](../08-ux-ui/screens/studio-overview.md) | AC-01…18, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SEI-` | [DOC-55](../08-ux-ui/screens/studio-event-info.md) | AC-01…27, 01…10 | U, E | Không (đăng ký ở đây) |
+| `STT-` | [DOC-56](../08-ux-ui/screens/studio-ticket-types.md) | AC-01…22, 01…07 | U, E | Không (đăng ký ở đây) |
+| `SPV-` | [DOC-58](../08-ux-ui/screens/studio-preview.md) | AC-01…14, 01…05 | U, E | Không (đăng ký ở đây) |
+| `SPB-` | [DOC-59](../08-ux-ui/screens/studio-publish.md) | AC-01…24, 01…09 | U, E | Không (đăng ký ở đây) |
+| `FLG-` | [DOC-85](../06-design/flows/ga-purchase.md) | 01…08, 10…21, 30…38, 40…46, 50…54, 60…66 | I, E | Có |
+| `FLO-` | [DOC-86](../06-design/flows/operations.md) | 01…20 | I | Có |
 
 ### 12.2 Tiền tố đã dành, tài liệu chưa viết
 
 | Tiền tố | Tài liệu | Cam kết sẵn trong tài liệu khác |
 | --- | --- | --- |
-| `EV-` | DOC-20 (P2) | `requirements.md` dẫn EV-01…27 |
 | `GEO-` | DOC-21 (P4) | — |
 | `ED-` | DOC-22 (P4) | — |
 | `MV-` | DOC-23 (P4) | — |
-| `INVT-` | DOC-24 (P2) | `requirements.md` dẫn INVT-01…15 |
-| `IDEM-` | DOC-25 (P2) | `requirements.md` dẫn IDEM-01…06 |
 | `PAY-` | DOC-26 (P3) | `requirements.md` dẫn PAY-01…14 |
 | `ADM-` | DOC-28 (P6) | `requirements.md` dẫn ADM-01…13 |
 | `AV-` | DOC-29 (P5) | — |
-| `IC-` | DOC-30 (P2) | — |
-| `FLS-`, `FLG-`, `FLO-`, `FLP-`, `FLM-`, `FLV-`, `FLW-` | DOC-84…90 | `FLG-01` đã xuất hiện trong bảng của master plan |
+| `FLS-`, `FLP-`, `FLM-`, `FLV-`, `FLW-` | DOC-84, DOC-87…90 | `FLG-01` đã xuất hiện trong bảng của master plan |
 
 Khi viết DOC-20, 24, 25, 26, 28, các dải đã dẫn ở cột phải là **cam kết**: tài liệu đó phải có đúng các ID này (hoặc sửa `requirements.md` cùng PR).
 

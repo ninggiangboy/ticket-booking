@@ -1,0 +1,6 @@
+{
+  "tickets.title": "My tickets",
+  "tickets.empty.title": "You don't have any tickets yet",
+  "tickets.empty.body": "Tickets you buy will appear here and be emailed to you.",
+  "tickets.empty.cta": "Browse events"
+}

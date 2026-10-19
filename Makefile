@@ -3,7 +3,7 @@ ENV_FILE ?= deploy/compose/.env
 COMPOSE = docker compose --env-file $(ENV_FILE) -f deploy/compose/docker-compose.yml
 S ?=
 
-.PHONY: lint fmt test it build up down reset logs psql dev infra env
+.PHONY: lint fmt test it e2e build up down reset logs psql dev infra env
 
 lint:
 	./backend/gradlew -p backend spotlessCheck
@@ -11,6 +11,7 @@ lint:
 	pnpm --dir frontend format:check
 	pnpm --dir frontend typecheck
 	pnpm --dir frontend i18n:check
+	pnpm --dir frontend gen:api && git diff --exit-code -- frontend/src/api/schema.d.ts
 	scripts/check-migrations.sh
 	scripts/check-secrets.sh
 
@@ -24,6 +25,10 @@ test:
 
 it:
 	./backend/gradlew -p backend integrationTest
+
+# Playwright against the MSW mock API; E2E_BASE_URL=http://localhost:8080 targets `make up` (master plan §7.4)
+e2e:
+	pnpm --dir frontend e2e
 
 build:
 	./backend/gradlew -p backend bootJar

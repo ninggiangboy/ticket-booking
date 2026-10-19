@@ -1,6 +1,6 @@
 # Yêu cầu
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-03
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (FR-02.6 khớp E-35) · DOC-03
 > Phụ thuộc: SDD gốc §3.3–§3.4, [DOC-01](vision-and-scope.md), [DOC-02](personas-and-journeys.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-10…13, 21…28, 31…38, 41…49, 52, 55…66, 70, 71, 73, 74, 75)
 > Người dùng chính: P0-11; [DOC-04](use-cases.md), [DOC-05](feature-catalog.md); mọi tài liệu thiết kế; mọi task `Pn-xx` khi viết test nghiệm thu
 
@@ -48,7 +48,7 @@ Nguồn: SDD gốc §6, DR-24…27, DR-30. UC-02, UC-07, UC-09. Thiết kế: DO
 | FR-02.3 | Khóa lạc quan khi sửa | **G** event `rowVersion = 3`, tab A và B cùng đọc **W** A rồi B `PATCH` kèm `rowVersion: 3` **T** A 200 (`rowVersion` 4); B 409 `STALE_EVENT_VERSION` | M | EV-03 |
 | FR-02.4 | Múi giờ là tên IANA, khóa sau xuất bản | **G** event `DRAFT` **W** `timezone = "+07:00"` **T** 422 `invalid_timezone`; `"Asia/Tokyo"` → 200; sau publish đổi → 422 `locked_after_publish` | M | EV-04 |
 | FR-02.5 | Loại vé: tối đa 5, tên duy nhất, giá hợp lệ | **G** event có 5 loại vé **W** thêm loại thứ 6 **T** 422 `TICKET_TYPE_LIMIT_REACHED`; tên "vip" khi đã có "VIP" → 422; giá 10.000 → 422 (dưới `payment.min-amount` 20.000); giá 0 hoặc 20.000 → 201; `color_index` là số nhỏ nhất chưa dùng | M | EV-05 |
-| FR-02.6 | Mô hình loại vé không đổi sau xuất bản; GA có sức chứa 1–100.000 | **G** event đã `PUBLISHED` **W** đổi `model` **T** 409 `EVENT_STATE_CONFLICT`; `ga_capacity = 100001` → 422 | M | EV-06 |
+| FR-02.6 | Mô hình loại vé không đổi sau xuất bản; GA có sức chứa 1–100.000 | **G** event đã `PUBLISHED` **W** đổi `model` **T** 422 `VALIDATION_FAILED` `rule = locked_after_publish` (*Sửa 2026-10-14:* trước ghi 409 `EVENT_STATE_CONFLICT`, lệch E-35 và DOC-20); `ga_capacity = 100001` → 422 | M | EV-06 |
 | FR-02.7 | Xuất bản tạo kho vé trong một transaction | **G** event GA, pool 5.000 vé **W** `POST …/publish` **T** đúng 5.000 `inventory_unit` `AVAILABLE`; event `PUBLISHED` cùng transaction; thiếu điều kiện → 422 `PUBLISH_PRECONDITIONS_FAILED` kèm danh sách điều kiện chưa đạt | M | EV-07, INVT-xx |
 | FR-02.8 | `displayStatus` tính ở server | **G** event `PUBLISHED`, `now() < sale_starts_at` **T** `UPCOMING`; trong khung và còn unit `AVAILABLE` → `ON_SALE`; trong khung, mọi unit `HELD`/`SOLD` → `SOLD_OUT`; `now() >= sale_ends_at` → `SALE_CLOSED` | M | EV-08 |
 | FR-02.9 | Tạm dừng, mở lại | **G** event `ON_SALE` **W** `POST …/pause` **T** lệnh giữ vé mới 409 `EVENT_NOT_ON_SALE`; reservation đã `ACTIVE` vẫn tạo PaymentIntent và thanh toán tới hết hạn; `…/resume` → giữ vé được lại | M | EV-09 |

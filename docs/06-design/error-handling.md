@@ -1,6 +1,6 @@
 # Xử lý lỗi
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-35
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (cột module ở §2 đổi `catalog` → `event`, `seatmap` → `map` theo DOC-07; `rule` mới `nonexistent_local_time`, `locked_after_sale_end` ở DOC-40 §3.8, DR-162, DR-163) · DOC-35
 > Phụ thuộc: SDD gốc §10.5, §12.3, [DOC-06](../02-glossary.md), [DOC-12](../03-architecture/code-architecture.md) §4, [DOC-36](../07-api/api-guidelines.md), [Sổ quyết định](../00-decision-register.md) (DR-09, 10, 12, 21, 25, 35, 41, 43, 44, 45, 47, 48, 55, 56, 58, 61, 63, 64, 66)
 > Người dùng chính: P1-01 (khung `common.error`), P1-04 (Problem Details và i18n); mọi task backend khi thêm exception; [DOC-37](../07-api/api-endpoints.md) (cột mã lỗi), [DOC-40](../08-ux-ui/ui-states-and-copy.md) (ánh xạ mã lỗi → thông báo)
 
@@ -58,13 +58,13 @@ Các exception cụ thể (tên là class trong package gốc của module nếu
 | `ReservationNotActiveException` | `reservation` | `RESERVATION_NOT_ACTIVE` | `status` |
 | `PaymentWindowTooShortException` | `payment` | `PAYMENT_WINDOW_TOO_SHORT` | `remainingSeconds` |
 | `PaymentAlreadySucceededException` | `payment` | `PAYMENT_ALREADY_SUCCEEDED` | `orderId` |
-| `EventNotOnSaleException` | `catalog` | `EVENT_NOT_ON_SALE` | `displayStatus` |
-| `EventStateConflictException` | `catalog` | `EVENT_STATE_CONFLICT` | `status` |
-| `StaleEventVersionException` | `catalog` | `STALE_EVENT_VERSION` | `currentRowVersion` |
-| `PublishPreconditionsFailedException` | `catalog` | `PUBLISH_PRECONDITIONS_FAILED` | `checks` |
-| `MapLockedAfterSaleException` | `seatmap` | `MAP_LOCKED_AFTER_SALE` | `saleStartsAt` |
-| `MapValidationFailedException` | `seatmap` | `MAP_VALIDATION_FAILED` | `issues` |
-| `RevisionConflictException` | `seatmap` | `REVISION_CONFLICT` | `currentRevision` |
+| `EventNotOnSaleException` | `event` | `EVENT_NOT_ON_SALE` | `displayStatus` |
+| `EventStateConflictException` | `event` | `EVENT_STATE_CONFLICT` | `status` |
+| `StaleEventVersionException` | `event` | `STALE_EVENT_VERSION` | `currentRowVersion` |
+| `PublishPreconditionsFailedException` | `event` | `PUBLISH_PRECONDITIONS_FAILED` | `checks` |
+| `MapLockedAfterSaleException` | `map` | `MAP_LOCKED_AFTER_SALE` | `saleStartsAt` |
+| `MapValidationFailedException` | `map` | `MAP_VALIDATION_FAILED` | `issues` |
+| `RevisionConflictException` | `map` | `REVISION_CONFLICT` | `currentRevision` |
 | `ValidationFailedException` | mọi module | `VALIDATION_FAILED` | `errors[]` |
 | `NotFoundException` | mọi module | `NOT_FOUND` | — |
 | `ForbiddenException` | `auth` | `FORBIDDEN`, `ORGANIZER_PROFILE_REQUIRED` | — |

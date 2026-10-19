@@ -1,0 +1,11 @@
+.retry {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--warn-bd);
+}
+
+.line {
+  color: var(--warn-fg);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}

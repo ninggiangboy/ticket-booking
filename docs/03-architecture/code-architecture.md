@@ -1,10 +1,10 @@
 # Kiến trúc code
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-12
-> Phụ thuộc: SDD gốc §4, §13.2, phụ lục, [DOC-07](system-context-and-containers.md), [DOC-11](tech-stack-and-versions.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 03, 05, 06, 10, 11, 39, 41, 67, 76, 79, 81), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (DR-153; DR-165, 167, 168, 173, 174) · DOC-12
+> Phụ thuộc: SDD gốc §4, §13.2, phụ lục, [DOC-07](system-context-and-containers.md), [DOC-11](tech-stack-and-versions.md), [DOC-06](../02-glossary.md), [Sổ quyết định](../00-decision-register.md) (DR-01, 03, 05, 06, 10, 11, 39, 41, 67, 76, 79, 81, 153), [ADR-0002](../04-adr/0002-modular-monolith-postgres-source-of-truth.md), [ADR-0012](../04-adr/0012-spring-data-jdbc-and-modulith-boundaries.md)
 > Người dùng chính: P1-01, P1-05 (khung module và test kiến trúc); mọi task backend và frontend; người review PR
 
-Tài liệu cho biết đặt class ở đâu, layer nào được làm gì, module gọi nhau thế nào và cách Spring Data JDBC được dùng trong dự án; phần cuối là checklist review. Không giải thích lại Spring. Bảng sở hữu dữ liệu và đồ thị module ở [DOC-07](system-context-and-containers.md) §3–§4; thư viện và phiên bản ở [DOC-11](tech-stack-and-versions.md); mã lỗi và exception ở DOC-35; cấu hình ở DOC-34.
+Tài liệu cho biết đặt class ở đâu, layer nào được làm gì, module gọi nhau thế nào, cách Spring Data JDBC được dùng trong dự án và nên viết code theo cú pháp nào (§2.5); phần cuối là checklist review. Không giải thích lại Spring. Bảng sở hữu dữ liệu và đồ thị module ở [DOC-07](system-context-and-containers.md) §3–§4; thư viện và phiên bản ở [DOC-11](tech-stack-and-versions.md); mã lỗi và exception ở DOC-35; cấu hình ở DOC-34.
 
 ## 1. Bố cục repo
 
@@ -36,10 +36,10 @@ Gói gốc `io.ticket`. Mỗi module nghiệp vụ `io.ticket.<module>` là mộ
 | `<module>.controller` | Điểm vào | `@RestController`, webhook endpoint: nhận request, validate hình thức (`@Valid`), gọi service, trả DTO | HTTP | Gọi repository, client; mở transaction; chứa logic nghiệp vụ; trả entity |
 | `<module>.job` | Điểm vào | `@Scheduled` `…Job`: đọc lịch/cấu hình, gọi service | Lịch | Gọi repository; mở transaction; gọi controller |
 | `<module>.listener` | Điểm vào | Nghe event của module khác (`…Listener`), gọi service | Event | Như `job` |
-| `<module>.service` | Service | `@Service`: logic nghiệp vụ, **ranh giới transaction**, cài đặt `…Api`, mapper `…Mapper` entity ↔ DTO | Điểm vào cùng module; module khác qua `…Api` | Trả entity ra ngoài layer; gọi controller; gọi `service` của module khác (chỉ qua `…Api`) |
-| `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `…Claims` + `…Impl` dùng `JdbcClient`, `…RedisRepository` | Service cùng module | Gọi service; mở transaction; chứa quyết định nghiệp vụ |
+| `<module>.service` | Service | `@Service`: logic nghiệp vụ, **ranh giới transaction**, cài đặt `…Api`, mapper `…Mapper` model ↔ DTO | Điểm vào cùng module; module khác qua `…Api` | Trả entity ra ngoài layer; gọi controller; gọi `service` của module khác (chỉ qua `…Api`) |
+| `<module>.repository` | Truy cập dữ liệu | Repository Spring Data JDBC, custom fragment `…Claims` + `…Impl` dùng `JdbcClient`, class `@Repository` dùng `JdbcClient` cho bảng không có aggregate (`OutboxRepository`), `…RedisRepository` | Service cùng module | Gọi service; mở transaction; chứa quyết định nghiệp vụ |
 | `<module>.client` | Hệ thống ngoài | Stripe (`PaymentGateway` + hai adapter), S3, SMTP | Service cùng module | Gọi service; chạy trong transaction của người gọi mà không có timeout |
-| `<module>.entity` | Dữ liệu | Entity ánh xạ bảng, enum trạng thái | Repository, service cùng module | Có logic gọi ra ngoài |
+| `<module>.model` | Dữ liệu | Model ánh xạ bảng, enum trạng thái | Repository, service cùng module | Có logic gọi ra ngoài |
 | `<module>.dto` | Dữ liệu | `record` request/response của REST API | Controller, service cùng module | Dùng ở module khác (DTO chia sẻ nằm ở package gốc) |
 | `<module>.config` | Kỹ thuật (không phải layer) | `@Configuration`, `@ConfigurationProperties` (`record`), bean chọn bản cài đặt (`inventory.strategy`) | Spring | Chứa logic nghiệp vụ |
 
@@ -49,7 +49,7 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 
 1. Chiều gọi chỉ đi xuống: điểm vào (`controller`, `job`, `listener`) → `service` → `repository` / `client`. Điểm vào không gọi repository hay client và không gọi lẫn nhau; repository và client không gọi service.
 2. `@Transactional` chỉ đặt ở `service`; điểm vào không tự mở transaction.
-3. Entity không ra khỏi layer service: controller nhận và trả DTO; service đổi entity ↔ DTO bằng mapper viết tay (`…Mapper`, không MapStruct).
+3. Model không ra khỏi layer service: controller nhận và trả DTO; service đổi model ↔ DTO bằng mapper viết tay (`…Mapper`, không MapStruct).
 4. DTO là `record` (Java 25), bất biến; validate bằng Bean Validation trên controller (`@Valid`).
 5. Hằng số tên cột/bảng không dùng chung giữa module (mỗi module có SQL của riêng mình).
 
@@ -66,7 +66,7 @@ Gói `config` không có trong DR-06; nó là package kỹ thuật cho cấu hì
 | Module | `allowedDependencies` |
 | --- | --- |
 | `auth`, `media`, `notification`, `inventory` | (không có; chỉ `common`) |
-| `event` | `inventory` |
+| `event` | `inventory`, `auth` (*Sửa 2026-10-14 (DR-165):* `AuthApi.organizerPublicInfo` cho E-07; `mapVersion` qua SPI `event.SeatMapVersionLookup` do `map` cài từ P5) |
 | `ticket` | `event` |
 | `order` | `event`, `ticket` |
 | `map` | `event`, `inventory`, `media` |
@@ -92,8 +92,10 @@ io.ticket.reservation
 │   └── ReleaseExpiredHoldsJob.java         # @Scheduled(fixedDelayString = "${reservation.expiry.interval}")
 ├── listener/                               # (module này chưa nghe event nào)
 ├── service/
-│   ├── HoldService.java                    # điều phối transaction giữ vé (DR-41)
-│   ├── ReleaseService.java                 # thủ tục trả vé dùng chung cho job và đường nhanh (DR-43)
+│   ├── HoldService.java                    # điều phối giữ vé, không transaction: kiểm tra hình thức, bulkhead, Redis (DR-41, DR-167)
+│   ├── HoldTxService.java                  # transaction giữ vé T0…T8 (DOC-24 §4.1)
+│   ├── ReleaseService.java                 # thủ tục trả vé dùng chung cho job và đường nhanh, không transaction (DR-43, DR-167)
+│   ├── ReleaseTxService.java               # các transaction ngắn của trả vé (DOC-24 §4.4)
 │   ├── IdempotencyService.java             # cài đặt IdempotencyApi
 │   ├── ReservationService.java             # cài đặt ReservationApi
 │   └── ReservationMapper.java
@@ -102,7 +104,7 @@ io.ticket.reservation
 │   ├── ReservationClaims.java              # custom fragment: câu SQL claim reservation đến hạn (JdbcClient)
 │   ├── ReservationClaimsImpl.java
 │   └── IdempotencyKeyRepository.java
-├── entity/
+├── model/
 │   ├── Reservation.java                    # aggregate, @MappedCollection reservation_item
 │   ├── ReservationItem.java
 │   └── ReservationStatus.java              # enum ↔ text
@@ -113,15 +115,39 @@ io.ticket.reservation
     └── ReservationProperties.java          # @ConfigurationProperties("reservation") record
 ```
 
-Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `repository/InventoryClaimer` (interface) với `SkipLockedClaimer`, `CounterClaimer`, `NaiveClaimer` (DR-76); `repository/InventoryUnitRepository` + `InventoryUnitClaims` + `InventoryUnitClaimsImpl`; `service/InventoryService implements InventoryApi`; `entity/InventoryUnit`, `UnitStatus`; `config/InventoryStrategyConfig` chọn bean theo `inventory.strategy` (khác `skip-locked` thì cần profile `experiment`, nếu không API từ chối khởi động).
+Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `repository/InventoryClaimer` (interface) với `SkipLockedClaimer`, `CounterClaimer`, `NaiveClaimer` (DR-76); `repository/InventoryUnitRepository` + `InventoryUnitClaims` + `InventoryUnitClaimsImpl`; `service/InventoryService implements InventoryApi`; `model/InventoryUnit`, `UnitStatus`; `config/InventoryStrategyConfig` chọn bean theo `inventory.strategy` (khác `skip-locked` thì cần profile `experiment`, nếu không API từ chối khởi động).
 
 ### 2.4 Transaction
 
-- **Chỉ `service` mở transaction** (`@Transactional`). Mặc định `REQUIRED`, `READ COMMITTED` (mặc định PostgreSQL).
+- **Chỉ `service` mở transaction, và chỉ bằng `@Transactional`** (không `TransactionTemplate`, §2.5). Mặc định `REQUIRED`, `READ COMMITTED` (mặc định PostgreSQL).
 - **Module điều phối** của transaction liên module ([DOC-07](system-context-and-containers.md) §4.3) mở transaction; method của `…Api` chỉ được gọi bên trong transaction khác đánh `@Transactional(propagation = Propagation.MANDATORY)` để nổ lỗi ngay nếu bị gọi ngoài transaction. Method `…Api` đọc độc lập dùng `REQUIRED` (hoặc `readOnly`).
 - Transaction nóng đặt `SET LOCAL statement_timeout` và `lock_timeout` bằng `JdbcClient` ở đầu transaction (giữ vé: 2 giây và 1 giây; xuất bản: 30 giây; hủy event: 60 giây; dựng lại kho vé theo sơ đồ: `lock_timeout` 5 giây).
 - **Không gọi ra ngoài khi đang mở transaction:** Stripe, SMTP, S3, Redis chạy trước hoặc sau transaction, hoặc qua outbox. Kiểm tra rẻ (Redis, `ZSCORE`, cờ hết vé, rate limit, bulkhead) chạy **trước** khi lấy connection.
 - So sánh thời gian quyết định nghiệp vụ nằm trong SQL bằng `now()`; Java không gọi `Instant.now()` cho hạn giữ vé, hạn token, khung mở bán (DR-12).
+- **Luồng có nhiều transaction ngắn xen với gọi ra ngoài** (relay outbox, gửi magic link): một service điều phối **không** đánh `@Transactional` gọi một service khác của cùng module có các method `@Transactional` nhỏ, rồi gọi ra ngoài giữa các lần gọi đó. Ví dụ đã cài: `OutboxRelayService` (không transaction) → `OutboxQueueService.claim()`, gửi SMTP, `OutboxQueueService.sent(id)` (DOC-27 §5.2).
+
+### 2.5 Phong cách code: chọn cú pháp dễ đọc (DR-153)
+
+Dự án để học và người làm là dev backend còn ít kinh nghiệm (DR-06), nên khi có hai cách viết cùng chạy đúng, chọn cách **khai báo, đọc là hiểu**, kể cả khi nó kém tối ưu một chút. Mục tiêu: đọc tài liệu thiết kế rồi đọc code thấy khớp từng bước, không phải lần theo callback hay API cấp thấp.
+
+| Việc | Dùng | Không dùng trong `src/main` |
+| --- | --- | --- |
+| Mở transaction | `@Transactional` trên method `public` của bean `service` | `TransactionTemplate`, `PlatformTransactionManager`, `TransactionSynchronizationManager`/`TransactionSynchronization` |
+| Nhiều transaction ngắn trong một luồng | Tách bean: service điều phối gọi service có method `@Transactional` (§2.4) | Gọi method `@Transactional` của chính class (`this.foo()` bỏ qua proxy nên không có transaction) |
+| Việc sau commit (gửi SMTP, gọi Stripe) | Gọi tuần tự trong service điều phối sau khi method `@Transactional` trả về | Callback `afterCommit`, `@TransactionalEventListener(AFTER_COMMIT)` |
+| Câu SQL cố định | Method `@Query`/`@Modifying @Query` trên repository Spring Data | `JdbcClient` khi `@Query` đủ dùng |
+| SQL ghép động, map sang `record` không phải aggregate, bảng không có aggregate | `JdbcClient` | `NamedParameterJdbcTemplate`, `JdbcTemplate.query…` |
+| Chèn theo lô (DR-106) | `JdbcTemplate.batchUpdate` (`JdbcClient` không có API batch) | Vòng lặp gọi `insert` từng dòng |
+| Cấu hình | `record` `@ConfigurationProperties` + `@Validated` (DR-146) | `@Value("${…}")` rải trong class |
+| Inject | Constructor (một constructor thì không cần `@Autowired`) | Inject vào field, `ApplicationContext.getBean` |
+| Logic Java | `if`/`for`/`switch` khi rõ hơn chuỗi stream; tên biến đầy đủ | Stream lồng nhiều tầng, `Optional` dùng thay `if` |
+
+Hệ quả cần chấp nhận:
+
+- **Transaction rộng hơn mức tối thiểu là được.** Không tách method chỉ để thu hẹp transaction vài câu `SELECT`. Hai giới hạn vẫn giữ: không gọi ra ngoài trong transaction (§2.4) và đặt `SET LOCAL statement_timeout`/`lock_timeout` cho transaction nóng.
+- Method `@Transactional` đặt `public` dù Spring 6+ cũng proxy được method package-private: người đọc không phải nhớ quy tắc proxy.
+- Test được dùng `TransactionTemplate` để commit dữ liệu chuẩn bị mà code cần đọc ở transaction khác (ví dụ `OutboxRelayIT`); `@Transactional` trên method test sẽ rollback và che mất hành vi thật.
+- ARC-03 kiểm phần transaction của bảng (§5); các dòng còn lại kiểm khi review (mục 16 của §7).
 
 > **Cài đặt ở P1-05.** `package-info.java` của 13 module khai báo `allowedDependencies`; mọi module thêm `common` (module `common` đặt `type = OPEN` để dùng được các package con). `payment` và `studio` có thêm `auth` theo `AuthApi` của DOC-19 §11 (DR-102). Test kiến trúc ở `backend/src/test/java/io/ticket/arch` và `ModularityTests`; mỗi quy tắc có fixture vi phạm ở `src/test/java/fixture/**` làm test đỏ (ARC-10…15). ARC-05 và ARC-07 đọc mã nguồn để tìm chuỗi SQL (ArchUnit không thấy literal). ARC-06 cấm `save()` trên `Reservation|Order|Ticket|Event|OutboxMessage` repository, trừ class tên kết thúc bằng `Inserter`. ARC-08 và ARC-09 chưa có `…Api`/khóa cấu hình nên chờ task sau.
 
@@ -131,7 +157,7 @@ Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `reposit
 
 | Module | Aggregate (có `save()` để chèn và sửa trường không phải trạng thái) | Truy cập không qua aggregate |
 | --- | --- | --- |
-| `auth` | `AppUser`, `Organizer` | `login_token`, `session` (`JdbcClient`/`@Modifying @Query`, không `save()`) |
+| `auth` | `AppUser`, `Organizer`, `LoginToken` (khóa `token_hash bytea`; dòng được chèn bằng `@Modifying @Query` để `created_at`/`expires_at` lấy từ `now()` của DB, DR-12; không `save()`) | `session` (`JdbcClient`/`@Modifying @Query`, không `save()`) |
 | `media` | `Media` | — |
 | `event` | `Event` (`@Version` trên `row_version`), `TicketType` | — |
 | `map` | `SeatMap`, `SeatMapVersion` | — |
@@ -140,16 +166,16 @@ Module `inventory` tương tự: `InventoryApi`, `ClaimResult` (gốc); `reposit
 | `order` | `Order` (`@Table("orders")`) | — |
 | `ticket` | `Ticket` | — |
 | `payment` | — | `stripe_event`, `fake_payment_intent` (`JdbcClient`) |
-| `notification` | `OutboxMessage` | claim bằng `@Modifying @Query` |
+| `notification` | — (*Đổi (DR-153):* không có aggregate; `OutboxMessage` là `record` của dòng đã claim) | `outbox`: class `OutboxRepository` dùng `JdbcClient`, chèn theo lô bằng `JdbcTemplate.batchUpdate`; mọi đổi trạng thái là `UPDATE … AND status = 'PENDING'` |
 
 ### 3.2 Luật
 
 1. **Không bao giờ đổi `status` bằng `save()`.** Mọi chuyển trạng thái là method `@Modifying @Query("UPDATE … WHERE … AND status = :from")` trả `int` số dòng; service kiểm tra số dòng và quyết định (SDD gốc 4.2). `save()` chỉ dùng để chèn dòng mới và sửa trường không phải trạng thái (tên, mô tả, giá, bản nháp sơ đồ).
-2. **ID gán trước bằng UUIDv7** (DR-11): chèn bằng `JdbcAggregateTemplate.insert(entity)` (hoặc entity cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
-3. **`Reservation` chỉ `save()` một lần lúc chèn:** aggregate có `@MappedCollection` bị xóa-chèn lại toàn bộ con khi `save()`.
+2. **ID gán trước bằng UUIDv7** (DR-11): chèn bằng `JdbcAggregateTemplate.insert(model)` (hoặc model cài `Persistable.isNew()`), vì `save()` với ID khác null sẽ chạy `UPDATE`.
+3. **`Reservation` không bao giờ `save()`.** *Sửa 2026-10-14 (DR-168):* dòng `reservation` chèn bằng `@Modifying @Query` `INSERT … ON CONFLICT … DO NOTHING RETURNING expires_at` (DR-41 bước 3 cần `ON CONFLICT`), `reservation_item` chèn theo lô bằng `ReservationItemWriter` (`JdbcTemplate.batchUpdate`) sau claim; aggregate chỉ để đọc (DOC-24 §4.1.1). Lý do cũ vẫn đúng: `save()` trên aggregate có `@MappedCollection` xóa-chèn lại toàn bộ con.
 4. **SQL phức tạp** (claim `SKIP LOCKED` có CTE và `RETURNING`, chèn hàng loạt `generate_series`, snapshot tình trạng, kiểm tra bất biến) nằm trong custom repository fragment dùng `JdbcClient`; vẫn là SQL viết tay, ở trong module sở hữu bảng.
 5. **Cột `jsonb`** (`seat_map.draft`, `seat_map_version.document`, `reservation_item.label`, `ticket.label`, `outbox.payload`) ánh xạ bằng cặp `@ReadingConverter`/`@WritingConverter` qua `PGobject`; cột trạng thái ánh xạ Java `enum` ↔ `text`.
-6. **Khóa lạc quan:** `Event.rowVersion` dùng `@Version`; `PATCH` so `rowVersion` của client với entity đã đọc, lệch → `StaleEventVersionException` (409 `STALE_EVENT_VERSION`); `OptimisticLockingFailureException` do đua cũng ánh xạ về mã này (DR-70).
+6. **Khóa lạc quan:** `Event.rowVersion` dùng `@Version`; `PATCH` so `rowVersion` của client với model đã đọc, lệch → `StaleEventVersionException` (409 `STALE_EVENT_VERSION`); `OptimisticLockingFailureException` do đua cũng ánh xạ về mã này (DR-70).
 7. **Truy vấn đọc cho giao diện** viết bằng `@Query` trả projection `record`, không nạp aggregate.
 
 ```java
@@ -206,37 +232,43 @@ class MapToJsonb implements Converter<Map<String, Object>, PGobject> {
 
 ### 3.3 `…Api` và nơi mở transaction (ví dụ)
 
+*Sửa 2026-10-14 (DR-167, DR-173, DR-174):* chữ ký đầy đủ của `InventoryApi` ở DOC-24 §3.2; ví dụ dưới chỉ minh họa nơi mở transaction.
+
 ```java
-// io.ticket.inventory.InventoryApi (package gốc)
+// io.ticket.inventory.InventoryApi (package gốc), rút gọn
 public interface InventoryApi {
-  /** Bên trong transaction của HoldService. Trả số unit đã claim; bên gọi so với số yêu cầu. */
-  ClaimResult claim(UUID eventId, UUID reservationId, List<ClaimRequest> items);
-
-  /** Xác nhận: HELD → SOLD cho mọi unit của reservation. */
-  int confirmSold(UUID reservationId);
-
-  /** Trả vé: HELD → AVAILABLE cho mọi unit của reservation. */
-  int release(UUID reservationId);
-
-  AvailabilitySnapshot snapshot(UUID eventId);           // đọc độc lập, cache Caffeine 2 giây
-  int createSeatUnits(UUID eventId, Map<UUID, UUID> ticketTypeBySeat, String documentJson);
+  @Transactional(propagation = Propagation.MANDATORY)
+  ClaimResult claim(UUID eventId, UUID reservationId, List<ClaimItem> items);
+  @Transactional(propagation = Propagation.MANDATORY)
+  int confirmSold(UUID reservationId, List<PoolQuantity> poolItems);   // poolItems cho CounterClaimer
+  @Transactional(propagation = Propagation.MANDATORY)
+  Set<UUID> release(UUID reservationId, List<PoolQuantity> poolItems);
+  Map<UUID, AvailabilitySummary> availabilityOf(Collection<UUID> eventIds);  // đọc độc lập, Caffeine
 }
 
-// io.ticket.reservation.service.HoldService
+// io.ticket.reservation.service.HoldService: điều phối, KHÔNG @Transactional
 @Service
-class HoldService {
+public class HoldService {
+  public HoldOutcome hold(UUID userId, UUID eventId, IdempotencyRequest idem, CreateReservationRequest req) {
+    // kiểm tra hình thức → bulkhead → cờ hết vé (Redis) → holdTx.holdInTransaction(cmd)
+  }
+}
+
+// io.ticket.reservation.service.HoldTxService
+@Service
+public class HoldTxService {
   @Transactional
-  public ReservationResponse hold(UUID userId, UUID eventId, UUID idemKey, String rawBody, HoldCommand cmd) {
+  public HoldOutcome holdInTransaction(HoldCommand cmd) {
     // SET LOCAL statement_timeout = '2s'; lock_timeout = '1s'
     // 1. idempotency  2. eventApi.requireOnSale  3. insert reservation
-    // 4. inventoryApi.claim  5. orderApi.createPending  6. idempotency.complete(…)
+    // 4. inventoryApi.claim  5. items + orderApi.createPending  6. idempotency.complete(…)
   }
 }
 ```
 
 ## 4. DTO, lỗi và log
 
-- **DTO** là `record`; tên trường camelCase; trường không có giá trị là `null` (không bỏ, DR-63). Mapper entity ↔ DTO viết tay, đặt ở `service`.
+- **DTO** là `record`; tên trường camelCase; trường không có giá trị là `null` (không bỏ, DR-63). Mapper model ↔ DTO viết tay, đặt ở `service`.
 - **Lỗi nghiệp vụ** là exception kế thừa `common.error.DomainException(code, status)`; exception thuộc hợp đồng `…Api` nằm ở package gốc, exception nội bộ ở `service`. `@RestControllerAdvice` trong `common` đổi sang Problem Details; bảng exception → mã lỗi → HTTP ở DOC-35. Service không trả `ResponseEntity`.
 - **Log:** JSON ECS; MDC `trace_id` (từ `X-Request-Id`), `user_id`, `event_id`, `reservation_id`, `order_id`; không bao giờ log email (DR-09, DR-22). Lỗi nghiệp vụ mức INFO/WARN, lỗi lập trình mức ERROR (DOC-35).
 
@@ -248,8 +280,8 @@ Chạy trong `make test`; mỗi quy tắc có test thất bại có chủ đích
 | --- | --- | --- | --- |
 | ARC-01 | Spring Modulith `ApplicationModules.of(Application.class).verify()` | Chỉ dùng package gốc của module khác; không vòng phụ thuộc; chỉ `allowedDependencies` khai báo | Một unit test `ModularityTests` |
 | ARC-02 | ArchUnit `layeredArchitecture()` | Chiều gọi trong module: điểm vào → service → repository/client; điểm vào không gọi nhau | `LayerRulesTest` |
-| ARC-03 | ArchUnit | `@Transactional` chỉ trong `..service..` | `TransactionRulesTest` |
-| ARC-04 | ArchUnit | `..controller..` không dùng `..entity..` | `LayerRulesTest` |
+| ARC-03 | ArchUnit | `@Transactional` chỉ trong `..service..`; mã chính không dùng `TransactionTemplate`, `PlatformTransactionManager`, `TransactionSynchronizationManager` (DR-153) | `TransactionRulesTest` |
+| ARC-04 | ArchUnit | `..controller..` không dùng `..model..` | `LayerRulesTest` |
 | ARC-05 | ArchUnit tùy biến | Chuỗi SQL (hằng, `@Query`, text block) trong module X chỉ nhắc bảng của X theo danh sách ở DOC-07 §4.1 | `TableOwnershipTest` |
 | ARC-06 | ArchUnit tùy biến | Không method nào ngoài lớp chèn gọi `save()` trên aggregate có cột `status` (`Reservation`, `Order`, `Ticket`, `Event`, `OutboxMessage`) | `NoStatusSaveTest` |
 | ARC-07 | ArchUnit tùy biến | Package `io.ticket.invariant` không chứa `INSERT/UPDATE/DELETE` | `InvariantReadOnlyTest` |
@@ -278,7 +310,7 @@ frontend/
 │   ├── map-core/               # schema/seat-map.v1.json, model, geometry, validation, render, fixtures/validation/*.json
 │   ├── components/             # component design system (DOC-39): Button, Field, Chip, SeatLegend, HoldTimer…
 │   ├── lib/                    # offset giờ server, idempotency key, lưu lựa chọn (localStorage), định dạng Intl
-│   ├── locales/{vi,en}/*.json  # common, events, seats, checkout, tickets, queue, studio, editor, auth, error, validation
+│   ├── locales/{vi,en}/*.json  # common, events, seats, checkout, tickets, queue, studio, editor, auth, errors, validation
 │   ├── mocks/                  # MSW handler theo nhóm endpoint (VITE_API_MOCK=1)
 │   └── styles/tokens.css       # token "Vé giấy" (DR-68)
 ├── e2e/                        # Playwright
@@ -303,7 +335,7 @@ Người review (và tác giả) đối chiếu từng mục; mục nào liên q
 | 1 | **Câu ghi có điều kiện:** mọi đổi trạng thái là `UPDATE … WHERE … AND status = :from`, kiểm số dòng trả về; không đọc rồi mới quyết định ghi | Đọc diff; `NoStatusSaveTest` |
 | 2 | **Không gọi ra ngoài trong transaction:** Stripe, SMTP, S3, Redis nằm trước, sau transaction hoặc qua outbox; kiểm tra rẻ chạy trước khi lấy connection | Đọc diff; không `@Transactional` gọi `client`/Redis |
 | 3 | **Không chuỗi giao diện cứng** trong JSX, email, message; có key ở `vi` và `en` | `pnpm i18n:check`, test `messages_*.properties` |
-| 4 | Layer đúng: controller chỉ nhận/trả DTO, entity không ra khỏi `service`, `@Transactional` chỉ ở `service` | `LayerRulesTest`, `TransactionRulesTest` |
+| 4 | Layer đúng: controller chỉ nhận/trả DTO, model không ra khỏi `service`, `@Transactional` chỉ ở `service` | `LayerRulesTest`, `TransactionRulesTest` |
 | 5 | Chỉ dùng package gốc của module khác; bảng của module khác không xuất hiện trong SQL | `ModularityTests`, `TableOwnershipTest` |
 | 6 | `…Api` mới: method chỉ gọi trong transaction đánh `MANDATORY` và có trong bảng giao dịch liên module ở DOC-07 §4.3 | Đọc diff, cập nhật DOC-07 |
 | 7 | Thời gian quyết định nghiệp vụ dùng `now()` của database | `grep Instant.now` trong service nghiệp vụ |
@@ -315,6 +347,7 @@ Người review (và tác giả) đối chiếu từng mục; mục nào liên q
 | 13 | Migration mới theo `V<yyyymmddHHmm>__<snake_case>.sql`, không sửa migration đã merge, chạy sạch trên `postgres:18-alpine` | `make it` |
 | 14 | `FL-xx` và `E-xx` liên quan đã cập nhật khi đổi endpoint, câu SQL, mã lỗi hoặc thông báo giao diện | Checklist PR (master plan §7.2) |
 | 15 | Test mới có tiền tố của tài liệu thiết kế và đăng ký ở DOC-69 | Đọc diff |
+| 16 | Cú pháp theo §2.5: transaction bằng `@Transactional` trên method `public` gọi qua bean khác, cấu hình qua `@ConfigurationProperties`, `@Query` trước `JdbcClient` | `TransactionRulesTest`, đọc diff |
 
 ## 8. Test bắt buộc
 
@@ -331,4 +364,4 @@ Tiền tố `ARC-` (đăng ký ở DOC-69). Các test ở §5 (`ARC-01…09`) l�
 
 ## Câu hỏi còn mở
 
-Không có. Quyết định phát sinh khi viết tài liệu này: DR-79 (đồ thị phụ thuộc, `allowedDependencies`, SPI), DR-81 (package kỹ thuật `config`, danh sách thư viện bổ sung).
+Không có. Quyết định phát sinh khi viết tài liệu này: DR-79 (đồ thị phụ thuộc, `allowedDependencies`, SPI), DR-81 (package kỹ thuật `config`, danh sách thư viện bổ sung), DR-153 (cú pháp dễ đọc, §2.5).

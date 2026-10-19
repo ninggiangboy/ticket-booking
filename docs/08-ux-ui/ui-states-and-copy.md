@@ -1,6 +1,6 @@
 # Trạng thái giao diện và microcopy
 
-> Trạng thái: **Approved** · Cập nhật: 2026-10-07 · DOC-40
+> Trạng thái: **Approved** · Cập nhật: 2026-10-14 (key của spec màn hình gate P2 DOC-42…50; `validation.locked_after_sale_end`, `validation.nonexistent_local_time` theo DR-162, DR-163) · DOC-40
 > Phụ thuộc: SDD gốc §12.3, §13, [Sổ quyết định](../00-decision-register.md) (DR-10, 12, 13, 24, 25, 26, 28, 41, 44, 45, 52, 57, 58, 59, 63, 64, 66, 70), [DOC-06](../02-glossary.md), [DOC-31](../06-design/i18n.md) (quy trình thêm chuỗi), [DOC-35](../06-design/error-handling.md) (bảng exception → mã lỗi), [DOC-38](ux-principles-and-ia.md), [DOC-39](design-system.md)
 > Người dùng chính: P1-01 (khung frontend, i18n), mọi task màn hình P1–P6, DOC-41…60 (màn hình dẫn key ở đây), DOC-51 (email dùng cùng phong cách), người dịch
 
@@ -119,7 +119,7 @@ Trang Sự kiện (DOC-43) cho `CANCELLED` dùng hai chuỗi tùy có đơn đã
 | `REFUND_PENDING` | Chờ hoàn tiền | Refund pending |
 | `REFUNDED` | Đã hoàn tiền | Refunded |
 
-`ticket.status`: `ISSUED` hiện "Còn hiệu lực" / "Valid"; `VOID` hiện "Đã vô hiệu" / "Void" (khi sự kiện bị hủy, DR-28).
+`ticket.status` (key `common.ticketStatus.<status>`): `ISSUED` hiện "Còn hiệu lực" / "Valid"; `VOID` hiện "Đã vô hiệu" / "Void" (khi sự kiện bị hủy, DR-28).
 
 **Trạng thái hàng đợi** (`queue.status.<state>`, DR-57): `PRE_QUEUE` "Chờ trước giờ mở bán"; `WAITING` "Đang xếp hàng"; `ADMITTED` "Tới lượt"; `PAUSED` "Tạm hết vé"; `SOLD_OUT` "Đã hết vé"; `NOT_IN_QUEUE` (không hiện, chuyển trang); `DISCONNECTED` (chỉ client) "Mất kết nối".
 
@@ -293,6 +293,18 @@ Phòng chờ (`PhongCho`, namespace `queue`; DOC-45):
 | `queue.offline.lastPosition` | Vị trí gần nhất của bạn | Your last known position |
 | `queue.offline.title` | Mất kết nối với phòng chờ | Lost connection to the waiting room |
 | `queue.offline.body` | Trang đang tự thử lại. Bạn vẫn giữ vị trí nếu kết nối lại trong vòng 2 phút. | The page is retrying. You keep your position if it reconnects within 2 minutes. |
+
+*Bổ sung 2026-10-14 (spec màn hình gate P2, DOC-42…50):*
+
+| Key | `vi` | `en` |
+| --- | --- | --- |
+| `events.list.more` | Xem thêm sự kiện | Show more events |
+| `events.list.more.error` | Không tải được thêm sự kiện. Danh sách hiện có vẫn giữ nguyên. | Couldn't load more events. The list you have is unchanged. |
+| `events.detail.cta.soon.countdownToday` | {time} | {time} |
+| `events.detail.how.1ga.title` | Chọn số lượng vé | Choose how many tickets |
+| `events.detail.how.1ga.body` | Chọn số vé cho từng loại; vé vào cửa tự do, không số ghế. | Pick a quantity for each type; general admission, no seat numbers. |
+| `events.detail.how.3free.title` | Nhận vé qua email | Get your tickets by email |
+| `events.detail.how.3free.body` | Vé miễn phí không cần thẻ. Vé cũng nằm ở trang Vé của tôi. | Free tickets need no card. They also appear on My tickets. |
 
 ### 3.4 `studio`
 
@@ -675,6 +687,23 @@ Thanh toán (`ThanhToan`, DOC-48):
 | `checkout.error.title` | Không tải được đơn của bạn | Couldn't load your order |
 | `checkout.error.body` | Vé vẫn đang được giữ cho bạn và đồng hồ vẫn chạy. Kiểm tra kết nối mạng rồi thử lại. | Your tickets are still held and the clock is still running. Check your connection and try again. |
 
+*Bổ sung 2026-10-14 (spec màn hình gate P2, DOC-42…50):*
+
+| Key | `vi` | `en` |
+| --- | --- | --- |
+| `checkout.order.item.ga` | {name} × {qty} | {name} × {qty} |
+| `checkout.ga.loading` | Đang tải loại vé… | Loading ticket types… |
+| `checkout.ga.error.title` | Không tải được loại vé | Couldn't load ticket types |
+| `checkout.ga.error.body` | Kiểm tra kết nối mạng rồi thử lại. Số vé bạn đã chọn vẫn được nhớ. | Check your connection and try again. Your selection is remembered. |
+| `checkout.ga.overLeft` | Chỉ còn {count} vé | Only {count} left |
+| `checkout.release.dialog.label` | Hủy giữ vé | Release hold |
+| `checkout.release.dialog.title` | Trả lại vé đang giữ? | Give back your tickets? |
+| `checkout.release.dialog.body` | Vé được trả lại ngay cho người khác. Bạn có thể chọn lại nếu vẫn còn chỗ. | Your tickets go straight back to others. You can pick again if there's still room. |
+| `checkout.release.dialog.keep` | Giữ vé | Keep tickets |
+| `checkout.release.dialog.confirm` | Hủy giữ vé | Release hold |
+| `checkout.release.pending` | Đang trả vé, có thể mất vài giây trước khi bạn giữ vé mới. | Releasing your tickets. It may take a few seconds before you can hold new ones. |
+| `checkout.expiring.body` | Đang kiểm tra trạng thái giữ vé của bạn… | Checking the status of your hold… |
+
 ### 3.6 `orders` (Kết quả) và vé (`tickets`)
 
 Kết quả (`KetQua`, DOC-49):
@@ -733,6 +762,21 @@ Vé của tôi (`VeCuaToi`, DOC-50) và thẻ vé:
 | `tickets.error.title` | Không tải được vé của bạn | Couldn't load your tickets |
 | `tickets.error.body` | Vé của bạn vẫn an toàn và vẫn có trong email. Kiểm tra kết nối mạng rồi thử lại. | Your tickets are safe and still in your email. Check your connection and try again. |
 
+*Bổ sung 2026-10-14 (spec màn hình gate P2, DOC-42…50):*
+
+| Key | `vi` | `en` |
+| --- | --- | --- |
+| `orders.paid.summary.free` | {count, plural, other {# vé}} {type} · miễn phí | {count, plural, one {# {type} ticket} other {# {type} tickets}} · free |
+| `orders.confirming.slow` | Việc xác nhận đang lâu hơn bình thường. Khi có kết quả, chúng tôi gửi email cho bạn; bạn cũng có thể xem lại ở Vé của tôi. | Confirmation is taking longer than usual. We'll email you when it's done; you can also check My tickets. |
+| `orders.refund.note.noEmail` | Bạn không cần làm gì thêm. Thời gian hoàn tiền: {sla}. | You don't need to do anything. Refund time: {sla}. |
+| `orders.loading` | Đang tải đơn của bạn… | Loading your order… |
+| `orders.error.title` | Không tải được đơn của bạn | Couldn't load your order |
+| `orders.error.body` | Đơn và vé của bạn vẫn an toàn và vẫn có trong email. Kiểm tra kết nối mạng rồi thử lại. | Your order and tickets are safe and still in your email. Check your connection and try again. |
+| `tickets.order.free` | {count, plural, other {# vé}} · miễn phí | {count, plural, one {# ticket} other {# tickets}} · free |
+| `tickets.order.viewOrder` | Xem đơn | View order |
+| `tickets.more` | Xem thêm vé | Show more tickets |
+| `tickets.refunds.error` | Không tải được các đơn đang chờ hoàn tiền. Vé của bạn bên dưới vẫn đầy đủ. | Couldn't load orders awaiting a refund. Your tickets below are complete. |
+
 ### 3.7 Trang lỗi (`errors.page`)
 
 Nguồn: `TrangLoi` (E1, E3, E4, E5), `HetPhien` (E2 = biến thể Đăng nhập, mục 3.2). Chi tiết bố cục ở DOC-52.
@@ -788,6 +832,8 @@ Server trả `errors: [{ "field", "rule" }]` (422 `VALIDATION_FAILED`); client t
 | `invalid_token` | Đường dẫn đăng nhập không hợp lệ. | That sign-in link isn't valid. |
 | `invalid_locale` | Ngôn ngữ này chưa được hỗ trợ. | That language isn't supported. |
 | `locked_after_sale_start` | Không đổi được giờ mở bán sau khi đã mở bán. | The sales start time can't change once sales have opened. |
+| `locked_after_sale_end` | Đã đóng bán, không đổi được giờ đóng bán. | Sales have closed; the closing time can't be changed. |
+| `nonexistent_local_time` | Giờ này không tồn tại ở múi giờ đã chọn (chuyển giờ mùa hè). | This time doesn't exist in the selected time zone (daylight saving change). |
 | `invalid_media` | Ảnh này không dùng được, hãy tải ảnh khác. | That image can't be used. Upload another one. |
 | `duplicate` | Tên này đã được dùng. | That name is already in use. |
 | `out_of_range` | Giá trị nằm ngoài khoảng cho phép. | That value is outside the allowed range. |
