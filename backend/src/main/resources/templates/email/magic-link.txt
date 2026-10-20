@@ -1,0 +1,7 @@
+[(#{email.magic-link.title(${appName})})]
+
+[(#{email.magic-link.body})]
+
+[(${linkUrl})]
+
+[(#{email.magic-link.note(${appName}, ${linkUrl}, ${expiresInMinutes})})]
